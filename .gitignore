@@ -1,2 +1,6 @@
-skills/
+download/
+.env
+upload/
 node_modules/
+skills/
+.DS_Store

@@ -7,167 +7,92 @@
   <link rel="icon" type="image/png" href="assets/small-logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;650;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <!-- Navigation -->
-  <nav class="nav">
-    <a href="index.html" class="nav-logo">
-      <img src="assets/main-logo.png" alt="Socra" style="height: 32px; width: auto; border-radius: 4px;">
-    </a>
+  <nav class="nav" id="nav">
+    <a href="index.html" class="nav-logo"><img src="assets/main-logo.png" alt="Socra"></a>
     <div class="nav-links">
-      <a href="index.html" class="active">Home</a>
-      <a href="pricing.html">Pricing</a>
+      <a href="index.html" class="nav-link active">Home</a>
+      <a href="pricing.html" class="nav-link">Pricing</a>
       <a href="auth.html" class="btn btn-primary" id="nav-cta">Get Started</a>
     </div>
   </nav>
-
-  <!-- Hero Section -->
   <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-float hero-float-1"></div>
+    <div class="hero-float hero-float-2"></div>
+    <div class="hero-float hero-float-3"></div>
     <div class="hero-content">
       <div class="hero-badge">The Socratic AI</div>
-      <h1>Don't Let AI <span class="accent-word">Think</span> For You</h1>
-      <p class="hero-subtitle">
-        Conventional AI hands you answers on a silver platter. Socra guides you to discover them yourself — because the mind that reasons grows stronger, while the mind that is fed grows dependent.
-      </p>
+      <h1>Don't Let AI <span class="accent">Think</span> For You</h1>
+      <p class="hero-sub">Conventional AI hands you answers on a silver platter. Socra guides you to discover them yourself — because the mind that reasons grows stronger, while the mind that is fed grows dependent.</p>
       <div class="hero-actions">
-        <a href="auth.html" class="btn btn-primary btn-large">Start Your Socratic Journey</a>
-        <a href="pricing.html" class="btn btn-secondary btn-large">See Plans</a>
+        <a href="auth.html" class="btn btn-gold btn-large">Start Your Socratic Journey</a>
+        <a href="pricing.html" class="btn btn-outline btn-large">See Plans</a>
       </div>
     </div>
   </section>
-
-  <!-- Comparison Section -->
-  <section class="section" style="background: var(--surface-container-low);">
+  <section class="section section-alt">
     <div class="section-container">
       <div class="section-header">
         <h2>A Different Kind of Intelligence</h2>
         <p>Most AI tools optimize for speed. Socra optimizes for understanding.</p>
+        <div class="gold-line"></div>
       </div>
       <div class="comparison-grid">
-        <!-- Conventional AI -->
         <div class="comparison-card conventional">
           <h3>Conventional AI</h3>
           <ul class="comparison-list">
-            <li>
-              <span class="icon cross">&#10005;</span>
-              <span>Delivers complete answers instantly, bypassing your reasoning</span>
-            </li>
-            <li>
-              <span class="icon cross">&#10005;</span>
-              <span>Creates dependency — the more you use it, the less you think</span>
-            </li>
-            <li>
-              <span class="icon cross">&#10005;</span>
-              <span>No insight into your cognitive growth or reasoning patterns</span>
-            </li>
-            <li>
-              <span class="icon cross">&#10005;</span>
-              <span>Encourages copy-paste workflows that erode comprehension</span>
-            </li>
-            <li>
-              <span class="icon cross">&#10005;</span>
-              <span>Measures success by how quickly it solves your problems</span>
-            </li>
+            <li><span class="icon cross">&#10005;</span><span>Delivers complete answers instantly, bypassing your reasoning</span></li>
+            <li><span class="icon cross">&#10005;</span><span>Creates dependency — the more you use it, the less you think</span></li>
+            <li><span class="icon cross">&#10005;</span><span>No insight into your cognitive growth or reasoning patterns</span></li>
+            <li><span class="icon cross">&#10005;</span><span>Encourages copy-paste workflows that erode comprehension</span></li>
+            <li><span class="icon cross">&#10005;</span><span>Measures success by how quickly it solves your problems</span></li>
           </ul>
         </div>
-        <!-- Socratic AI -->
         <div class="comparison-card socratic">
           <h3>Socratic AI</h3>
           <ul class="comparison-list">
-            <li>
-              <span class="icon check">&#10003;</span>
-              <span>Guides you through reasoning steps so you arrive at answers yourself</span>
-            </li>
-            <li>
-              <span class="icon check">&#10003;</span>
-              <span>Builds independence — the more you use it, the sharper you become</span>
-            </li>
-            <li>
-              <span class="icon check">&#10003;</span>
-              <span>Tracks cognitive growth with a personalized portfolio of metrics</span>
-            </li>
-            <li>
-              <span class="icon check">&#10003;</span>
-              <span>Encourages productive struggle that deepens true understanding</span>
-            </li>
-            <li>
-              <span class="icon check">&#10003;</span>
-              <span>Measures success by how much your thinking improves</span>
-            </li>
+            <li><span class="icon check">&#10003;</span><span>Guides you through reasoning steps so you arrive at answers yourself</span></li>
+            <li><span class="icon check">&#10003;</span><span>Builds independence — the more you use it, the sharper you become</span></li>
+            <li><span class="icon check">&#10003;</span><span>Tracks cognitive growth with a personalized portfolio of metrics</span></li>
+            <li><span class="icon check">&#10003;</span><span>Encourages productive struggle that deepens true understanding</span></li>
+            <li><span class="icon check">&#10003;</span><span>Measures success by how much your thinking improves</span></li>
           </ul>
         </div>
       </div>
     </div>
   </section>
-
-  <!-- Features Section -->
   <section class="section">
     <div class="section-container">
       <div class="section-header">
         <h2>Built for Thinkers</h2>
         <p>Every feature in Socra is designed to strengthen your mind, not replace it.</p>
+        <div class="gold-line"></div>
       </div>
       <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">?</div>
-          <h3>Socratic Guidance</h3>
-          <p>Rather than giving you direct answers, Socra asks the right questions. Each interaction moves you forward by exactly one reasoning step, building your capacity to think independently.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#9998;</div>
-          <h3>Workspace Documents</h3>
-          <p>A live Markdown editor sits alongside every conversation. Capture insights, structure your reasoning, and build a personal knowledge base as you think through problems with Socra.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#9670;</div>
-          <h3>Cognitive Portfolio</h3>
-          <p>Track your intellectual growth over time. Socra measures reasoning quality, logical consistency, originality, and more — giving you a mirror into how your thinking evolves with every session.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#9881;</div>
-          <h3>Adaptive Difficulty</h3>
-          <p>Socra reads your frustration level and adjusts its challenge accordingly. When you are comfortable, it pushes harder. When you struggle, it offers just enough guidance — never too much, never too little.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#9776;</div>
-          <h3>Domain Awareness</h3>
-          <p>Whether you are working through mathematics, programming, writing, or scientific reasoning, Socra adapts its Socratic approach to the specific demands of each discipline.</p>
-        </div>
-        <div class="feature-card">
-          <div class="feature-icon">&#9733;</div>
-          <h3>Active Thought Highlighting</h3>
-          <p>See exactly where your reasoning is active. Socra highlights the current line of thought with a visual indicator, so you always know what you are working through and where to focus next.</p>
-        </div>
+        <div class="feature-card"><div class="feature-icon">?</div><h3>Socratic Guidance</h3><p>Rather than giving you direct answers, Socra asks the right questions. Each interaction moves you forward by exactly one reasoning step, building your capacity to think independently.</p></div>
+        <div class="feature-card"><div class="feature-icon" style="background:var(--gold-10);color:var(--gold-dark);">&#9998;</div><h3>Workspace Documents</h3><p>A live Markdown editor sits alongside every conversation. Capture insights, structure your reasoning, and build a personal knowledge base as you think through problems.</p></div>
+        <div class="feature-card"><div class="feature-icon">&#9670;</div><h3>Cognitive Portfolio</h3><p>Track your intellectual growth over time. Socra measures reasoning quality, logical consistency, originality, and more — giving you a mirror into how your thinking evolves.</p></div>
+        <div class="feature-card"><div class="feature-icon" style="background:var(--gold-10);color:var(--gold-dark);">&#9881;</div><h3>Adaptive Difficulty</h3><p>Socra reads your frustration level and adjusts its challenge accordingly. When you are comfortable, it pushes harder. When you struggle, it offers just enough guidance.</p></div>
+        <div class="feature-card"><div class="feature-icon">&#9776;</div><h3>Domain Awareness</h3><p>Whether you are working through mathematics, programming, writing, or scientific reasoning, Socra adapts its Socratic approach to the specific demands of each discipline.</p></div>
+        <div class="feature-card"><div class="feature-icon" style="background:var(--gold-10);color:var(--gold-dark);">&#9733;</div><h3>Active Thought Highlighting</h3><p>See exactly where your reasoning is active. Socra highlights the current line of thought with a visual indicator, so you always know what to focus on next.</p></div>
       </div>
     </div>
   </section>
-
-  <!-- CTA Section -->
   <section class="cta-section">
     <h2>Ready to Think Again?</h2>
     <p>Join the movement to reclaim critical thinking. Your mind is your greatest asset — train it, don't outsource it.</p>
-    <a href="auth.html" class="btn btn-primary btn-large">Begin Your Socratic Journey</a>
+    <a href="auth.html" class="btn btn-gold btn-large">Begin Your Socratic Journey</a>
   </section>
-
-  <!-- Footer -->
-  <footer class="footer">
-    <p>&copy; 2025 Socra. Restoring critical thinking, one question at a time.</p>
-  </footer>
-
+  <footer class="footer"><p>&copy; 2025 Socra. Restoring critical thinking, one question at a time.</p></footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
   <script>
-    window.addEventListener('supabase-ready', async function() {
-      if (!sb) return;
-      const { data: { session } } = await sb.auth.getSession();
-      const cta = document.getElementById('nav-cta');
-      if (session) {
-        cta.textContent = 'Open App';
-        cta.href = 'app.html';
-      }
-    });
+    window.addEventListener('scroll',()=>{document.getElementById('nav').classList.toggle('scrolled',window.scrollY>20)});
+    window.addEventListener('supabase-ready',async()=>{if(!sb)return;const{data:{session}}=await sb.auth.getSession();if(session){const c=document.getElementById('nav-cta');c.textContent='Open App';c.href='app.html';}});
   </script>
 </body>
 </html>
