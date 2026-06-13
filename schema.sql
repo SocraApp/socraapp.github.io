@@ -1,14 +1,9 @@
--- ============================================
 -- Socra Database Schema
 -- Run this in the Supabase SQL Editor
--- ============================================
 
--- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- ============================================
--- User Profiles
--- ============================================
+-- Profiles
 CREATE TABLE public.profiles (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   name TEXT NOT NULL,
@@ -16,26 +11,22 @@ CREATE TABLE public.profiles (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- Auto-create profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
   INSERT INTO public.profiles (id, name)
-  VALUES (
-    NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1))
-  );
+  VALUES (NEW.id, COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)))
+  ON CONFLICT (id) DO NOTHING;
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- ============================================
 -- Chats
--- ============================================
 CREATE TABLE public.chats (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
@@ -44,9 +35,7 @@ CREATE TABLE public.chats (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- ============================================
 -- Messages
--- ============================================
 CREATE TABLE public.messages (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   chat_id UUID REFERENCES public.chats(id) ON DELETE CASCADE NOT NULL,
@@ -56,9 +45,7 @@ CREATE TABLE public.messages (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- ============================================
 -- Workspace Documents
--- ============================================
 CREATE TABLE public.workspace_documents (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   chat_id UUID REFERENCES public.chats(id) ON DELETE CASCADE NOT NULL UNIQUE,
@@ -69,9 +56,7 @@ CREATE TABLE public.workspace_documents (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
--- ============================================
--- Cognitive Metrics (daily aggregates)
--- ============================================
+-- Cognitive Metrics
 CREATE TABLE public.cognitive_metrics (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
@@ -88,53 +73,37 @@ CREATE TABLE public.cognitive_metrics (
   UNIQUE(user_id, date)
 );
 
--- ============================================
--- Row Level Security (RLS)
--- ============================================
-
--- Profiles
+-- RLS
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own profile" ON public.profiles FOR SELECT USING (auth.uid() = id);
 CREATE POLICY "Users can update own profile" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Users can insert own profile" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
--- Chats
 ALTER TABLE public.chats ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own chats" ON public.chats FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can create own chats" ON public.chats FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own chats" ON public.chats FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own chats" ON public.chats FOR DELETE USING (auth.uid() = user_id);
 
--- Messages
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Users can view own messages" ON public.messages FOR SELECT USING (
-  chat_id IN (SELECT id FROM public.chats WHERE user_id = auth.uid())
-);
-CREATE POLICY "Users can create own messages" ON public.messages FOR INSERT WITH CHECK (
-  chat_id IN (SELECT id FROM public.chats WHERE user_id = auth.uid())
-);
-CREATE POLICY "Users can delete own messages" ON public.messages FOR DELETE USING (
-  chat_id IN (SELECT id FROM public.chats WHERE user_id = auth.uid())
-);
+CREATE POLICY "Users can view own messages" ON public.messages FOR SELECT USING (chat_id IN (SELECT id FROM public.chats WHERE user_id = auth.uid()));
+CREATE POLICY "Users can create own messages" ON public.messages FOR INSERT WITH CHECK (chat_id IN (SELECT id FROM public.chats WHERE user_id = auth.uid()));
 
--- Workspace Documents
 ALTER TABLE public.workspace_documents ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own workspace docs" ON public.workspace_documents FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can create own workspace docs" ON public.workspace_documents FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own workspace docs" ON public.workspace_documents FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Users can delete own workspace docs" ON public.workspace_documents FOR DELETE USING (auth.uid() = user_id);
 
--- Cognitive Metrics
 ALTER TABLE public.cognitive_metrics ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own metrics" ON public.cognitive_metrics FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can create own metrics" ON public.cognitive_metrics FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own metrics" ON public.cognitive_metrics FOR UPDATE USING (auth.uid() = user_id);
 
--- ============================================
--- Indexes for performance
--- ============================================
-CREATE INDEX idx_chats_user_id ON public.chats(user_id);
-CREATE INDEX idx_chats_updated_at ON public.chats(updated_at DESC);
-CREATE INDEX idx_messages_chat_id ON public.messages(chat_id);
-CREATE INDEX idx_messages_created_at ON public.messages(created_at);
-CREATE INDEX idx_workspace_documents_chat_id ON public.workspace_documents(chat_id);
-CREATE INDEX idx_cognitive_metrics_user_date ON public.cognitive_metrics(user_id, date DESC);
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_chats_user_id ON public.chats(user_id);
+CREATE INDEX IF NOT EXISTS idx_chats_updated_at ON public.chats(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON public.messages(chat_id);
+CREATE INDEX IF NOT EXISTS idx_messages_created_at ON public.messages(created_at);
+CREATE INDEX IF NOT EXISTS idx_workspace_documents_chat_id ON public.workspace_documents(chat_id);
+CREATE INDEX IF NOT EXISTS idx_cognitive_metrics_user_date ON public.cognitive_metrics(user_id, date DESC);
