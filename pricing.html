@@ -71,8 +71,8 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
   <script>
-    window.addEventListener('supabase-ready',async()=>{
-      if(!sb)return;
+    async function initPricing(){
+      if(!sb){return;}
       const{data:{session}}=await sb.auth.getSession();
       const navCta=document.getElementById('nav-cta'),doxaCta=document.getElementById('doxa-cta');
       if(session){
@@ -82,8 +82,14 @@
         if(plan==='doxa'){document.getElementById('plan-doxa').classList.add('current-plan');doxaCta.textContent='Current Plan';doxaCta.className='btn btn-outline btn-disabled';doxaCta.disabled=true;}
         else if(plan==='elenchus'){document.getElementById('plan-elenchus').classList.add('current-plan');document.getElementById('plan-elenchus').querySelector('.btn').textContent='Current Plan';document.getElementById('plan-elenchus').querySelector('.btn').disabled=true;}
         else if(plan==='nous'){document.getElementById('plan-nous').classList.add('current-plan');document.getElementById('plan-nous').querySelector('.btn').textContent='Current Plan';document.getElementById('plan-nous').querySelector('.btn').disabled=true;}
-      }else{doxaCta.addEventListener('click',()=>window.location.href='auth.html');}
-    });
+      }else{
+        doxaCta.addEventListener('click',()=>window.location.href='auth.html');
+      }
+    }
+    // Try immediately if sb is already available
+    if(window.sb){initPricing();}
+    // Also listen for the supabase-ready event (in case CDN was slow)
+    window.addEventListener('supabase-ready',initPricing);
   </script>
 </body>
 </html>

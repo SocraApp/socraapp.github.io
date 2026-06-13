@@ -1,6 +1,7 @@
 (function(){
 'use strict';
 let currentUser=null,currentProfile=null,currentChat=null,chats=[],editor=null,aiClient=null,metricsManager=null,isSending=false,workspaceDoc=null;
+let openDropdown=null; // Track currently open chat dropdown
 const $=id=>document.getElementById(id);
 const sidebar=$('sidebar'),sidebarToggle=$('sidebar-toggle'),searchToggle=$('search-toggle');
 const sidebarSearch=$('sidebar-search'),chatSearchInput=$('chat-search-input'),newChatBtn=$('new-chat-btn');
@@ -12,6 +13,11 @@ const workspaceTitle=$('workspace-title'),profileAvatar=$('profile-avatar'),prof
 const profilePlan=$('profile-plan'),upgradeBtn=$('upgrade-btn'),formatHeading=$('format-heading');
 const toastContainer=$('toast-container'),mobileMenuBtn=$('mobile-menu-btn');
 const reopenWorkspaceBtn=$('reopen-workspace-btn'),sidebarLogoFull=$('sidebar-logo-full'),sidebarLogoSmall=$('sidebar-logo-small');
+
+// Configure marked to treat single newlines as <br>
+if(typeof marked!=='undefined'){
+  marked.setOptions({breaks:true,gfm:true});
+}
 
 async function init(){
   if(!sb){window.location.href='auth.html';return;}
@@ -29,6 +35,12 @@ async function init(){
   setupFormatBar();
   checkMobile();
   window.addEventListener('resize',checkMobile);
+  // Close dropdown when clicking outside
+  document.addEventListener('click',e=>{
+    if(openDropdown&&!openDropdown.contains(e.target)&&!e.target.closest('.chat-item-menu-btn')){
+      closeChatDropdown();
+    }
+  });
 }
 
 async function loadProfile(){
@@ -60,10 +72,128 @@ function renderChatHistory(filter=''){
     const item=document.createElement('div');
     item.className='chat-item'+(currentChat?.id===chat.id?' active':'');
     item.dataset.chatId=chat.id;
-    item.innerHTML=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--text-muted)"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg><span class="chat-item-title">${escapeHtml(chat.title)}</span>`;
-    item.addEventListener('click',()=>openChat(chat.id));
+    // Three-dot menu button
+    item.innerHTML=`<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--text-muted)"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg><span class="chat-item-title">${escapeHtml(chat.title)}</span><div class="chat-item-actions"><button class="chat-item-menu-btn" title="More options"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button></div>`;
+    // Click on the item (not on the menu button) opens the chat
+    item.addEventListener('click',e=>{
+      if(e.target.closest('.chat-item-menu-btn')||e.target.closest('.chat-item-dropdown'))return;
+      openChat(chat.id);
+    });
+    // Three-dot menu button opens dropdown
+    const menuBtn=item.querySelector('.chat-item-menu-btn');
+    menuBtn.addEventListener('click',e=>{
+      e.stopPropagation();
+      toggleChatDropdown(item,chat.id);
+    });
     chatHistory.insertBefore(item,chatHistoryEmpty);
   });
+}
+
+function closeChatDropdown(){
+  if(openDropdown){
+    openDropdown.remove();
+    openDropdown=null;
+  }
+}
+
+function toggleChatDropdown(chatItem,chatId){
+  closeChatDropdown();
+  const dropdown=document.createElement('div');
+  dropdown.className='chat-item-dropdown open';
+  dropdown.innerHTML=`<button class="chat-item-dropdown-item rename-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Rename</button><button class="chat-item-dropdown-item danger delete-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>Delete</button>`;
+  chatItem.appendChild(dropdown);
+  openDropdown=dropdown;
+
+  // Rename handler
+  dropdown.querySelector('.rename-btn').addEventListener('click',e=>{
+    e.stopPropagation();
+    closeChatDropdown();
+    startRename(chatId,chatItem);
+  });
+
+  // Delete handler
+  dropdown.querySelector('.delete-btn').addEventListener('click',e=>{
+    e.stopPropagation();
+    closeChatDropdown();
+    confirmDeleteChat(chatId);
+  });
+}
+
+function startRename(chatId,chatItem){
+  const chat=chats.find(c=>c.id===chatId);
+  if(!chat)return;
+  const titleEl=chatItem.querySelector('.chat-item-title');
+  const originalTitle=chat.title;
+  // Replace title with an input
+  const input=document.createElement('input');
+  input.type='text';
+  input.className='chat-item-rename-input';
+  input.value=originalTitle;
+  titleEl.replaceWith(input);
+  input.focus();
+  input.select();
+
+  const finishRename=async()=>{
+    const newTitle=input.value.trim()||originalTitle;
+    // Restore title element
+    const newTitleEl=document.createElement('span');
+    newTitleEl.className='chat-item-title';
+    newTitleEl.textContent=newTitle;
+    input.replaceWith(newTitleEl);
+    if(newTitle!==originalTitle){
+      await sb.from('chats').update({title:newTitle}).eq('id',chatId);
+      chat.title=newTitle;
+      if(currentChat?.id===chatId)currentChat.title=newTitle;
+    }
+  };
+
+  input.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){e.preventDefault();input.blur();}
+    if(e.key==='Escape'){input.value=originalTitle;input.blur();}
+  });
+  input.addEventListener('blur',finishRename);
+}
+
+function confirmDeleteChat(chatId){
+  const chat=chats.find(c=>c.id===chatId);
+  if(!chat)return;
+  // Create confirmation overlay
+  const overlay=document.createElement('div');
+  overlay.className='confirm-overlay';
+  overlay.innerHTML=`<div class="confirm-dialog"><h3>Delete Chat</h3><p>This will permanently delete "<strong>${escapeHtml(chat.title)}</strong>" along with all its messages and workspace document. This action cannot be undone.</p><div class="confirm-dialog-btns"><button class="btn btn-cancel">Cancel</button><button class="btn btn-danger">Delete</button></div></div>`;
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('.btn-cancel').addEventListener('click',()=>overlay.remove());
+  overlay.querySelector('.btn-danger').addEventListener('click',async()=>{
+    overlay.remove();
+    await deleteChat(chatId);
+  });
+  // Close on overlay click (not dialog)
+  overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.remove();});
+}
+
+async function deleteChat(chatId){
+  try{
+    // Delete workspace document
+    await sb.from('workspace_documents').delete().eq('chat_id',chatId);
+    // Delete messages
+    await sb.from('messages').delete().eq('chat_id',chatId);
+    // Delete chat
+    await sb.from('chats').delete().eq('id',chatId);
+    // Update local state
+    chats=chats.filter(c=>c.id!==chatId);
+    if(currentChat?.id===chatId){
+      currentChat=null;workspaceDoc=null;
+      chatMessages.innerHTML='';
+      chatMessages.appendChild(welcomeScreen);
+      welcomeScreen.style.display='flex';
+      closeWorkspacePanel();
+    }
+    renderChatHistory(chatSearchInput.value);
+    showToast('Chat deleted.');
+  }catch(err){
+    showToast('Failed to delete chat.',true);
+  }
 }
 
 async function createNewChat(){
