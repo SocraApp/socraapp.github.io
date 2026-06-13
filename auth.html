@@ -39,16 +39,132 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="js/supabase-client.js"></script>
   <script>
-    window.addEventListener('supabase-ready',async()=>{
-      if(!sb)return;
-      const{data:{session}}=await sb.auth.getSession();
-      if(session){window.location.href='app.html';return;}
-      const tabs=document.querySelectorAll('.auth-tab'),sf=document.getElementById('signup-form'),lf=document.getElementById('login-form');
-      tabs.forEach(t=>t.addEventListener('click',()=>{tabs.forEach(x=>x.classList.remove('active'));t.classList.add('active');if(t.dataset.tab==='signup'){sf.classList.remove('hidden');lf.classList.add('hidden');}else{lf.classList.remove('hidden');sf.classList.add('hidden');}}));
-      document.querySelectorAll('.password-toggle').forEach(b=>b.addEventListener('click',()=>{const i=document.getElementById(b.dataset.target);const p=i.type==='password';i.type=p?'text':'password';b.innerHTML=p?'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>':'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';}));
-      sf.addEventListener('submit',async e=>{e.preventDefault();const err=document.getElementById('signup-error');err.classList.add('hidden');const n=document.getElementById('signup-name').value.trim(),em=document.getElementById('signup-email').value.trim(),pw=document.getElementById('signup-password').value,cf=document.getElementById('signup-confirm').value;if(pw!==cf){err.textContent='Passwords do not match.';err.classList.remove('hidden');return;}if(pw.length<6){err.textContent='Password must be at least 6 characters.';err.classList.remove('hidden');return;}const{data,error}=await sb.auth.signUp({email:em,password:pw,options:{data:{name:n}}});if(error){err.textContent=error.message;err.classList.remove('hidden');return;}if(data.user)window.location.href='app.html';});
-      lf.addEventListener('submit',async e=>{e.preventDefault();const err=document.getElementById('login-error');err.classList.add('hidden');const em=document.getElementById('login-email').value.trim(),pw=document.getElementById('login-password').value;const{error}=await sb.auth.signInWithPassword({email:em,password:pw});if(error){err.textContent=error.message;err.classList.remove('hidden');return;}window.location.href='app.html';});
+    // ===== UI logic runs immediately (no Supabase dependency) =====
+    const tabs = document.querySelectorAll('.auth-tab');
+    const sf = document.getElementById('signup-form');
+    const lf = document.getElementById('login-form');
+
+    // Tab switching — always works regardless of Supabase loading
+    tabs.forEach(t => t.addEventListener('click', () => {
+      tabs.forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+      if (t.dataset.tab === 'signup') {
+        sf.classList.remove('hidden');
+        lf.classList.add('hidden');
+      } else {
+        lf.classList.remove('hidden');
+        sf.classList.add('hidden');
+      }
+    }));
+
+    // Password visibility toggle — always works regardless of Supabase loading
+    document.querySelectorAll('.password-toggle').forEach(b => {
+      b.addEventListener('click', () => {
+        const input = document.getElementById(b.dataset.target);
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+        b.innerHTML = isPassword
+          ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+          : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+      });
     });
+
+    // ===== Helper: wait for Supabase client (handles race condition) =====
+    function waitForSB() {
+      return new Promise(resolve => {
+        if (window.sb) return resolve(sb);
+        window.addEventListener('supabase-ready', () => resolve(sb), { once: true });
+        // Fallback: poll for up to 5 seconds
+        let attempts = 0;
+        const poll = setInterval(() => {
+          if (window.sb) { clearInterval(poll); resolve(sb); }
+          if (++attempts > 50) { clearInterval(poll); resolve(null); }
+        }, 100);
+      });
+    }
+
+    // ===== Supabase-dependent logic =====
+    (async () => {
+      const sb = await waitForSB();
+      if (!sb) {
+        document.getElementById('signup-error').textContent = 'Unable to connect. Please refresh the page.';
+        document.getElementById('signup-error').classList.remove('hidden');
+        return;
+      }
+
+      // Redirect if already logged in
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) { window.location.href = 'app.html'; return; }
+
+      // Signup form handler
+      sf.addEventListener('submit', async e => {
+        e.preventDefault();
+        const err = document.getElementById('signup-error');
+        err.classList.add('hidden');
+        const name = document.getElementById('signup-name').value.trim();
+        const email = document.getElementById('signup-email').value.trim();
+        const pw = document.getElementById('signup-password').value;
+        const confirm = document.getElementById('signup-confirm').value;
+
+        if (pw !== confirm) {
+          err.textContent = 'Passwords do not match.';
+          err.classList.remove('hidden');
+          return;
+        }
+        if (pw.length < 6) {
+          err.textContent = 'Password must be at least 6 characters.';
+          err.classList.remove('hidden');
+          return;
+        }
+
+        const { data, error } = await sb.auth.signUp({
+          email, password: pw,
+          options: { data: { name } }
+        });
+
+        if (error) {
+          err.textContent = error.message;
+          err.classList.remove('hidden');
+          return;
+        }
+
+        // Supabase returns a fake user for duplicate emails (no session created).
+        // If session is null but user exists, the email is already registered.
+        if (data.user && data.session) {
+          // Successfully signed up AND auto-confirmed — go to app
+          window.location.href = 'app.html';
+        } else if (data.user && !data.session) {
+          // Email already registered — show error and switch to login
+          err.textContent = 'An account with this email already exists. Please log in instead.';
+          err.classList.remove('hidden');
+          tabs.forEach(x => x.classList.remove('active'));
+          tabs[1].classList.add('active');
+          sf.classList.add('hidden');
+          lf.classList.remove('hidden');
+          document.getElementById('login-email').value = email;
+        } else {
+          err.textContent = 'Something went wrong. Please try again.';
+          err.classList.remove('hidden');
+        }
+      });
+
+      // Login form handler
+      lf.addEventListener('submit', async e => {
+        e.preventDefault();
+        const err = document.getElementById('login-error');
+        err.classList.add('hidden');
+        const email = document.getElementById('login-email').value.trim();
+        const pw = document.getElementById('login-password').value;
+
+        const { error } = await sb.auth.signInWithPassword({ email, password: pw });
+        if (error) {
+          err.textContent = error.message;
+          err.classList.remove('hidden');
+          return;
+        }
+        window.location.href = 'app.html';
+      });
+    })();
   </script>
 </body>
 </html>
