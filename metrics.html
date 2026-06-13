@@ -20,20 +20,29 @@
       <a href="app.html" class="metrics-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>Back to Chat</a>
       <h1 style="font-size:28px;font-weight:700;color:var(--navy);margin-bottom:8px;">Cognitive Portfolio</h1>
       <p style="color:var(--text-secondary);margin-bottom:32px;max-width:500px;">Track your intellectual growth over time. These metrics reflect how your reasoning evolves with every session.</p>
-      <div class="metrics-summary" id="metrics-summary">
-        <div class="metric-card"><div class="metric-value" id="metric-reasoning">—</div><div class="metric-label">Reasoning</div><div class="metric-bar"><div class="metric-bar-fill" id="bar-reasoning" style="width:0%"></div></div></div>
-        <div class="metric-card"><div class="metric-value" id="metric-consistency">—</div><div class="metric-label">Consistency</div><div class="metric-bar"><div class="metric-bar-fill" id="bar-consistency" style="width:0%"></div></div></div>
-        <div class="metric-card"><div class="metric-value" id="metric-completeness">—</div><div class="metric-label">Completeness</div><div class="metric-bar"><div class="metric-bar-fill" id="bar-completeness" style="width:0%"></div></div></div>
-        <div class="metric-card"><div class="metric-value" id="metric-originality">—</div><div class="metric-label">Originality</div><div class="metric-bar"><div class="metric-bar-fill" id="bar-originality" style="width:0%"></div></div></div>
-        <div class="metric-card"><div class="metric-value" id="metric-confidence">—</div><div class="metric-label">Confidence</div><div class="metric-bar"><div class="metric-bar-fill" id="bar-confidence" style="width:0%"></div></div></div>
+      <div class="metrics-loading" id="metrics-loading" style="text-align:center;padding:60px 0;color:var(--text-muted);">Loading your portfolio...</div>
+      <div class="metrics-empty hidden" id="metrics-empty" style="text-align:center;padding:60px 0;">
+        <div style="font-size:48px;margin-bottom:16px;opacity:0.3;">&#9734;</div>
+        <h3 style="color:var(--navy);margin-bottom:8px;">No Metrics Yet</h3>
+        <p style="color:var(--text-secondary);max-width:400px;margin:0 auto 20px;">Start a Socratic conversation to begin tracking your cognitive growth. Metrics will appear here after your first few exchanges.</p>
+        <a href="app.html" class="btn btn-primary" style="display:inline-block;">Start a Conversation</a>
       </div>
-      <div class="metrics-chart-area">
-        <h3>Reasoning Progress Over Time</h3>
-        <div class="metrics-chart-container"><canvas id="metrics-chart"></canvas></div>
-      </div>
-      <div class="metrics-stats">
-        <div class="metrics-stat-card"><div class="metrics-stat-label">Total Sessions</div><div class="metrics-stat-value" id="metric-sessions">0</div></div>
-        <div class="metrics-stat-card"><div class="metrics-stat-label">Avg. Struggle Level</div><div class="metrics-stat-value" id="metric-struggle">—</div></div>
+      <div class="metrics-content hidden" id="metrics-content">
+        <div class="metrics-summary" id="metrics-summary">
+          <div class="metric-card"><div class="metric-value" id="metric-reasoning">—</div><div class="metric-label">Reasoning</div><div class="metric-bar"><div class="metric-bar-fill" id="bar-reasoning" style="width:0%"></div></div></div>
+          <div class="metric-card"><div class="metric-value" id="metric-consistency">—</div><div class="metric-label">Consistency</div><div class="metric-bar"><div class="metric-bar-fill" id="bar-consistency" style="width:0%"></div></div></div>
+          <div class="metric-card"><div class="metric-value" id="metric-completeness">—</div><div class="metric-label">Completeness</div><div class="metric-bar"><div class="metric-bar-fill" id="bar-completeness" style="width:0%"></div></div></div>
+          <div class="metric-card"><div class="metric-value" id="metric-originality">—</div><div class="metric-label">Originality</div><div class="metric-bar"><div class="metric-bar-fill" id="bar-originality" style="width:0%"></div></div></div>
+          <div class="metric-card"><div class="metric-value" id="metric-confidence">—</div><div class="metric-label">Confidence</div><div class="metric-bar"><div class="metric-bar-fill" id="bar-confidence" style="width:0%"></div></div></div>
+        </div>
+        <div class="metrics-chart-area">
+          <h3>Reasoning Progress Over Time</h3>
+          <div class="metrics-chart-container" style="position:relative;height:300px;"><canvas id="metrics-chart"></canvas></div>
+        </div>
+        <div class="metrics-stats">
+          <div class="metrics-stat-card"><div class="metrics-stat-label">Total Sessions</div><div class="metrics-stat-value" id="metric-sessions">0</div></div>
+          <div class="metrics-stat-card"><div class="metrics-stat-label">Avg. Struggle Level</div><div class="metrics-stat-value" id="metric-struggle">—</div></div>
+        </div>
       </div>
     </div>
   </section>
@@ -41,33 +50,94 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
   <script src="js/supabase-client.js"></script>
   <script>
-    window.addEventListener('supabase-ready',async()=>{
-      if(!sb){window.location.href='auth.html';return;}
-      const{data:{session}}=await sb.auth.getSession();
-      if(!session){window.location.href='auth.html';return;}
-      const{data,error}=await sb.from('cognitive_metrics').select('*').eq('user_id',session.user.id).order('date',{ascending:false}).limit(30);
-      const metrics=data||[];
-      if(!metrics.length)return;
-      const latest=metrics[0];
-      const fields={reasoning:'reasoning_quality',consistency:'logical_consistency',completeness:'completeness',originality:'originality',confidence:'confidence_alignment'};
-      Object.entries(fields).forEach(([k,f])=>{const val=latest[f]||0;document.getElementById('metric-'+k).textContent=val.toFixed(1);document.getElementById('bar-'+k).style.width=(val*10)+'%';});
-      document.getElementById('metric-sessions').textContent=latest.session_count||0;
-      document.getElementById('metric-struggle').textContent=latest.avg_struggle_level?latest.avg_struggle_level.toFixed(1):'—';
-      const cd=[...metrics].reverse();
-      const labels=cd.map(d=>new Date(d.date).toLocaleDateString('en-US',{month:'short',day:'numeric'}));
-      new Chart(document.getElementById('metrics-chart'),{
-        type:'line',
-        data:{labels,datasets:[
-          {label:'Reasoning',data:cd.map(d=>d.reasoning_quality),borderColor:'#1B2A4A',backgroundColor:'rgba(27,42,74,0.08)',fill:true,tension:0.3,pointRadius:3,borderWidth:2},
-          {label:'Consistency',data:cd.map(d=>d.logical_consistency),borderColor:'#C9A84C',backgroundColor:'rgba(201,168,76,0.08)',fill:false,tension:0.3,pointRadius:3,borderWidth:2},
-          {label:'Originality',data:cd.map(d=>d.originality),borderColor:'#2D8A56',fill:false,tension:0.3,pointRadius:3,borderWidth:2}
-        ]},
-        options:{responsive:true,maintainAspectRatio:false,
-          scales:{y:{min:0,max:10,grid:{color:'#E2E5EA'},ticks:{font:{family:'Inter',size:11},color:'#8D96A5'}},x:{grid:{display:false},ticks:{font:{family:'Inter',size:11},color:'#8D96A5'}}},
-          plugins:{legend:{position:'bottom',labels:{font:{family:'Inter',size:12},color:'#5A6577',usePointStyle:true,padding:16}}}
-        }
+    // Helper: wait for Supabase client
+    function waitForSB() {
+      return new Promise(resolve => {
+        if (window.sb) return resolve(sb);
+        window.addEventListener('supabase-ready', () => resolve(sb), { once: true });
+        let attempts = 0;
+        const poll = setInterval(() => {
+          if (window.sb) { clearInterval(poll); resolve(sb); }
+          if (++attempts > 50) { clearInterval(poll); resolve(null); }
+        }, 100);
       });
-    });
+    }
+
+    (async () => {
+      const sb = await waitForSB();
+      if (!sb) { window.location.href = 'auth.html'; return; }
+
+      const { data: { session } } = await sb.auth.getSession();
+      if (!session) { window.location.href = 'auth.html'; return; }
+
+      const loadingEl = document.getElementById('metrics-loading');
+      const emptyEl = document.getElementById('metrics-empty');
+      const contentEl = document.getElementById('metrics-content');
+
+      try {
+        const { data, error } = await sb.from('cognitive_metrics').select('*').eq('user_id', session.user.id).order('date', { ascending: false }).limit(30);
+        if (error) throw error;
+
+        loadingEl.classList.add('hidden');
+
+        const metrics = data || [];
+        if (!metrics.length) {
+          emptyEl.classList.remove('hidden');
+          return;
+        }
+
+        contentEl.classList.remove('hidden');
+
+        // Fill summary cards with latest metrics
+        const latest = metrics[0];
+        const fields = {
+          reasoning: 'reasoning_quality',
+          consistency: 'logical_consistency',
+          completeness: 'completeness',
+          originality: 'originality',
+          confidence: 'confidence_alignment'
+        };
+        Object.entries(fields).forEach(([k, f]) => {
+          const val = latest[f] || 0;
+          document.getElementById('metric-' + k).textContent = val.toFixed(1);
+          document.getElementById('bar-' + k).style.width = (val * 10) + '%';
+        });
+        document.getElementById('metric-sessions').textContent = latest.session_count || 0;
+        document.getElementById('metric-struggle').textContent = latest.avg_struggle_level ? latest.avg_struggle_level.toFixed(1) : '—';
+
+        // Chart
+        const cd = [...metrics].reverse();
+        const labels = cd.map(d => new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        new Chart(document.getElementById('metrics-chart'), {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              { label: 'Reasoning', data: cd.map(d => d.reasoning_quality), borderColor: '#1B2A4A', backgroundColor: 'rgba(27,42,74,0.08)', fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2 },
+              { label: 'Consistency', data: cd.map(d => d.logical_consistency), borderColor: '#C9A84C', backgroundColor: 'rgba(201,168,76,0.08)', fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2 },
+              { label: 'Originality', data: cd.map(d => d.originality), borderColor: '#2D8A56', fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2 }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: { min: 0, max: 10, grid: { color: '#E2E5EA' }, ticks: { font: { family: 'Inter', size: 11 }, color: '#8D96A5' } },
+              x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 }, color: '#8D96A5' } }
+            },
+            plugins: {
+              legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12 }, color: '#5A6577', usePointStyle: true, padding: 16 } }
+            }
+          }
+        });
+      } catch (err) {
+        console.error('Metrics load error:', err);
+        loadingEl.classList.add('hidden');
+        emptyEl.classList.remove('hidden');
+        emptyEl.querySelector('h3').textContent = 'Could not load metrics';
+        emptyEl.querySelector('p').textContent = 'There was a problem loading your cognitive portfolio. Please try again later.';
+      }
+    })();
   </script>
 </body>
 </html>

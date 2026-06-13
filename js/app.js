@@ -21,7 +21,7 @@ async function init(){
   await loadProfile();
   aiClient=new AIClient(sb);
   metricsManager=new MetricsManager(sb);
-  editor=new MarkdownEditor($('editor-textarea'),$('editor-preview'),{autoSave:c=>saveWorkspaceDocument(c)});
+  editor=new MarkdownEditor(null,null,{autoSave:c=>saveWorkspaceDocument(c)});
   setupEvents();
   sb.auth.onAuthStateChange(e=>{if(e==='SIGNED_OUT')window.location.href='auth.html';});
   await loadChats();
@@ -168,8 +168,10 @@ function setupFormatBar(){
 
 function setupEvents(){
   sidebarToggle.addEventListener('click',()=>sidebar.classList.toggle('collapsed'));
+  // Expanded sidebar: logo creates new chat
   sidebarLogoFull.addEventListener('click',e=>{e.preventDefault();createNewChat();});
-  sidebarLogoSmall.addEventListener('click',e=>{e.preventDefault();createNewChat();});
+  // Collapsed sidebar: small logo expands the sidebar
+  sidebarLogoSmall.addEventListener('click',e=>{e.preventDefault();sidebar.classList.remove('collapsed');});
   searchToggle.addEventListener('click',()=>{sidebarSearch.classList.toggle('active');if(sidebarSearch.classList.contains('active'))chatSearchInput.focus();});
   chatSearchInput.addEventListener('input',()=>renderChatHistory(chatSearchInput.value));
   newChatBtn.addEventListener('click',createNewChat);
