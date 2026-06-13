@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up — Socra</title>
+  <link rel="icon" type="image/png" href="assets/small-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;650;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="auth-page">
+    <div class="auth-container">
+      <div class="auth-logo">
+        <a href="index.html">
+          <img src="assets/main-logo.png" alt="Socra" style="height: 40px; width: auto; border-radius: 4px;">
+        </a>
+      </div>
+
+      <div class="auth-card">
+        <div class="auth-tabs">
+          <button class="auth-tab active" data-tab="signup">Sign Up</button>
+          <button class="auth-tab" data-tab="login">Log In</button>
+        </div>
+
+        <!-- Sign Up Form -->
+        <form class="auth-form" id="signup-form">
+          <div class="form-group">
+            <label for="signup-name">Name</label>
+            <input type="text" id="signup-name" class="form-input" placeholder="Your full name" required autocomplete="name">
+          </div>
+          <div class="form-group">
+            <label for="signup-email">Email</label>
+            <input type="email" id="signup-email" class="form-input" placeholder="you@example.com" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label for="signup-password">Password</label>
+            <div class="form-input-wrapper">
+              <input type="password" id="signup-password" class="form-input" placeholder="At least 6 characters" required autocomplete="new-password" minlength="6">
+              <button type="button" class="password-toggle" data-target="signup-password" aria-label="Toggle password visibility">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="signup-confirm">Confirm Password</label>
+            <div class="form-input-wrapper">
+              <input type="password" id="signup-confirm" class="form-input" placeholder="Re-enter your password" required autocomplete="new-password">
+              <button type="button" class="password-toggle" data-target="signup-confirm" aria-label="Toggle password visibility">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="form-error hidden" id="signup-error"></div>
+          <div class="auth-submit">
+            <button type="submit" class="btn btn-primary">Create Account</button>
+          </div>
+        </form>
+
+        <!-- Login Form -->
+        <form class="auth-form hidden" id="login-form">
+          <div class="form-group">
+            <label for="login-email">Email</label>
+            <input type="email" id="login-email" class="form-input" placeholder="you@example.com" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <div class="form-input-wrapper">
+              <input type="password" id="login-password" class="form-input" placeholder="Your password" required autocomplete="current-password">
+              <button type="button" class="password-toggle" data-target="login-password" aria-label="Toggle password visibility">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="form-error hidden" id="login-error"></div>
+          <div class="auth-submit">
+            <button type="submit" class="btn btn-primary">Log In</button>
+          </div>
+        </form>
+
+        <div class="auth-message hidden" id="auth-message"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script>
+    window.addEventListener('supabase-ready', async function() {
+      if (!sb) return;
+
+      // If already logged in, redirect to app
+      const { data: { session } } = await sb.auth.getSession();
+      if (session) {
+        window.location.href = 'app.html';
+        return;
+      }
+
+      // Tab switching
+      const tabs = document.querySelectorAll('.auth-tab');
+      const signupForm = document.getElementById('signup-form');
+      const loginForm = document.getElementById('login-form');
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          if (tab.dataset.tab === 'signup') {
+            signupForm.classList.remove('hidden');
+            loginForm.classList.add('hidden');
+          } else {
+            loginForm.classList.remove('hidden');
+            signupForm.classList.add('hidden');
+          }
+        });
+      });
+
+      // Password toggle
+      document.querySelectorAll('.password-toggle').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const input = document.getElementById(btn.dataset.target);
+          const isPassword = input.type === 'password';
+          input.type = isPassword ? 'text' : 'password';
+          btn.innerHTML = isPassword
+            ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+            : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+        });
+      });
+
+      // Signup
+      signupForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const errorEl = document.getElementById('signup-error');
+        const name = document.getElementById('signup-name').value.trim();
+        const email = document.getElementById('signup-email').value.trim();
+        const password = document.getElementById('signup-password').value;
+        const confirm = document.getElementById('signup-confirm').value;
+
+        errorEl.classList.add('hidden');
+
+        if (password !== confirm) {
+          errorEl.textContent = 'Passwords do not match.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        if (password.length < 6) {
+          errorEl.textContent = 'Password must be at least 6 characters.';
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        const { data, error } = await sb.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { name }
+          }
+        });
+
+        if (error) {
+          errorEl.textContent = error.message;
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        if (data.user) {
+          window.location.href = 'app.html';
+        }
+      });
+
+      // Login
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const errorEl = document.getElementById('login-error');
+        const email = document.getElementById('login-email').value.trim();
+        const password = document.getElementById('login-password').value;
+
+        errorEl.classList.add('hidden');
+
+        const { data, error } = await sb.auth.signInWithPassword({
+          email,
+          password
+        });
+
+        if (error) {
+          errorEl.textContent = error.message;
+          errorEl.classList.remove('hidden');
+          return;
+        }
+
+        window.location.href = 'app.html';
+      });
+    });
+  </script>
+</body>
+</html>

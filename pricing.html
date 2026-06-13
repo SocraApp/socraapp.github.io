@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pricing — Socra</title>
+  <link rel="icon" type="image/png" href="assets/small-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;650;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="nav">
+    <a href="index.html" class="nav-logo">
+      <img src="assets/main-logo.png" alt="Socra" style="height: 32px; width: auto; border-radius: 4px;">
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="pricing.html" class="active">Pricing</a>
+      <a href="auth.html" class="btn btn-primary" id="nav-cta">Get Started</a>
+    </div>
+  </nav>
+
+  <!-- Pricing Section -->
+  <section class="pricing-section">
+    <div class="section-container">
+      <div class="pricing-header">
+        <h1>Choose Your Path to Understanding</h1>
+        <p>Every plan gives you a Socratic partner. The difference is how deep the partnership goes.</p>
+      </div>
+
+      <div class="pricing-grid">
+        <!-- Doxa -->
+        <div class="pricing-card" id="plan-doxa">
+          <div class="pricing-name">Doxa</div>
+          <div class="pricing-label">The Socratic concept of common belief</div>
+          <div class="pricing-price">
+            <span class="amount">Free</span>
+          </div>
+          <ul class="pricing-features">
+            <li>
+              <span class="check-icon">&#10003;</span>
+              <span>Limited chat credits</span>
+            </li>
+            <li>
+              <span class="check-icon">&#10003;</span>
+              <span>1 workspace document</span>
+            </li>
+            <li>
+              <span class="check-icon">&#10003;</span>
+              <span>Basic model quality</span>
+            </li>
+            <li class="disabled">
+              <span class="check-icon">&#10005;</span>
+              <span>No cognitive portfolio</span>
+            </li>
+            <li class="disabled">
+              <span class="check-icon">&#10005;</span>
+              <span>No metrics tracking</span>
+            </li>
+          </ul>
+          <button class="btn btn-primary" id="doxa-cta">Start Your Socratic Journey</button>
+        </div>
+
+        <!-- Elenchus -->
+        <div class="pricing-card featured" id="plan-elenchus">
+          <div class="pricing-name">Elenchus</div>
+          <div class="pricing-label">The Socratic concept of cross-examination</div>
+          <div class="pricing-price">
+            <span class="amount">$8</span>
+            <span class="period">/month</span>
+            <span class="annual">$79 when billed annually</span>
+          </div>
+          <ul class="pricing-features">
+            <li>
+              <span class="check-icon">&#10003;</span>
+              <span>Unlimited chat credits</span>
+            </li>
+            <li>
+              <span class="check-icon">&#10003;</span>
+              <span>10 workspace documents</span>
+            </li>
+            <li>
+              <span class="check-icon">&#10003;</span>
+              <span>Better model quality</span>
+            </li>
+            <li>
+              <span class="check-icon">&#10003;</span>
+              <span>Limited cognitive portfolio + metrics</span>
+            </li>
+            <li class="disabled">
+              <span class="check-icon">&#10005;</span>
+              <span>Some advanced metrics remain locked</span>
+            </li>
+          </ul>
+          <button class="btn btn-secondary btn-disabled" disabled>Coming Soon</button>
+        </div>
+
+        <!-- Nous -->
+        <div class="pricing-card" id="plan-nous">
+          <div class="pricing-name">Nous</div>
+          <div class="pricing-label">The Socratic concept of true understanding</div>
+          <div class="pricing-price">
+            <span class="amount">$15</span>
+            <span class="period">/month</span>
+            <span class="annual">$149 when billed annually</span>
+          </div>
+          <ul class="pricing-features">
+            <li>
+              <span class="check-icon">&#10003;</span>
+              <span>Unlimited chat credits</span>
+            </li>
+            <li>
+              <span class="check-icon">&#10003;</span>
+              <span>Unlimited workspace documents</span>
+            </li>
+            <li>
+              <span class="check-icon">&#10003;</span>
+              <span>Fully unlocked cognitive portfolio and metrics</span>
+            </li>
+            <li>
+              <span class="check-icon">&#10003;</span>
+              <span>Best model quality</span>
+            </li>
+            <li>
+              <span class="check-icon">&#10003;</span>
+              <span>Priority access to new features</span>
+            </li>
+          </ul>
+          <button class="btn btn-secondary btn-disabled" disabled>Coming Soon</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script>
+    window.addEventListener('supabase-ready', async function() {
+      if (!sb) return;
+      const { data: { session } } = await sb.auth.getSession();
+
+      const navCta = document.getElementById('nav-cta');
+      const doxaCta = document.getElementById('doxa-cta');
+
+      if (session) {
+        navCta.textContent = 'Open App';
+        navCta.href = 'app.html';
+
+        const { data: profile } = await sb
+          .from('profiles')
+          .select('plan, name')
+          .eq('id', session.user.id)
+          .single();
+
+        const plan = profile?.plan || 'doxa';
+
+        if (plan === 'doxa') {
+          document.getElementById('plan-doxa').classList.add('current-plan');
+          doxaCta.textContent = 'Current Plan';
+          doxaCta.classList.add('btn-secondary');
+          doxaCta.classList.remove('btn-primary');
+          doxaCta.disabled = true;
+        } else if (plan === 'elenchus') {
+          document.getElementById('plan-elenchus').classList.add('current-plan');
+          document.getElementById('plan-elenchus').querySelector('.btn').textContent = 'Current Plan';
+          document.getElementById('plan-elenchus').querySelector('.btn').disabled = true;
+        } else if (plan === 'nous') {
+          document.getElementById('plan-nous').classList.add('current-plan');
+          document.getElementById('plan-nous').querySelector('.btn').textContent = 'Current Plan';
+          document.getElementById('plan-nous').querySelector('.btn').disabled = true;
+        }
+      } else {
+        doxaCta.addEventListener('click', function() {
+          window.location.href = 'auth.html';
+        });
+      }
+    });
+  </script>
+</body>
+</html>
