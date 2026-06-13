@@ -280,6 +280,14 @@ img{max-width:100%;height:auto;display:block}
 .live-editor .katex-display{margin:8px 0;overflow-x:auto}
 .live-editor .katex{font-size:1.1em}
 
+/* ── Fenced code blocks ── */
+.md-code-fence-line{background:var(--surface);border-left:3px solid var(--border-dark);padding-left:12px}
+.md-code-fence-line:first-child{border-radius:var(--r-md) var(--r-md) 0 0;padding-top:4px}
+.md-code-fence-line:last-child{border-radius:0 0 var(--r-md) var(--r-md);padding-bottom:4px}
+.md-code-line{background:var(--surface-2);border-left:3px solid var(--border-dark);padding-left:12px}
+.md-code-lang{font-family:'SFMono-Regular',Consolas,monospace;font-size:0.85em;color:var(--text-muted);margin-left:4px}
+.md-code-block-content{font-family:'SFMono-Regular',Consolas,monospace;font-size:0.9em;color:var(--text-primary);display:block;white-space:pre-wrap;word-break:break-all;background:transparent;padding:0}
+
 .format-bar{display:flex;align-items:center;gap:2px;padding:6px 14px;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap}
 .format-btn{width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:3px;color:var(--text-secondary);font-size:13px;font-weight:500;transition:all var(--fast)}
 .format-btn:hover{background:var(--navy-10);color:var(--navy)}
