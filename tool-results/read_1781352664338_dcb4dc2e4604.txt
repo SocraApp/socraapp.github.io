@@ -1,0 +1,772 @@
+     1→/**
+     2→ * Socra Markdown Editor — Obsidian-style Live Preview
+     3→ *
+     4→ * Architecture:
+     5→ * - rawMarkdown is the source of truth (always)
+     6→ * - beforeinput is intercepted; all edits update rawMarkdown + cursorPos
+     7→ * - Custom renderer outputs HTML with syntax wrapped in <span class="md-syntax">
+     8→ * - Syntax spans are hidden by CSS (font-size:0) and shown when cursor is on that line/element
+     9→ * - Cursor marker (<span id="cursor-marker">) is placed during rendering and resolved after
+    10→ *
+    11→ * Behavior (mimics Obsidian Live Preview):
+    12→ * - Block syntax (# heading, > blockquote, - list): hidden when cursor is OFF that line
+    13→ * - Inline syntax (**bold**, *italic*, `code`, $math$): hidden when cursor is OUTSIDE that element
+    14→ * - Formatting (heading size, bold weight, italic style) is ALWAYS visible
+    15→ * - LaTeX renders when complete ($...$ closed), raw source shows when cursor enters
+    16→ */
+    17→class MarkdownEditor {
+    18→  constructor(textarea, previewEl, options = {}) {
+    19→    this.rawMarkdown = '';
+    20→    this.cursorPos = 0;
+    21→    this.editorEl = null;
+    22→    this.autoSaveCallback = options.autoSave || null;
+    23→    this.autoSaveDelay = options.autoSaveDelay || 1500;
+    24→    this.autoSaveTimer = null;
+    25→    this.isComposing = false;
+    26→    this.lastSavedContent = '';
+    27→    this.activeLineIndex = -1;
+    28→    this.activeElementId = null;
+    29→    this.cursorLineIndex = -1;
+    30→    this.init();
+    31→  }
+    32→
+    33→  init() {
+    34→    const editorSplit = document.querySelector('.editor-split');
+    35→    if (!editorSplit) return;
+    36→    editorSplit.innerHTML = '';
+    37→
+    38→    const wrapper = document.createElement('div');
+    39→    wrapper.className = 'live-editor-wrapper';
+    40→
+    41→    this.editorEl = document.createElement('div');
+    42→    this.editorEl.className = 'live-editor';
+    43→    this.editorEl.contentEditable = 'true';
+    44→    this.editorEl.spellcheck = true;
+    45→    this.editorEl.setAttribute('role', 'textbox');
+    46→    this.editorEl.setAttribute('aria-multiline', 'true');
+    47→
+    48→    wrapper.appendChild(this.editorEl);
+    49→    editorSplit.appendChild(wrapper);
+    50→
+    51→    // Intercept all input before it reaches the browser
+    52→    this.editorEl.addEventListener('beforeinput', (e) => this.handleBeforeInput(e));
+    53→
+    54→    // IME composition support
+    55→    this.editorEl.addEventListener('compositionstart', () => { this.isComposing = true; });
+    56→    this.editorEl.addEventListener('compositionend', () => {
+    57→      this.isComposing = false;
+    58→      this.reconcile();
+    59→    });
+    60→
+    61→    // Fallback for unhandled input types
+    62→    this.editorEl.addEventListener('input', (e) => {
+    63→      if (this.isComposing) return;
+    64→      // If beforeinput didn't handle it, reconcile from DOM
+    65→    });
+    66→
+    67→    // Paste as plain text
+    68→    this.editorEl.addEventListener('paste', (e) => {
+    69→      e.preventDefault();
+    70→      const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+    71→      this.rawInsertText(text);
+    72→      this.render();
+    73→      this.scheduleAutoSave();
+    74→    });
+    75→
+    76→    // Tab key
+    77→    this.editorEl.addEventListener('keydown', (e) => {
+    78→      if (e.key === 'Tab') {
+    79→        e.preventDefault();
+    80→        this.rawInsertText('  ');
+    81→        this.render();
+    82→        this.scheduleAutoSave();
+    83→      }
+    84→    });
+    85→
+    86→    // Cursor movement detection
+    87→    document.addEventListener('selectionchange', () => {
+    88→      if (this.editorEl === document.activeElement || this.editorEl.contains(document.activeElement)) {
+    89→        requestAnimationFrame(() => this.onCursorChange());
+    90→      }
+    91→    });
+    92→
+    93→    this.editorEl.addEventListener('focus', () => this.onCursorChange());
+    94→    this.editorEl.addEventListener('blur', () => this.hideAllSyntax());
+    95→
+    96→    // Click on rendered elements (question blocks → send to AI)
+    97→    this.editorEl.addEventListener('click', (e) => {
+    98→      const qb = e.target.closest('.question-block');
+    99→      if (qb) {
+   100→        const text = qb.textContent.trim();
+   101→        if (text && window.sendMessage) window.sendMessage(text);
+   102→      }
+   103→    });
+   104→  }
+   105→
+   106→  // ═══════════════════════════════════════════
+   107→  // INPUT HANDLING
+   108→  // ═══════════════════════════════════════════
+   109→
+   110→  handleBeforeInput(e) {
+   111→    if (this.isComposing) return;
+   112→
+   113→    // For unhandled types, let browser do it and reconcile after
+   114→    const handled = ['insertText', 'deleteContentBackward', 'deleteContentForward',
+   115→      'insertParagraph', 'insertLineBreak', 'deleteWordBackward', 'deleteWordForward',
+   116→      'deleteByCut', 'deleteContent', 'insertReplacementText'];
+   117→
+   118→    if (!handled.includes(e.inputType)) return;
+   119→
+   120→    e.preventDefault();
+   121→
+   122→    switch (e.inputType) {
+   123→      case 'insertText':
+   124→        this.rawInsertText(e.data || '');
+   125→        break;
+   126→      case 'deleteContentBackward':
+   127→        this.rawDeleteBackward();
+   128→        break;
+   129→      case 'deleteContentForward':
+   130→        this.rawDeleteForward();
+   131→        break;
+   132→      case 'insertParagraph':
+   133→      case 'insertLineBreak':
+   134→        this.rawInsertText('\n');
+   135→        break;
+   136→      case 'deleteWordBackward':
+   137→        this.rawDeleteWordBackward();
+   138→        break;
+   139→      case 'deleteWordForward':
+   140→        this.rawDeleteWordForward();
+   141→        break;
+   142→      case 'deleteByCut':
+   143→      case 'deleteContent':
+   144→        this.rawDeleteBackward(); // simplified
+   145→        break;
+   146→      case 'insertReplacementText':
+   147→        this.rawInsertText(e.data || '');
+   148→        break;
+   149→    }
+   150→
+   151→    this.render();
+   152→    this.scheduleAutoSave();
+   153→  }
+   154→
+   155→  // After IME composition ends, sync from DOM
+   156→  reconcile() {
+   157→    const text = this.extractText();
+   158→    if (text !== this.rawMarkdown) {
+   159→      this.rawMarkdown = text;
+   160→      this.cursorPos = this.getOffsetFromDOM();
+   161→      this.render();
+   162→      this.scheduleAutoSave();
+   163→    }
+   164→  }
+   165→
+   166→  // ═══════════════════════════════════════════
+   167→  // RAW MARKDOWN MANIPULATION
+   168→  // ═══════════════════════════════════════════
+   169→
+   170→  rawInsertText(text) {
+   171→    this.rawMarkdown = this.rawMarkdown.substring(0, this.cursorPos) + text + this.rawMarkdown.substring(this.cursorPos);
+   172→    this.cursorPos += text.length;
+   173→  }
+   174→
+   175→  rawDeleteBackward() {
+   176→    if (this.cursorPos > 0) {
+   177→      this.rawMarkdown = this.rawMarkdown.substring(0, this.cursorPos - 1) + this.rawMarkdown.substring(this.cursorPos);
+   178→      this.cursorPos--;
+   179→    }
+   180→  }
+   181→
+   182→  rawDeleteForward() {
+   183→    if (this.cursorPos < this.rawMarkdown.length) {
+   184→      this.rawMarkdown = this.rawMarkdown.substring(0, this.cursorPos) + this.rawMarkdown.substring(this.cursorPos + 1);
+   185→    }
+   186→  }
+   187→
+   188→  rawDeleteWordBackward() {
+   189→    let pos = this.cursorPos - 1;
+   190→    while (pos > 0 && this.rawMarkdown[pos] === ' ') pos--;
+   191→    while (pos > 0 && this.rawMarkdown[pos - 1] !== ' ' && this.rawMarkdown[pos - 1] !== '\n') pos--;
+   192→    this.rawMarkdown = this.rawMarkdown.substring(0, pos) + this.rawMarkdown.substring(this.cursorPos);
+   193→    this.cursorPos = Math.max(0, pos);
+   194→  }
+   195→
+   196→  rawDeleteWordForward() {
+   197→    let pos = this.cursorPos;
+   198→    while (pos < this.rawMarkdown.length && this.rawMarkdown[pos] === ' ') pos++;
+   199→    while (pos < this.rawMarkdown.length && this.rawMarkdown[pos] !== ' ' && this.rawMarkdown[pos] !== '\n') pos++;
+   200→    this.rawMarkdown = this.rawMarkdown.substring(0, this.cursorPos) + this.rawMarkdown.substring(pos);
+   201→  }
+   202→
+   203→  // ═══════════════════════════════════════════
+   204→  // RENDERING ENGINE
+   205→  // ═══════════════════════════════════════════
+   206→
+   207→  render() {
+   208→    const html = this.renderDocument(this.rawMarkdown, this.cursorPos);
+   209→    this.editorEl.innerHTML = html;
+   210→    this.placeCursorAtMarker();
+   211→    this.onCursorChange();
+   212→  }
+   213→
+   214→  renderDocument(raw, cursorPos) {
+   215→    if (!raw && cursorPos === 0) {
+   216→      return '<div class="md-line" data-line="0"><br></div>';
+   217→    }
+   218→
+   219→    const lines = raw.split('\n');
+   220→    let html = '';
+   221→    let charPos = 0; // Track position in raw markdown
+   222→
+   223→    for (let li = 0; li < lines.length; li++) {
+   224→      const line = lines[li];
+   225→      const lineStart = charPos;
+   226→
+   227→      html += `<div class="md-line" data-line="${li}">`;
+   228→      html += this.renderLine(line, li, lineStart, cursorPos);
+   229→      html += '</div>';
+   230→
+   231→      charPos += line.length + 1; // +1 for \n
+   232→    }
+   233→
+   234→    return html;
+   235→  }
+   236→
+   237→  renderLine(line, lineIndex, lineStart, cursorPos) {
+   238→    // Heading: # text
+   239→    const headingMatch = line.match(/^(#{1,6})\s(.*)$/);
+   240→    if (headingMatch) {
+   241→      const level = headingMatch[1].length;
+   242→      const prefixLen = headingMatch[1].length + 1;
+   243→      const content = headingMatch[2];
+   244→      let html = this.mkSyntax('heading', lineIndex, headingMatch[1] + ' ', lineStart, lineStart + prefixLen, cursorPos);
+   245→      html += `<span class="md-h${level}">`;
+   246→      html += this.renderInline(content, lineIndex, lineStart + prefixLen, cursorPos);
+   247→      html += '</span>';
+   248→      return html;
+   249→    }
+   250→
+   251→    // Horizontal rule: --- or *** or ___
+   252→    if (line.match(/^(-{3,}|\*{3,}|_{3,})\s*$/)) {
+   253→      let html = this.mkSyntax('hr', lineIndex, line, lineStart, lineStart + line.length, cursorPos);
+   254→      html += '<hr>';
+   255→      return html;
+   256→    }
+   257→
+   258→    // Blockquote: > text
+   259→    if (line.match(/^>\s/)) {
+   260→      let html = this.mkSyntax('blockquote', lineIndex, '> ', lineStart, lineStart + 2, cursorPos);
+   261→      html += '<blockquote class="md-blockquote">';
+   262→      html += this.renderInline(line.substring(2), lineIndex, lineStart + 2, cursorPos);
+   263→      html += '</blockquote>';
+   264→      return html;
+   265→    }
+   266→
+   267→    // Unordered list: - item or * item or + item
+   268→    const ulMatch = line.match(/^([-*+])\s(.*)$/);
+   269→    if (ulMatch) {
+   270→      let html = this.mkSyntax('list', lineIndex, ulMatch[1] + ' ', lineStart, lineStart + 2, cursorPos);
+   271→      html += '<span class="md-list-item">';
+   272→      html += this.renderInline(ulMatch[2], lineIndex, lineStart + 2, cursorPos);
+   273→      html += '</span>';
+   274→      return html;
+   275→    }
+   276→
+   277→    // Ordered list: 1. item
+   278→    const olMatch = line.match(/^(\d+\.)\s(.*)$/);
+   279→    if (olMatch) {
+   280→      const prefixLen = olMatch[1].length + 1;
+   281→      let html = this.mkSyntax('olist', lineIndex, olMatch[1] + ' ', lineStart, lineStart + prefixLen, cursorPos);
+   282→      html += '<span class="md-list-item md-ol-item">';
+   283→      html += this.renderInline(olMatch[2], lineIndex, lineStart + prefixLen, cursorPos);
+   284→      html += '</span>';
+   285→      return html;
+   286→    }
+   287→
+   288→    // Empty line
+   289→    if (!line) {
+   290→      let html = '';
+   291→      if (cursorPos === lineStart) html += '<span id="cursor-marker"></span>';
+   292→      html += '<br>';
+   293→      return html;
+   294→    }
+   295→
+   296→    // Regular paragraph
+   297→    return this.renderInline(line, lineIndex, lineStart, cursorPos);
+   298→  }
+   299→
+   300→  renderInline(text, lineIndex, basePos, cursorPos) {
+   301→    let html = '';
+   302→    let i = 0;
+   303→    let pos = basePos;
+   304→
+   305→    while (i < text.length) {
+   306→      let match;
+   307→
+   308→      // Display LaTeX: $$...$$
+   309→      if ((match = text.substring(i).match(/^\$\$([^$]+)\$\$/))) {
+   310→        const elId = `${lineIndex}-${pos}`;
+   311→        html += this.mkSyntaxInline('latex-display', lineIndex, elId, '$$', pos, pos + 2, cursorPos);
+   312→        try {
+   313→          const rendered = katex.renderToString(match[1], { displayMode: true, throwOnError: false });
+   314→          html += `<span class="md-katex md-katex-display md-element" data-element="${elId}">${rendered}</span>`;
+   315→        } catch (e) {
+   316→          html += `<code class="md-element" data-element="${elId}">${this.esc(match[1])}</code>`;
+   317→        }
+   318→        html += this.mkSyntaxInline('latex-display', lineIndex, elId, '$$', pos + 2 + match[1].length, pos + match[0].length, cursorPos);
+   319→        pos += match[0].length;
+   320→        i += match[0].length;
+   321→        continue;
+   322→      }
+   323→
+   324→      // Inline LaTeX: $...$
+   325→      if ((match = text.substring(i).match(/^\$([^$\n]+)\$/))) {
+   326→        const elId = `${lineIndex}-${pos}`;
+   327→        html += this.mkSyntaxInline('latex-inline', lineIndex, elId, '$', pos, pos + 1, cursorPos);
+   328→        try {
+   329→          const rendered = katex.renderToString(match[1], { displayMode: false, throwOnError: false });
+   330→          html += `<span class="md-katex md-katex-inline md-element" data-element="${elId}">${rendered}</span>`;
+   331→        } catch (e) {
+   332→          html += `<code class="md-element" data-element="${elId}">${this.esc(match[1])}</code>`;
+   333→        }
+   334→        html += this.mkSyntaxInline('latex-inline', lineIndex, elId, '$', pos + 1 + match[1].length, pos + match[0].length, cursorPos);
+   335→        pos += match[0].length;
+   336→        i += match[0].length;
+   337→        continue;
+   338→      }
+   339→
+   340→      // Bold+Italic: ***text***
+   341→      if ((match = text.substring(i).match(/^\*\*\*(.+?)\*\*\*/))) {
+   342→        const elId = `${lineIndex}-${pos}`;
+   343→        html += this.mkSyntaxInline('bolditalic', lineIndex, elId, '***', pos, pos + 3, cursorPos);
+   344→        html += `<strong><em class="md-element" data-element="${elId}">`;
+   345→        html += this.renderTextWithCursor(match[1], pos + 3, cursorPos);
+   346→        html += '</em></strong>';
+   347→        html += this.mkSyntaxInline('bolditalic', lineIndex, elId, '***', pos + 3 + match[1].length, pos + match[0].length, cursorPos);
+   348→        pos += match[0].length;
+   349→        i += match[0].length;
+   350→        continue;
+   351→      }
+   352→
+   353→      // Bold: **text**
+   354→      if ((match = text.substring(i).match(/^\*\*(.+?)\*\*/))) {
+   355→        const elId = `${lineIndex}-${pos}`;
+   356→        html += this.mkSyntaxInline('bold', lineIndex, elId, '**', pos, pos + 2, cursorPos);
+   357→        html += `<strong class="md-element" data-element="${elId}">`;
+   358→        html += this.renderTextWithCursor(match[1], pos + 2, cursorPos);
+   359→        html += '</strong>';
+   360→        html += this.mkSyntaxInline('bold', lineIndex, elId, '**', pos + 2 + match[1].length, pos + match[0].length, cursorPos);
+   361→        pos += match[0].length;
+   362→        i += match[0].length;
+   363→        continue;
+   364→      }
+   365→
+   366→      // Italic: *text*
+   367→      if ((match = text.substring(i).match(/^\*(.+?)\*/))) {
+   368→        const elId = `${lineIndex}-${pos}`;
+   369→        html += this.mkSyntaxInline('italic', lineIndex, elId, '*', pos, pos + 1, cursorPos);
+   370→        html += `<em class="md-element" data-element="${elId}">`;
+   371→        html += this.renderTextWithCursor(match[1], pos + 1, cursorPos);
+   372→        html += '</em>';
+   373→        html += this.mkSyntaxInline('italic', lineIndex, elId, '*', pos + 1 + match[1].length, pos + match[0].length, cursorPos);
+   374→        pos += match[0].length;
+   375→        i += match[0].length;
+   376→        continue;
+   377→      }
+   378→
+   379→      // Italic: _text_
+   380→      if ((match = text.substring(i).match(/^_(.+?)_/))) {
+   381→        const elId = `${lineIndex}-${pos}`;
+   382→        html += this.mkSyntaxInline('italic', lineIndex, elId, '_', pos, pos + 1, cursorPos);
+   383→        html += `<em class="md-element" data-element="${elId}">`;
+   384→        html += this.renderTextWithCursor(match[1], pos + 1, cursorPos);
+   385→        html += '</em>';
+   386→        html += this.mkSyntaxInline('italic', lineIndex, elId, '_', pos + 1 + match[1].length, pos + match[0].length, cursorPos);
+   387→        pos += match[0].length;
+   388→        i += match[0].length;
+   389→        continue;
+   390→      }
+   391→
+   392→      // Strikethrough: ~~text~~
+   393→      if ((match = text.substring(i).match(/^~~(.+?)~~/))) {
+   394→        const elId = `${lineIndex}-${pos}`;
+   395→        html += this.mkSyntaxInline('strike', lineIndex, elId, '~~', pos, pos + 2, cursorPos);
+   396→        html += `<del class="md-element" data-element="${elId}">`;
+   397→        html += this.renderTextWithCursor(match[1], pos + 2, cursorPos);
+   398→        html += '</del>';
+   399→        html += this.mkSyntaxInline('strike', lineIndex, elId, '~~', pos + 2 + match[1].length, pos + match[0].length, cursorPos);
+   400→        pos += match[0].length;
+   401→        i += match[0].length;
+   402→        continue;
+   403→      }
+   404→
+   405→      // Inline code: `text`
+   406→      if ((match = text.substring(i).match(/^`(.+?)`/))) {
+   407→        const elId = `${lineIndex}-${pos}`;
+   408→        html += this.mkSyntaxInline('code', lineIndex, elId, '`', pos, pos + 1, cursorPos);
+   409→        html += `<code class="md-element" data-element="${elId}">`;
+   410→        html += this.renderTextWithCursor(match[1], pos + 1, cursorPos);
+   411→        html += '</code>';
+   412→        html += this.mkSyntaxInline('code', lineIndex, elId, '`', pos + 1 + match[1].length, pos + match[0].length, cursorPos);
+   413→        pos += match[0].length;
+   414→        i += match[0].length;
+   415→        continue;
+   416→      }
+   417→
+   418→      // Question block: ?text?
+   419→      if ((match = text.substring(i).match(/^\?([^?\n]+)\?/))) {
+   420→        const elId = `${lineIndex}-${pos}`;
+   421→        html += this.mkSyntaxInline('question', lineIndex, elId, '?', pos, pos + 1, cursorPos);
+   422→        html += `<span class="question-block md-element" data-element="${elId}">`;
+   423→        html += this.renderTextWithCursor(match[1], pos + 1, cursorPos);
+   424→        html += '</span>';
+   425→        html += this.mkSyntaxInline('question', lineIndex, elId, '?', pos + 1 + match[1].length, pos + match[0].length, cursorPos);
+   426→        pos += match[0].length;
+   427→        i += match[0].length;
+   428→        continue;
+   429→      }
+   430→
+   431→      // Link: [text](url)
+   432→      if ((match = text.substring(i).match(/^\[([^\]]+)\]\(([^)]+)\)/))) {
+   433→        const elId = `${lineIndex}-${pos}`;
+   434→        html += this.mkSyntaxInline('link', lineIndex, elId, '[', pos, pos + 1, cursorPos);
+   435→        html += `<a class="md-element md-link" data-element="${elId}" href="${this.esc(match[2])}">`;
+   436→        html += this.renderTextWithCursor(match[1], pos + 1, cursorPos);
+   437→        html += '</a>';
+   438→        html += this.mkSyntaxInline('link', lineIndex, elId, '](' + match[2] + ')', pos + 1 + match[1].length, pos + match[0].length, cursorPos);
+   439→        pos += match[0].length;
+   440→        i += match[0].length;
+   441→        continue;
+   442→      }
+   443→
+   444→      // Regular character — with cursor marker if needed
+   445→      if (pos === cursorPos) {
+   446→        html += '<span id="cursor-marker"></span>';
+   447→      }
+   448→      html += this.esc(text[i]);
+   449→      pos++;
+   450→      i++;
+   451→    }
+   452→
+   453→    // Cursor at end of line
+   454→    if (pos === cursorPos) {
+   455→      html += '<span id="cursor-marker"></span>';
+   456→    }
+   457→
+   458→    return html;
+   459→  }
+   460→
+   461→  renderTextWithCursor(text, basePos, cursorPos) {
+   462→    let html = '';
+   463→    for (let ci = 0; ci < text.length; ci++) {
+   464→      if (basePos + ci === cursorPos) {
+   465→        html += '<span id="cursor-marker"></span>';
+   466→      }
+   467→      html += this.esc(text[ci]);
+   468→    }
+   469→    if (basePos + text.length === cursorPos) {
+   470→      html += '<span id="cursor-marker"></span>';
+   471→    }
+   472→    return html;
+   473→  }
+   474→
+   475→  // Create a block-level syntax span (# heading, > blockquote, etc.)
+   476→  mkSyntax(type, lineIndex, text, from, to, cursorPos) {
+   477→    const cursorInSyntax = cursorPos >= from && cursorPos <= to;
+   478→    let html = `<span class="md-syntax md-block-syntax" data-line="${lineIndex}" data-type="${type}">`;
+   479→    if (cursorInSyntax) html += '<span id="cursor-marker"></span>';
+   480→    html += this.esc(text);
+   481→    html += '</span>';
+   482→    return html;
+   483→  }
+   484→
+   485→  // Create an inline syntax span (**, *, `, $, etc.)
+   486→  mkSyntaxInline(type, lineIndex, elementId, text, from, to, cursorPos) {
+   487→    const cursorInSyntax = cursorPos >= from && cursorPos <= to;
+   488→    let html = `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elementId}" data-type="${type}">`;
+   489→    if (cursorInSyntax) html += '<span id="cursor-marker"></span>';
+   490→    html += this.esc(text);
+   491→    html += '</span>';
+   492→    return html;
+   493→  }
+   494→
+   495→  esc(text) {
+   496→    const d = document.createElement('div');
+   497→    d.textContent = text;
+   498→    return d.innerHTML;
+   499→  }
+   500→
+   501→  // ═══════════════════════════════════════════
+   502→  // CURSOR MANAGEMENT
+   503→  // ═══════════════════════════════════════════
+   504→
+   505→  placeCursorAtMarker() {
+   506→    const marker = this.editorEl.querySelector('#cursor-marker');
+   507→    if (!marker) {
+   508→      // Fallback: place cursor at end
+   509→      this.placeCursorAtEnd();
+   510→      return;
+   511→    }
+   512→
+   513→    const range = document.createRange();
+   514→    const sel = window.getSelection();
+   515→
+   516→    // Try to place cursor right after the marker
+   517→    try {
+   518→      range.setStartAfter(marker);
+   519→      range.collapse(true);
+   520→      sel.removeAllRanges();
+   521→      sel.addRange(range);
+   522→    } catch (e) {
+   523→      // Fallback
+   524→      this.placeCursorAtEnd();
+   525→    }
+   526→
+   527→    marker.remove();
+   528→  }
+   529→
+   530→  placeCursorAtEnd() {
+   531→    const range = document.createRange();
+   532→    const sel = window.getSelection();
+   533→    range.selectNodeContents(this.editorEl);
+   534→    range.collapse(false);
+   535→    sel.removeAllRanges();
+   536→    sel.addRange(range);
+   537→  }
+   538→
+   539→  onCursorChange() {
+   540→    const sel = window.getSelection();
+   541→    if (!sel.rangeCount) return;
+   542→
+   543→    const range = sel.getRangeAt(0);
+   544→    let node = range.startContainer;
+   545→
+   546→    // Find which line the cursor is on
+   547→    let lineIndex = -1;
+   548→    let elementId = null;
+   549→
+   550→    while (node && node !== this.editorEl) {
+   551→      if (node.nodeType === Node.ELEMENT_NODE) {
+   552→        if (node.dataset && node.dataset.line !== undefined) {
+   553→          lineIndex = parseInt(node.dataset.line);
+   554→        }
+   555→        if (node.dataset && node.dataset.element !== undefined) {
+   556→          elementId = node.dataset.element;
+   557→        }
+   558→      }
+   559→      node = node.parentNode;
+   560→    }
+   561→
+   562→    if (lineIndex === -1) {
+   563→      // Try finding .md-line parent
+   564→      const lineEl = range.startContainer.parentElement?.closest?.('.md-line');
+   565→      if (lineEl && lineEl.dataset.line !== undefined) {
+   566→        lineIndex = parseInt(lineEl.dataset.line);
+   567→      }
+   568→    }
+   569→
+   570→    this.cursorLineIndex = lineIndex;
+   571→    this.activeElementId = elementId;
+   572→
+   573→    // Update syntax visibility
+   574→    this.editorEl.querySelectorAll('.md-syntax').forEach(el => {
+   575→      const elLine = parseInt(el.dataset.line ?? '-1');
+   576→      const elElement = el.dataset.element;
+   577→
+   578→      if (el.classList.contains('md-block-syntax')) {
+   579→        // Block syntax: visible when cursor is on this line
+   580→        el.classList.toggle('md-active', elLine === lineIndex);
+   581→      } else if (el.classList.contains('md-inline-syntax')) {
+   582→        // Inline syntax: visible when cursor is on this line AND in this element (or no specific element)
+   583→        const sameLine = elLine === lineIndex;
+   584→        const sameElement = !elElement || elElement === elementId;
+   585→        el.classList.toggle('md-active', sameLine && sameElement);
+   586→      }
+   587→    });
+   588→
+   589→    // Update cursorPos from DOM position when cursor moves via arrow keys/clicks
+   590→    this.updateCursorPosFromDOM();
+   591→  }
+   592→
+   593→  updateCursorPosFromDOM() {
+   594→    // Calculate raw markdown position from DOM cursor position
+   595→    const sel = window.getSelection();
+   596→    if (!sel.rangeCount) return;
+   597→
+   598→    const range = sel.getRangeAt(0);
+   599→    const preRange = range.cloneRange();
+   600→    preRange.selectNodeContents(this.editorEl);
+   601→    preRange.setEnd(range.startContainer, range.startOffset);
+   602→
+   603→    // Count text content before cursor (including text in md-syntax spans)
+   604→    const textBefore = preRange.toString();
+   605→    // But we need to account for line breaks from <div class="md-line"> elements
+   606→    // preRange.toString() doesn't add \n for div boundaries
+   607→    // We need a custom count
+   608→
+   609→    let offset = 0;
+   610→    let found = false;
+   611→
+   612→    const countText = (container) => {
+   613→      if (found) return;
+   614→      for (const child of container.childNodes) {
+   615→        if (found) return;
+   616→
+   617→        if (child === range.startContainer || child.contains(range.startContainer)) {
+   618→          if (child.nodeType === Node.TEXT_NODE) {
+   619→            offset += (child === range.startContainer) ? range.startOffset : child.textContent.length;
+   620→            found = true;
+   621→            return;
+   622→          } else if (child.nodeType === Node.ELEMENT_NODE) {
+   623→            if (child.contains(range.startContainer)) {
+   624→              countText(child);
+   625→              return;
+   626→            }
+   627→          }
+   628→        }
+   629→
+   630→        if (child.nodeType === Node.TEXT_NODE) {
+   631→          offset += child.textContent.length;
+   632→        } else if (child.nodeType === Node.ELEMENT_NODE) {
+   633→          if (child.classList?.contains('md-line')) {
+   634→            // Add newline between lines
+   635→            if (child !== container.firstChild) offset += 1;
+   636→          }
+   637→          countText(child);
+   638→        }
+   639→      }
+   640→    };
+   641→
+   642→    countText(this.editorEl);
+   643→    if (found) {
+   644→      this.cursorPos = offset;
+   645→    }
+   646→  }
+   647→
+   648→  hideAllSyntax() {
+   649→    this.editorEl.querySelectorAll('.md-syntax.md-active').forEach(el => {
+   650→      el.classList.remove('md-active');
+   651→    });
+   652→  }
+   653→
+   654→  // Extract raw markdown from DOM (for reconcile after IME)
+   655→  extractText() {
+   656→    let text = '';
+   657→    const lines = this.editorEl.querySelectorAll('.md-line');
+   658→    lines.forEach((line, i) => {
+   659→      if (i > 0) text += '\n';
+   660→      text += line.textContent;
+   661→    });
+   662→    return text;
+   663→  }
+   664→
+   665→  getOffsetFromDOM() {
+   666→    const sel = window.getSelection();
+   667→    if (!sel.rangeCount) return this.cursorPos;
+   668→
+   669→    const range = sel.getRangeAt(0);
+   670→    let offset = 0;
+   671→    let found = false;
+   672→
+   673→    const countIn = (container) => {
+   674→      if (found) return;
+   675→      for (const child of container.childNodes) {
+   676→        if (found) return;
+   677→        if (child.contains(range.startContainer) && child.nodeType === Node.ELEMENT_NODE) {
+   678→          if (child.classList?.contains('md-line') && child !== container.firstChild) {
+   679→            offset += 1;
+   680→          }
+   681→          countIn(child);
+   682→          return;
+   683→        }
+   684→        if (child === range.startContainer) {
+   685→          offset += range.startOffset;
+   686→          found = true;
+   687→          return;
+   688→        }
+   689→        if (child.nodeType === Node.TEXT_NODE) {
+   690→          offset += child.textContent.length;
+   691→        } else if (child.nodeType === Node.ELEMENT_NODE) {
+   692→          if (child.classList?.contains('md-line') && child !== container.firstChild) {
+   693→            offset += 1;
+   694→          }
+   695→          offset += child.textContent.length;
+   696→        }
+   697→      }
+   698→    };
+   699→
+   700→    countIn(this.editorEl);
+   701→    return found ? offset : this.cursorPos;
+   702→  }
+   703→
+   704→  // ═══════════════════════════════════════════
+   705→  // PUBLIC API
+   706→  // ═══════════════════════════════════════════
+   707→
+   708→  setContent(rawMarkdown) {
+   709→    this.rawMarkdown = rawMarkdown || '';
+   710→    this.cursorPos = this.rawMarkdown.length;
+   711→    this.lastSavedContent = this.rawMarkdown;
+   712→    this.render();
+   713→  }
+   714→
+   715→  getContent() {
+   716→    return this.rawMarkdown;
+   717→  }
+   718→
+   719→  insertAtCursor(text) {
+   720→    this.rawInsertText(text);
+   721→    this.render();
+   722→    this.scheduleAutoSave();
+   723→  }
+   724→
+   725→  insertAround(before, after, defaultText) {
+   726→    const text = before + defaultText + after;
+   727→    this.rawInsertText(text);
+   728→    // Place cursor between before and defaultText
+   729→    this.cursorPos -= after.length + defaultText.length;
+   730→    this.render();
+   731→    this.scheduleAutoSave();
+   732→  }
+   733→
+   734→  insertFormatting(type) {
+   735→    switch (type) {
+   736→      case 'bold': this.insertAround('**', '**', 'bold text'); break;
+   737→      case 'italic': this.insertAround('*', '*', 'italic text'); break;
+   738→      case 'code-inline': this.insertAround('`', '`', 'code'); break;
+   739→      case 'code-block': this.insertAtCursor('\n```\ncode\n```\n'); break;
+   740→      case 'latex-inline': this.insertAround('$', '$', '\\sqrt{x}'); break;
+   741→      case 'latex-display': this.insertAtCursor('\n$$\\frac{x}{y}$$\n'); break;
+   742→      case 'question': this.insertAround('?', '?', 'your question'); break;
+   743→    }
+   744→  }
+   745→
+   746→  insertHeading(level) {
+   747→    const lineStart = this.rawMarkdown.lastIndexOf('\n', this.cursorPos - 1) + 1;
+   748→    const lineEnd = this.rawMarkdown.indexOf('\n', this.cursorPos);
+   749→    const actualEnd = lineEnd === -1 ? this.rawMarkdown.length : lineEnd;
+   750→    const currentLine = this.rawMarkdown.substring(lineStart, actualEnd);
+   751→    const cleanLine = currentLine.replace(/^#{1,6}\s*/, '');
+   752→    const prefix = '#'.repeat(level) + ' ';
+   753→    const newLine = prefix + cleanLine;
+   754→    this.rawMarkdown = this.rawMarkdown.substring(0, lineStart) + newLine + this.rawMarkdown.substring(actualEnd);
+   755→    this.cursorPos = lineStart + newLine.length;
+   756→    this.render();
+   757→    this.scheduleAutoSave();
+   758→  }
+   759→
+   760→  scheduleAutoSave() {
+   761→    if (this.autoSaveTimer) clearTimeout(this.autoSaveTimer);
+   762→    this.autoSaveTimer = setTimeout(() => {
+   763→      const content = this.rawMarkdown;
+   764→      if (content !== this.lastSavedContent && this.autoSaveCallback) {
+   765→        this.autoSaveCallback(content);
+   766→        this.lastSavedContent = content;
+   767→      }
+   768→    }, this.autoSaveDelay);
+   769→  }
+   770→}
+   771→window.MarkdownEditor = MarkdownEditor;
+   772→
