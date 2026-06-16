@@ -132,6 +132,7 @@ img{max-width:100%;height:auto;display:block}
 .pricing-card.current-plan{border-color:var(--navy)}
 .pricing-card.current-plan::after{content:'Current Plan';position:absolute;top:-13px;left:24px;background:var(--navy);color:var(--white);padding:3px 14px;border-radius:var(--r-full);font-size:var(--label);font-weight:600;letter-spacing:0.04em;text-transform:uppercase}
 .pricing-card.featured{border-color:var(--success)}
+.pricing-card.featured::before{content:'Recommended';position:absolute;top:-13px;left:24px;background:var(--success);color:var(--white);padding:3px 14px;border-radius:var(--r-full);font-size:var(--label);font-weight:600;letter-spacing:0.04em;text-transform:uppercase}
 .pricing-name{font-size:22px;font-weight:700;color:var(--navy);margin-bottom:4px}
 .pricing-label{font-style:italic;font-size:var(--label);color:var(--text-muted);margin-bottom:22px;text-transform:none;letter-spacing:0}
 .pricing-price{margin-bottom:24px}
