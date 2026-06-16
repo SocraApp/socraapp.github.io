@@ -13,6 +13,8 @@ const workspaceTitle=$('workspace-title'),profileAvatar=$('profile-avatar'),prof
 const profilePlan=$('profile-plan'),upgradeBtn=$('upgrade-btn'),formatHeading=$('format-heading');
 const toastContainer=$('toast-container'),mobileMenuBtn=$('mobile-menu-btn');
 const reopenWorkspaceBtn=$('reopen-workspace-btn'),sidebarLogoFull=$('sidebar-logo-full'),sidebarLogoSmall=$('sidebar-logo-small');
+const settingsBtn=$('settings-btn'),settingsPanel=$('settings-panel'),settingsOverlay=$('settings-overlay');
+const settingsClose=$('settings-close'),darkModeToggle=$('dark-mode-toggle');
 
 // Configure marked to treat single newlines as <br>
 if(typeof marked!=='undefined'){
@@ -29,6 +31,7 @@ async function init(){
   metricsManager=new MetricsManager(sb);
   editor=new MarkdownEditor(null,null,{autoSave:c=>saveWorkspaceDocument(c)});
   setupEvents();
+  setupSettingsEvents();
   sb.auth.onAuthStateChange(e=>{if(e==='SIGNED_OUT')window.location.href='auth.html';});
   await loadChats();
   setWelcomeMessage();
@@ -99,6 +102,11 @@ async function loadProfile(){
   profileName.textContent=n;
   profilePlan.textContent=currentProfile.plan.charAt(0).toUpperCase()+currentProfile.plan.slice(1);
   upgradeBtn.classList.toggle('hidden',currentProfile.plan==='nous');
+  // Load and apply dark mode preference
+  if(currentProfile.dark_mode){
+    applyDarkMode(currentProfile.dark_mode);
+    if(darkModeToggle)darkModeToggle.checked=currentProfile.dark_mode;
+  }
 }
 
 async function loadChats(){
@@ -450,6 +458,26 @@ function autoResizeComposer(){composerInput.style.height='auto';composerInput.st
 function escapeHtml(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
 function showToast(msg,isErr=false){const t=document.createElement('div');t.className='toast'+(isErr?' error':'');t.textContent=msg;toastContainer.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(20px)';t.style.transition='all 0.3s';setTimeout(()=>t.remove(),300);},4000);}
 function checkMobile(){if(window.innerWidth<=768){mobileMenuBtn.style.display='flex';sidebar.classList.remove('collapsed');sidebar.classList.remove('mobile-open');}else{mobileMenuBtn.style.display='none';sidebar.classList.remove('mobile-open');}}
+
+// Settings Panel Functions
+function openSettings(){if(settingsPanel){settingsPanel.classList.add('open');settingsOverlay.classList.add('open');document.body.style.overflow='hidden';}}
+function closeSettings(){if(settingsPanel){settingsPanel.classList.remove('open');settingsOverlay.classList.remove('open');document.body.style.overflow='';}}
+function applyDarkMode(enabled){document.documentElement.setAttribute('data-theme',enabled?'dark':'light');}
+async function toggleDarkMode(enabled){applyDarkMode(enabled);if(currentUser&&sb){try{await sb.from('profiles').update({dark_mode:enabled}).eq('id',currentUser.id);if(currentProfile)currentProfile.dark_mode=enabled;}catch(e){console.error('Failed to save dark mode preference:',e);}}}
+function setupSettingsEvents(){
+  if(settingsBtn)settingsBtn.addEventListener('click',openSettings);
+  if(settingsClose)settingsClose.addEventListener('click',closeSettings);
+  if(settingsOverlay)settingsOverlay.addEventListener('click',closeSettings);
+  if(darkModeToggle)darkModeToggle.addEventListener('change',e=>toggleDarkMode(e.target.checked));
+  const viewProfile=$('settings-view-profile');
+  if(viewProfile)viewProfile.addEventListener('click',()=>{closeSettings();window.location.href='metrics.html';});
+  const upgrade=$('settings-upgrade');
+  if(upgrade)upgrade.addEventListener('click',()=>{closeSettings();window.location.href='pricing.html';});
+  const logout=$('settings-logout');
+  if(logout)logout.addEventListener('click',async()=>{closeSettings();await sb.auth.signOut();window.location.href='auth.html';});
+  // ESC key to close
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&settingsPanel?.classList.contains('open'))closeSettings();});
+}
 
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',init);else init();
 })();

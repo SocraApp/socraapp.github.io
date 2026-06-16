@@ -4,15 +4,15 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Socra — Restore Your Thinking</title>
-  <link rel="icon" type="image/png" href="assets/small-logo.png">
+  <link rel="icon" type="image/png" href="/assets/small-logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <nav class="nav" id="nav">
-    <a href="index.html" class="nav-logo"><img src="assets/main-logo.png" alt="Socra"></a>
+    <a href="/index.html" class="nav-logo"><img src="/assets/main-logo.png" alt="Socra"></a>
     <div class="nav-links">
       <a href="index.html" class="nav-link active">Home</a>
       <a href="pricing.html" class="nav-link">Pricing</a>
@@ -89,10 +89,25 @@
   </section>
   <footer class="footer"><p>&copy; 2025 Socra. Restoring critical thinking, one question at a time.</p></footer>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase-client.js"></script>
+  <script src="/js/supabase-client.js"></script>
   <script>
     window.addEventListener('scroll',()=>{document.getElementById('nav').classList.toggle('scrolled',window.scrollY>20)});
-    window.addEventListener('supabase-ready',async()=>{if(!sb)return;const{data:{session}}=await sb.auth.getSession();if(session){const c=document.getElementById('nav-cta');c.textContent='Open App';c.href='app.html';}});
+    window.addEventListener('supabase-ready',async()=>{
+      if(!sb)return;
+      const{data:{session}}=await sb.auth.getSession();
+      if(session){
+        const c=document.getElementById('nav-cta');
+        c.textContent='Open App';
+        c.href='app.html';
+        // Load and apply dark mode preference
+        try{
+          const{data:profile}=await sb.from('profiles').select('dark_mode').eq('id',session.user.id).single();
+          if(profile?.dark_mode){
+            document.documentElement.setAttribute('data-theme','dark');
+          }
+        }catch(e){}
+      }
+    });
   </script>
 </body>
 </html>

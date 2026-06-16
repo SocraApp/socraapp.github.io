@@ -69,6 +69,14 @@
       const { data: { session } } = await sb.auth.getSession();
       if (!session) { window.location.href = '/auth.html'; return; }
 
+      // Load and apply dark mode preference
+      try {
+        const { data: profile } = await sb.from('profiles').select('dark_mode').eq('id', session.user.id).single();
+        if (profile?.dark_mode) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      } catch (e) { /* ignore */ }
+
       const loadingEl = document.getElementById('metrics-loading');
       const emptyEl = document.getElementById('metrics-empty');
       const contentEl = document.getElementById('metrics-content');
