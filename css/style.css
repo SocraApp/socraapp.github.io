@@ -821,6 +821,11 @@ img{max-width:100%;height:auto;display:block}
 
 [data-theme="dark"] .model-option.active {
   background: var(--gold-10);
+  color: #FFFFFF;
+}
+
+[data-theme="dark"] .model-option.active strong {
+  color: #FFFFFF;
 }
 
 [data-theme="dark"] .model-tier {
