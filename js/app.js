@@ -268,6 +268,9 @@ function renderMessage(role,content){
     // Step 5: Markdown via marked.parse()
     rendered=marked.parse(processed);
   }catch(e){rendered=escapeHtml(rawMarkdown);}
+  // Strip intervention-type labels the AI may have added as headings (safety net)
+  rendered=rendered.replace(/<h[1-6][^>]*>\s*\*{0,2}(Clarifying Question|Recall Prompt|Assumption Challenge|Counterexample|Hint|Reflection Prompt|Step Verification|Analogy|Error Identification)\*{0,2}\s*<\/h[1-6]>/gi,'');
+  rendered=rendered.replace(/<p>\s*\*{0,2}(Clarifying Question|Recall Prompt|Assumption Challenge|Counterexample|Hint|Reflection Prompt|Step Verification|Analogy|Error Identification)\*{0,2}\s*<\/p>/gi,'');
   const copyIcon='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
   const copyCls=role==='user'?'msg-copy-btn hover-reveal':'msg-copy-btn always-show';
   msg.innerHTML=`<div class="message-role">${roleLabel}</div><div class="message-bubble">${rendered}</div><button class="${copyCls}" title="Copy">${copyIcon}</button>`;
