@@ -60,6 +60,7 @@ CREATE TABLE public.workspace_documents (
 CREATE TABLE public.cognitive_metrics (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  chat_id UUID REFERENCES public.chats(id) ON DELETE CASCADE NOT NULL,
   date DATE NOT NULL DEFAULT CURRENT_DATE,
   reasoning_quality NUMERIC(3,1) DEFAULT 0,
   logical_consistency NUMERIC(3,1) DEFAULT 0,
@@ -70,7 +71,7 @@ CREATE TABLE public.cognitive_metrics (
   avg_struggle_level NUMERIC(3,1) DEFAULT 0,
   interventions_used JSONB DEFAULT '{}'::jsonb,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE(user_id, date)
+  UNIQUE(user_id, chat_id, date)
 );
 
 -- RLS
@@ -99,6 +100,7 @@ ALTER TABLE public.cognitive_metrics ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own metrics" ON public.cognitive_metrics FOR SELECT USING (auth.uid() = user_id);
 CREATE POLICY "Users can create own metrics" ON public.cognitive_metrics FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can update own metrics" ON public.cognitive_metrics FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own metrics" ON public.cognitive_metrics FOR DELETE USING (auth.uid() = user_id);
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_chats_user_id ON public.chats(user_id);
@@ -107,3 +109,4 @@ CREATE INDEX IF NOT EXISTS idx_messages_chat_id ON public.messages(chat_id);
 CREATE INDEX IF NOT EXISTS idx_messages_created_at ON public.messages(created_at);
 CREATE INDEX IF NOT EXISTS idx_workspace_documents_chat_id ON public.workspace_documents(chat_id);
 CREATE INDEX IF NOT EXISTS idx_cognitive_metrics_user_date ON public.cognitive_metrics(user_id, date DESC);
+CREATE INDEX IF NOT EXISTS idx_cognitive_metrics_chat_id ON public.cognitive_metrics(chat_id);

@@ -174,6 +174,8 @@ function confirmDeleteChat(chatId){
 
 async function deleteChat(chatId){
   try{
+    // Delete cognitive metrics for this chat
+    await sb.from('cognitive_metrics').delete().eq('chat_id',chatId);
     // Delete workspace document
     await sb.from('workspace_documents').delete().eq('chat_id',chatId);
     // Delete messages
@@ -236,7 +238,7 @@ async function sendMessage(content){
     hideLoadingIndicator();
     renderMessage('assistant',response.content);
     await sb.from('messages').insert({chat_id:currentChat.id,role:'assistant',content:response.content,metrics:response.metrics});
-    if(response.metrics)await metricsManager.saveMetrics(response.metrics);
+    if(response.metrics)await metricsManager.saveMetrics(response.metrics,currentChat.id);
     if(chats.find(c=>c.id===currentChat.id)?.title==='New Chat'){
       const title=content.length>50?content.substring(0,50)+'...':content;
       await sb.from('chats').update({title}).eq('id',currentChat.id);

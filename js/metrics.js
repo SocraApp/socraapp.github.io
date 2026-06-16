@@ -1,7 +1,7 @@
 class MetricsManager {
   constructor(supabaseClient) { this.sb = supabaseClient; }
 
-  async saveMetrics(metrics) {
+  async saveMetrics(metrics, chatId) {
     if (!metrics) {
       console.warn('[Socra] saveMetrics called with null metrics');
       return;
@@ -19,6 +19,7 @@ class MetricsManager {
         .from('cognitive_metrics')
         .select('*')
         .eq('user_id', session.user.id)
+        .eq('chat_id', chatId)
         .eq('date', today)
         .single();
 
@@ -47,11 +48,12 @@ class MetricsManager {
         if (updateError) {
           console.error('[Socra] Metrics update error:', updateError);
         } else {
-          console.log('[Socra] Metrics updated for', today);
+          console.log('[Socra] Metrics updated for chat', chatId, 'on', today);
         }
       } else {
         const { error: insertError } = await this.sb.from('cognitive_metrics').insert({
           user_id: session.user.id,
+          chat_id: chatId,
           date: today,
           session_count: 1,
           reasoning_quality: metrics.reasoning_quality || 0,
@@ -65,7 +67,7 @@ class MetricsManager {
         if (insertError) {
           console.error('[Socra] Metrics insert error:', insertError);
         } else {
-          console.log('[Socra] Metrics inserted for', today);
+          console.log('[Socra] Metrics inserted for chat', chatId, 'on', today);
         }
       }
     } catch (err) {
