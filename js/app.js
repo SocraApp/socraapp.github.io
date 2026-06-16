@@ -402,6 +402,41 @@ function setupEvents(){
   upgradeBtn.addEventListener('click',()=>window.location.href='pricing.html');
   $('logout-btn').addEventListener('click',async()=>{await sb.auth.signOut();window.location.href='auth.html';});
   if(mobileMenuBtn)mobileMenuBtn.addEventListener('click',()=>sidebar.classList.toggle('mobile-open'));
+  // Model selector
+  const modelSelectorBtn=$('model-selector-btn');
+  const modelDropdown=$('model-selector-dropdown');
+  const modelLabel=$('model-selector-label');
+  const modelDot=modelSelectorBtn?.querySelector('.model-selector-dot');
+  if(modelSelectorBtn&&modelDropdown){
+    modelSelectorBtn.addEventListener('click',e=>{
+      e.stopPropagation();
+      modelDropdown.classList.toggle('open');
+    });
+    document.addEventListener('click',e=>{
+      if(!e.target.closest('.model-selector'))modelDropdown.classList.remove('open');
+    });
+    modelDropdown.querySelectorAll('.model-option').forEach(opt=>{
+      opt.addEventListener('click',()=>{
+        const model=opt.dataset.model;
+        if(opt.classList.contains('locked')){
+          modelDropdown.classList.remove('open');
+          window.location.href='pricing.html';
+          return;
+        }
+        // Select this model
+        modelDropdown.querySelectorAll('.model-option').forEach(o=>o.classList.remove('active'));
+        opt.classList.add('active');
+        modelLabel.textContent=opt.querySelector('strong').textContent;
+        // Update dot color
+        const dotClass=[...opt.querySelector('.model-option-dot').classList].find(c=>['low','med','high'].includes(c))||'low';
+        modelDot.className='model-selector-dot';
+        modelDot.classList.add(dotClass);
+        modelDropdown.classList.remove('open');
+      });
+    });
+    // Set initial dot color
+    if(modelDot)modelDot.classList.add('low');
+  }
 }
 
 function setWelcomeMessage(){
