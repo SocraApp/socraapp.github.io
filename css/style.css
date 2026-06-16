@@ -526,16 +526,22 @@ img{max-width:100%;height:auto;display:block}
 
 [data-theme="dark"] .btn-primary {
   background: var(--gold);
-  color: var(--navy-dark);
+  color: #1B2A4A;
 }
 
 [data-theme="dark"] .btn-primary:hover {
   background: var(--gold-light);
+  color: #1B2A4A;
 }
 
 [data-theme="dark"] .btn-gold {
   background: var(--gold);
-  color: var(--navy-dark);
+  color: #1B2A4A;
+}
+
+[data-theme="dark"] .btn-gold:hover {
+  background: var(--gold-light);
+  color: #1B2A4A;
 }
 
 [data-theme="dark"] .btn-outline {
@@ -588,7 +594,7 @@ img{max-width:100%;height:auto;display:block}
 
 [data-theme="dark"] .new-chat-btn {
   background: var(--gold);
-  color: var(--navy-dark);
+  color: #1B2A4A;
 }
 
 [data-theme="dark"] .new-chat-btn:hover {
@@ -1434,4 +1440,91 @@ img{max-width:100%;height:auto;display:block}
   background: var(--error);
   color: var(--white);
   border-color: var(--error);
+}
+
+/* General links in dark mode */
+[data-theme="dark"] a {
+  color: var(--gold-light);
+}
+
+[data-theme="dark"] a:hover {
+  color: var(--gold);
+}
+
+/* Headings using navy color in dark mode */
+[data-theme="dark"] h1,
+[data-theme="dark"] h2,
+[data-theme="dark"] h3,
+[data-theme="dark"] h4,
+[data-theme="dark"] h5,
+[data-theme="dark"] h6 {
+  color: var(--text-primary);
+}
+
+/* Interactive elements using navy */
+[data-theme="dark"] .metrics-btn:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+[data-theme="dark"] .workspace-action-btn:hover {
+  background: var(--surface-3);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .format-btn:hover {
+  background: var(--surface-3);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .sidebar-icon-btn:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .chat-item.active {
+  background: var(--surface-3);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .chat-item-menu-btn:hover {
+  background: var(--surface-2);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .welcome-preset:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  background: var(--gold-06);
+}
+
+[data-theme="dark"] .btn-ghost:hover {
+  color: var(--gold);
+  background: var(--gold-06);
+}
+
+[data-theme="dark"] .reopen-workspace-btn {
+  color: var(--text-secondary);
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+
+[data-theme="dark"] .reopen-workspace-btn:hover {
+  background: var(--surface-3);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+
+[data-theme="dark"] .attach-btn:hover {
+  background: var(--gold);
+  color: #1B2A4A;
+  border-color: var(--gold);
+}
+
+[data-theme="dark"] .composer-wrapper:focus-within {
+  border-color: var(--gold);
+}
+
+[data-theme="dark"] .form-input:focus {
+  border-color: var(--gold);
 }
