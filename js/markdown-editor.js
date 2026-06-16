@@ -273,13 +273,33 @@ class MarkdownEditor {
   // ═══════════════════════════════════════════
 
   render() {
-    const html = this.renderDocument(this.rawMarkdown);
+    // Compute cursor line from model BEFORE rendering so we can apply
+    // md-active directly in the HTML output — this prevents the jitter
+    // caused by syntax spans flashing invisible→visible on every keystroke.
+    const cursorLineIdx = this._computeCursorLineIndex();
+    const html = this.renderDocument(this.rawMarkdown, cursorLineIdx);
     this.editorEl.innerHTML = html;
     this.placeCursorFromModel();
     this.onCursorChange();
   }
 
-  renderDocument(raw) {
+  /**
+   * Compute which line the cursor is on from rawMarkdown + cursorPos.
+   * Used at render time so syntax spans can be born with md-active already set,
+   * eliminating the flash/jitter that occurs when md-active is applied after paint.
+   */
+  _computeCursorLineIndex() {
+    if (!this.rawMarkdown) return -1;
+    const lines = this.rawMarkdown.split('\n');
+    let charPos = 0;
+    for (let i = 0; i < lines.length; i++) {
+      if (charPos + lines[i].length >= this.cursorPos) return i;
+      charPos += lines[i].length + 1;
+    }
+    return lines.length - 1;
+  }
+
+  renderDocument(raw, cursorLineIdx = -1) {
     if (!raw) {
       return '<div class="md-line" data-line="0"><br></div>';
     }
@@ -309,9 +329,12 @@ class MarkdownEditor {
 
         const hasClose = j < lines.length;
 
+        const fenceOpenActive = (i === cursorLineIdx) ? ' md-active' : '';
+        const fenceCloseActive = (hasClose && j === cursorLineIdx) ? ' md-active' : '';
+
         // Opening fence line
         html += `<div class="md-line md-code-fence-line" data-line="${i}">`;
-        html += `<span class="md-syntax md-block-syntax" data-line="${i}" data-type="code-fence-open">${this.esc(line)}</span>`;
+        html += `<span class="md-syntax md-block-syntax${fenceOpenActive}" data-line="${i}" data-type="code-fence-open">${this.esc(line)}</span>`;
         if (info) {
           html += `<span class="md-code-lang">${this.esc(info)}</span>`;
         }
@@ -330,7 +353,7 @@ class MarkdownEditor {
         // Closing fence line
         if (hasClose) {
           html += `<div class="md-line md-code-fence-line" data-line="${j}">`;
-          html += `<span class="md-syntax md-block-syntax" data-line="${j}" data-type="code-fence-close">${this.esc(lines[j])}</span>`;
+          html += `<span class="md-syntax md-block-syntax${fenceCloseActive}" data-line="${j}" data-type="code-fence-close">${this.esc(lines[j])}</span>`;
           html += '</div>';
           charPos = codeCharPos + lines[j].length + 1;
           i = j + 1;
@@ -343,7 +366,7 @@ class MarkdownEditor {
 
       // ── Regular line ──
       html += `<div class="md-line" data-line="${i}">`;
-      html += this.renderLine(line, i, lineStart);
+      html += this.renderLine(line, i, lineStart, cursorLineIdx);
       html += '</div>';
 
       charPos += line.length + 1;
@@ -353,25 +376,28 @@ class MarkdownEditor {
     return html;
   }
 
-  renderLine(line, lineIndex, lineStart) {
+  renderLine(line, lineIndex, lineStart, cursorLineIdx = -1) {
+    const isLineActive = (lineIndex === cursorLineIdx);
+    const activeCls = isLineActive ? ' md-active' : '';
+
     // Heading: # text
     const headingMatch = line.match(/^(#{1,6})\s(.*)$/);
     if (headingMatch) {
       const level = headingMatch[1].length;
       const prefixLen = headingMatch[1].length + 1;
       const content = headingMatch[2];
-      let html = `<span class="md-syntax md-block-syntax" data-line="${lineIndex}" data-type="heading">`;
+      let html = `<span class="md-syntax md-block-syntax${activeCls}" data-line="${lineIndex}" data-type="heading">`;
       html += this.esc(headingMatch[1] + ' ');
       html += '</span>';
       html += `<span class="md-h${level}">`;
-      html += this.renderInline(content, lineIndex, lineStart + prefixLen);
+      html += this.renderInline(content, lineIndex, lineStart + prefixLen, cursorLineIdx);
       html += '</span>';
       return html;
     }
 
     // Horizontal rule: --- or *** or ___
     if (line.match(/^(-{3,}|\*{3,}|_{3,})\s*$/)) {
-      let html = `<span class="md-syntax md-block-syntax" data-line="${lineIndex}" data-type="hr">`;
+      let html = `<span class="md-syntax md-block-syntax${activeCls}" data-line="${lineIndex}" data-type="hr">`;
       html += this.esc(line);
       html += '</span><hr>';
       return html;
@@ -379,11 +405,11 @@ class MarkdownEditor {
 
     // Blockquote: > text
     if (line.match(/^>\s/)) {
-      let html = `<span class="md-syntax md-block-syntax" data-line="${lineIndex}" data-type="blockquote">`;
+      let html = `<span class="md-syntax md-block-syntax${activeCls}" data-line="${lineIndex}" data-type="blockquote">`;
       html += this.esc('> ');
       html += '</span>';
       html += '<blockquote class="md-blockquote">';
-      html += this.renderInline(line.substring(2), lineIndex, lineStart + 2);
+      html += this.renderInline(line.substring(2), lineIndex, lineStart + 2, cursorLineIdx);
       html += '</blockquote>';
       return html;
     }
@@ -391,11 +417,11 @@ class MarkdownEditor {
     // Unordered list: - item or * item or + item
     const ulMatch = line.match(/^([-*+])\s(.*)$/);
     if (ulMatch) {
-      let html = `<span class="md-syntax md-block-syntax" data-line="${lineIndex}" data-type="list">`;
+      let html = `<span class="md-syntax md-block-syntax${activeCls}" data-line="${lineIndex}" data-type="list">`;
       html += this.esc(ulMatch[1] + ' ');
       html += '</span>';
       html += '<span class="md-list-item">';
-      html += this.renderInline(ulMatch[2], lineIndex, lineStart + 2);
+      html += this.renderInline(ulMatch[2], lineIndex, lineStart + 2, cursorLineIdx);
       html += '</span>';
       return html;
     }
@@ -404,11 +430,11 @@ class MarkdownEditor {
     const olMatch = line.match(/^(\d+\.)\s(.*)$/);
     if (olMatch) {
       const prefixLen = olMatch[1].length + 1;
-      let html = `<span class="md-syntax md-block-syntax" data-line="${lineIndex}" data-type="olist">`;
+      let html = `<span class="md-syntax md-block-syntax${activeCls}" data-line="${lineIndex}" data-type="olist">`;
       html += this.esc(olMatch[1] + ' ');
       html += '</span>';
       html += '<span class="md-list-item md-ol-item">';
-      html += this.renderInline(olMatch[2], lineIndex, lineStart + prefixLen);
+      html += this.renderInline(olMatch[2], lineIndex, lineStart + prefixLen, cursorLineIdx);
       html += '</span>';
       return html;
     }
@@ -419,13 +445,23 @@ class MarkdownEditor {
     }
 
     // Regular paragraph
-    return this.renderInline(line, lineIndex, lineStart);
+    return this.renderInline(line, lineIndex, lineStart, cursorLineIdx);
   }
 
-  renderInline(text, lineIndex, basePos) {
+  renderInline(text, lineIndex, basePos, cursorLineIdx = -1) {
     let html = '';
     let i = 0;
     let pos = basePos;
+
+    // Helper: determine if an inline syntax element should be born with md-active.
+    // Inline syntax is active when cursor is on the same line AND inside the same element.
+    const inlineActiveCls = (elId) => {
+      if (lineIndex !== cursorLineIdx) return '';
+      // If we have a tracked activeElementId and it matches, or if no element was
+      // previously tracked (e.g. first render), show all inline syntax on the line.
+      if (!this.activeElementId || this.activeElementId === elId) return ' md-active';
+      return '';
+    };
 
     while (i < text.length) {
       let match;
@@ -441,14 +477,15 @@ class MarkdownEditor {
       // Display LaTeX: $$...$$
       if ((match = text.substring(i).match(/^\$\$([^$]+)\$\$/))) {
         const elId = `${lineIndex}-${pos}`;
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="latex-display">${this.esc('$$')}</span>`;
+        const iac = inlineActiveCls(elId);
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="latex-display">${this.esc('$$')}</span>`;
         try {
           const rendered = katex.renderToString(match[1], { displayMode: true, throwOnError: false });
           html += `<span class="md-katex md-katex-display md-element" data-element="${elId}">${rendered}</span>`;
         } catch (e) {
           html += `<code class="md-element" data-element="${elId}">${this.esc(match[1])}</code>`;
         }
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="latex-display">${this.esc('$$')}</span>`;
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="latex-display">${this.esc('$$')}</span>`;
         pos += match[0].length;
         i += match[0].length;
         continue;
@@ -457,14 +494,15 @@ class MarkdownEditor {
       // Inline LaTeX: $...$
       if ((match = text.substring(i).match(/^\$([^$\n]+)\$/))) {
         const elId = `${lineIndex}-${pos}`;
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="latex-inline">${this.esc('$')}</span>`;
+        const iac = inlineActiveCls(elId);
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="latex-inline">${this.esc('$')}</span>`;
         try {
           const rendered = katex.renderToString(match[1], { displayMode: false, throwOnError: false });
           html += `<span class="md-katex md-katex-inline md-element" data-element="${elId}">${rendered}</span>`;
         } catch (e) {
           html += `<code class="md-element" data-element="${elId}">${this.esc(match[1])}</code>`;
         }
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="latex-inline">${this.esc('$')}</span>`;
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="latex-inline">${this.esc('$')}</span>`;
         pos += match[0].length;
         i += match[0].length;
         continue;
@@ -473,11 +511,12 @@ class MarkdownEditor {
       // Bold+Italic: ***text***
       if ((match = text.substring(i).match(/^\*\*\*(.+?)\*\*\*/))) {
         const elId = `${lineIndex}-${pos}`;
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="bolditalic">${this.esc('***')}</span>`;
+        const iac = inlineActiveCls(elId);
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="bolditalic">${this.esc('***')}</span>`;
         html += `<strong><em class="md-element" data-element="${elId}">`;
         html += this.esc(match[1]);
         html += '</em></strong>';
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="bolditalic">${this.esc('***')}</span>`;
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="bolditalic">${this.esc('***')}</span>`;
         pos += match[0].length;
         i += match[0].length;
         continue;
@@ -486,11 +525,12 @@ class MarkdownEditor {
       // Bold: **text**
       if ((match = text.substring(i).match(/^\*\*(.+?)\*\*/))) {
         const elId = `${lineIndex}-${pos}`;
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="bold">${this.esc('**')}</span>`;
+        const iac = inlineActiveCls(elId);
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="bold">${this.esc('**')}</span>`;
         html += `<strong class="md-element" data-element="${elId}">`;
         html += this.esc(match[1]);
         html += '</strong>';
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="bold">${this.esc('**')}</span>`;
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="bold">${this.esc('**')}</span>`;
         pos += match[0].length;
         i += match[0].length;
         continue;
@@ -499,11 +539,12 @@ class MarkdownEditor {
       // Italic: *text*
       if ((match = text.substring(i).match(/^\*(.+?)\*/))) {
         const elId = `${lineIndex}-${pos}`;
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="italic">${this.esc('*')}</span>`;
+        const iac = inlineActiveCls(elId);
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="italic">${this.esc('*')}</span>`;
         html += `<em class="md-element" data-element="${elId}">`;
         html += this.esc(match[1]);
         html += '</em>';
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="italic">${this.esc('*')}</span>`;
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="italic">${this.esc('*')}</span>`;
         pos += match[0].length;
         i += match[0].length;
         continue;
@@ -512,11 +553,12 @@ class MarkdownEditor {
       // Italic: _text_
       if ((match = text.substring(i).match(/^_(.+?)_/))) {
         const elId = `${lineIndex}-${pos}`;
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="italic">${this.esc('_')}</span>`;
+        const iac = inlineActiveCls(elId);
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="italic">${this.esc('_')}</span>`;
         html += `<em class="md-element" data-element="${elId}">`;
         html += this.esc(match[1]);
         html += '</em>';
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="italic">${this.esc('_')}</span>`;
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="italic">${this.esc('_')}</span>`;
         pos += match[0].length;
         i += match[0].length;
         continue;
@@ -525,11 +567,12 @@ class MarkdownEditor {
       // Strikethrough: ~~text~~
       if ((match = text.substring(i).match(/^~~(.+?)~~/))) {
         const elId = `${lineIndex}-${pos}`;
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="strike">${this.esc('~~')}</span>`;
+        const iac = inlineActiveCls(elId);
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="strike">${this.esc('~~')}</span>`;
         html += `<del class="md-element" data-element="${elId}">`;
         html += this.esc(match[1]);
         html += '</del>';
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="strike">${this.esc('~~')}</span>`;
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="strike">${this.esc('~~')}</span>`;
         pos += match[0].length;
         i += match[0].length;
         continue;
@@ -538,11 +581,12 @@ class MarkdownEditor {
       // Inline code: `text` — content must not contain backticks
       if ((match = text.substring(i).match(/^`([^`]+)`/))) {
         const elId = `${lineIndex}-${pos}`;
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="code">${this.esc('`')}</span>`;
+        const iac = inlineActiveCls(elId);
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="code">${this.esc('`')}</span>`;
         html += `<code class="md-element" data-element="${elId}">`;
         html += this.esc(match[1]);
         html += '</code>';
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="code">${this.esc('`')}</span>`;
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="code">${this.esc('`')}</span>`;
         pos += match[0].length;
         i += match[0].length;
         continue;
@@ -551,11 +595,12 @@ class MarkdownEditor {
       // Question block: ?text?
       if ((match = text.substring(i).match(/^\?([^?\n]+)\?/))) {
         const elId = `${lineIndex}-${pos}`;
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="question">${this.esc('?')}</span>`;
+        const iac = inlineActiveCls(elId);
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="question">${this.esc('?')}</span>`;
         html += `<span class="question-block md-element" data-element="${elId}">`;
         html += this.esc(match[1]);
         html += '</span>';
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="question">${this.esc('?')}</span>`;
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="question">${this.esc('?')}</span>`;
         pos += match[0].length;
         i += match[0].length;
         continue;
@@ -564,11 +609,12 @@ class MarkdownEditor {
       // Link: [text](url)
       if ((match = text.substring(i).match(/^\[([^\]]+)\]\(([^)]+)\)/))) {
         const elId = `${lineIndex}-${pos}`;
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="link">${this.esc('[')}</span>`;
+        const iac = inlineActiveCls(elId);
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="link">${this.esc('[')}</span>`;
         html += `<a class="md-element md-link" data-element="${elId}" href="${this.esc(match[2])}">`;
         html += this.esc(match[1]);
         html += '</a>';
-        html += `<span class="md-syntax md-inline-syntax" data-line="${lineIndex}" data-element="${elId}" data-type="link">${this.esc('](' + match[2] + ')')}</span>`;
+        html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="link">${this.esc('](' + match[2] + ')')}</span>`;
         pos += match[0].length;
         i += match[0].length;
         continue;
