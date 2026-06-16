@@ -267,35 +267,20 @@ function renderMessage(role,content){
     // Step 5: Markdown via marked.parse()
     rendered=marked.parse(processed);
   }catch(e){rendered=escapeHtml(rawMarkdown);}
-  let bubbleContent=rendered;
-  // Add copy button for assistant messages
+  let copyBtnHtml='';
   if(role==='assistant'){
-    bubbleContent+=`<button class="msg-copy-btn" title="Copy response"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>Copy</span></button>`;
+    copyBtnHtml='<button class="msg-copy-btn" title="Copy"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>';
   }
-  msg.innerHTML=`<div class="message-role">${roleLabel}</div><div class="message-bubble">${bubbleContent}</div>`;
-  // Attach copy handler after innerHTML is set
+  msg.innerHTML=`<div class="message-role">${roleLabel}</div><div class="message-row"><div class="message-bubble">${rendered}</div>${copyBtnHtml}</div>`;
   if(role==='assistant'){
     const copyBtn=msg.querySelector('.msg-copy-btn');
     if(copyBtn){
+      const copyIcon='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+      const checkIcon='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
       copyBtn.addEventListener('click',async()=>{
-        try{
-          await navigator.clipboard.writeText(rawMarkdown);
-          copyBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Copied!</span>';
-          copyBtn.classList.add('copied');
-          setTimeout(()=>{
-            copyBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>Copy</span>';
-            copyBtn.classList.remove('copied');
-          },2000);
-        }catch(e){
-          // Fallback for older browsers
-          const ta=document.createElement('textarea');ta.value=rawMarkdown;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();
-          copyBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Copied!</span>';
-          copyBtn.classList.add('copied');
-          setTimeout(()=>{
-            copyBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>Copy</span>';
-            copyBtn.classList.remove('copied');
-          },2000);
-        }
+        try{await navigator.clipboard.writeText(rawMarkdown);}catch(e){const ta=document.createElement('textarea');ta.value=rawMarkdown;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}
+        copyBtn.innerHTML=checkIcon;copyBtn.classList.add('copied');
+        setTimeout(()=>{copyBtn.innerHTML=copyIcon;copyBtn.classList.remove('copied');},2000);
       });
     }
   }

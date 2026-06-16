@@ -361,10 +361,12 @@ img{max-width:100%;height:auto;display:block}
 .message-bubble img{max-width:100%;border-radius:var(--r-md);margin:8px 0}
 .message-bubble .katex{font-size:1.05em}
 
-/* Copy button on assistant messages */
-.msg-copy-btn{display:inline-flex;align-items:center;gap:5px;margin-top:10px;padding:4px 10px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface);color:var(--text-muted);font-size:12px;cursor:pointer;transition:all var(--fast);user-select:none}
-.msg-copy-btn:hover{background:var(--surface-2);color:var(--text-secondary);border-color:var(--border-dark)}
-.msg-copy-btn.copied{color:var(--success);border-color:var(--success);background:rgba(45,138,86,0.06)}
+/* Copy button on assistant messages (outside bubble) */
+.message-row{display:flex;align-items:flex-start;gap:6px}
+.msg-copy-btn{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border:none;border-radius:var(--r-sm);background:transparent;color:var(--text-muted);cursor:pointer;opacity:0;transition:all var(--fast);flex-shrink:0;margin-top:2px}
+.message:hover .msg-copy-btn,.msg-copy-btn:focus,.msg-copy-btn.copied{opacity:1}
+.msg-copy-btn:hover{background:var(--surface-2);color:var(--text-secondary)}
+.msg-copy-btn.copied{color:var(--success)}
 .msg-copy-btn svg{flex-shrink:0}
 
 .ai-loading{display:flex;align-items:flex-start;margin-bottom:20px;animation:fadeUp 0.3s ease}
