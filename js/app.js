@@ -41,6 +41,51 @@ async function init(){
       closeChatDropdown();
     }
   });
+  // Handle browser back/forward for chat URLs
+  window.addEventListener('popstate',()=>{
+    const chatId=getChatIdFromUrl();
+    if(chatId)openChat(chatId,true);
+    else{currentChat=null;workspaceDoc=null;chatMessages.innerHTML='';chatMessages.appendChild(welcomeScreen);welcomeScreen.style.display='flex';closeWorkspacePanel();document.querySelectorAll('.chat-item').forEach(i=>i.classList.remove('active'));newChatBtn.classList.add('active');}
+  });
+  // Auto-open chat if URL has a chat ID (either from direct /chat/UUID or 404 redirect)
+  let urlChatId=getChatIdFromUrl();
+  // Check for redirect from 404.html (GitHub Pages SPA routing)
+  const redirectPath=sessionStorage.getItem('socra_redirect');
+  if(redirectPath){
+    sessionStorage.removeItem('socra_redirect');
+    const redirectMatch=redirectPath.match(/\/chat\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+    if(redirectMatch){
+      urlChatId=redirectMatch[1];
+      // Restore the clean URL
+      history.replaceState({chatId:urlChatId},'',redirectPath);
+    }
+  }
+  if(urlChatId){
+    // Ensure chat is in our list (might need refresh), then open
+    const exists=chats.find(c=>c.id===urlChatId);
+    if(exists)await openChat(urlChatId,true);
+    else{await loadChats();const c2=chats.find(c=>c.id===urlChatId);if(c2)await openChat(urlChatId,true);}
+  }
+}
+
+// Extract chat UUID from URL: /chat/UUID or ?chat=UUID
+function getChatIdFromUrl(){
+  const path=window.location.pathname;
+  const pathMatch=path.match(/\/chat\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+  if(pathMatch)return pathMatch[1];
+  const params=new URLSearchParams(window.location.search);
+  return params.get('chat')||null;
+}
+
+// Update URL to reflect current chat (or clear it)
+function updateUrl(chatId){
+  if(chatId){
+    const base=window.location.pathname.replace(/\/chat\/.*$/,'').replace(/\/app\.html.*$/,'');
+    const newPath='/chat/'+chatId;
+    history.pushState({chatId},'',newPath);
+  }else{
+    history.pushState({},'',window.location.pathname.replace(/\/chat\/.*$/,'')+'/app.html');
+  }
 }
 
 async function loadProfile(){
@@ -174,6 +219,8 @@ function confirmDeleteChat(chatId){
 
 async function deleteChat(chatId){
   try{
+    // Delete cognitive metrics for this chat
+    await sb.from('cognitive_metrics').delete().eq('chat_id',chatId);
     // Delete workspace document
     await sb.from('workspace_documents').delete().eq('chat_id',chatId);
     // Delete messages
@@ -202,12 +249,14 @@ async function createNewChat(){
   closeWorkspacePanel();
   document.querySelectorAll('.chat-item').forEach(i=>i.classList.remove('active'));
   newChatBtn.classList.add('active');setWelcomeMessage();
+  history.pushState({},'',window.location.pathname.replace(/\/chat\/.*$/,'')+'/app.html');
 }
 
-async function openChat(chatId){
+async function openChat(chatId,skipPush){
   const chat=chats.find(c=>c.id===chatId);if(!chat)return;
   currentChat=chat;newChatBtn.classList.remove('active');
   document.querySelectorAll('.chat-item').forEach(i=>i.classList.toggle('active',i.dataset.chatId===chatId));
+  if(!skipPush)history.pushState({chatId},'',window.location.pathname.replace(/\/chat\/.*$/,'').replace(/\/app\.html.*$/,'')+'/chat/'+chatId);
   const{data:messages}=await sb.from('messages').select('*').eq('chat_id',chatId).order('created_at',{ascending:true});
   chatMessages.innerHTML='';
   if(messages?.length){messages.forEach(msg=>renderMessage(msg.role,msg.content));chatMessages.scrollTop=chatMessages.scrollHeight;}
@@ -219,10 +268,10 @@ async function sendMessage(content){
   if(!content.trim()||isSending)return;
   isSending=true;sendBtn.disabled=true;composerInput.value='';autoResizeComposer();
   if(!currentChat){
-    const title=content.length>50?content.substring(0,50)+'...':content;
-    const{data:newChat,error}=await sb.from('chats').insert({user_id:currentUser.id,title}).select().single();
+    const{data:newChat,error}=await sb.from('chats').insert({user_id:currentUser.id,title:'New Conversation'}).select().single();
     if(error){showToast('Failed to create chat.',true);isSending=false;sendBtn.disabled=false;return;}
     currentChat=newChat;chats.unshift(currentChat);renderChatHistory();
+    history.pushState({chatId:currentChat.id},'',window.location.pathname.replace(/\/chat\/.*$/,'').replace(/\/app\.html.*$/,'')+'/chat/'+currentChat.id);
   }
   if(welcomeScreen.parentNode===chatMessages)chatMessages.removeChild(welcomeScreen);
   renderMessage('user',content);
@@ -236,11 +285,12 @@ async function sendMessage(content){
     hideLoadingIndicator();
     renderMessage('assistant',response.content);
     await sb.from('messages').insert({chat_id:currentChat.id,role:'assistant',content:response.content,metrics:response.metrics});
-    if(response.metrics)await metricsManager.saveMetrics(response.metrics);
-    if(chats.find(c=>c.id===currentChat.id)?.title==='New Chat'){
-      const title=content.length>50?content.substring(0,50)+'...':content;
-      await sb.from('chats').update({title}).eq('id',currentChat.id);
-      currentChat.title=title;renderChatHistory();
+    if(response.metrics)await metricsManager.saveMetrics(response.metrics,currentChat.id);
+    // Update title from AI response
+    const newTitle=response.title||null;
+    if(newTitle&&currentChat.title==='New Conversation'){
+      await sb.from('chats').update({title:newTitle}).eq('id',currentChat.id);
+      currentChat.title=newTitle;renderChatHistory();
     }
   }catch(err){hideLoadingIndicator();renderMessage('assistant','I encountered an issue. Please try again.');showToast('Failed to get AI response.',true);}
   isSending=false;sendBtn.disabled=false;chatMessages.scrollTop=chatMessages.scrollHeight;
@@ -250,15 +300,50 @@ window.sendMessage=sendMessage;
 function renderMessage(role,content){
   const msg=document.createElement('div');msg.className=`message ${role}`;
   const roleLabel=role==='user'?'You':'Socra';
+  const rawMarkdown=content.replace(/<!--METRICS{[\s\S]*?}-->/g,'').replace(/<!--TITLE:.+?-->/g,'').trim();
   let rendered;
   try{
-    const clean=content.replace(/<!--METRICS{[\s\S]*?}-->/g,'').trim();
-    let processed=clean;
-    processed=processed.replace(/\$\$([^$]+)\$\$/g,(m,f)=>{try{return '<div class="katex-display">'+katex.renderToString(f,{displayMode:true,throwOnError:false})+'</div>';}catch(e){return '<code>'+m+'</code>';}});
-    processed=processed.replace(/(?<!\$)\$(?!\$)([^$\n]+)(?<!\$)\$(?!\$)/g,(m,f)=>{try{return katex.renderToString(f,{displayMode:false,throwOnError:false});}catch(e){return '<code>'+m+'</code>';}});
+    let processed=rawMarkdown;
+    // Strip intervention-type labels from raw markdown BEFORE rendering.
+    const interventionTypes='Clarifying Question|Recall Prompt|Assumption Challenge|Counterexample|Hint|Reflection Prompt|Step Verification|Analogy|Error Identification';
+    // Line-level: matches labels on their own line (## Heading, **Bold Label**, plain text)
+    const intvLineRe=new RegExp('^[ \\t]*(#{1,6}[ \\t]*)?(\\*{1,2}|_{1,2})?[ \\t]*('+interventionTypes+')[ \\t]*(\\2)?[ \\t]*$','gim');
+    processed=processed.replace(intvLineRe,'');
+    // Inline: matches labels embedded in text like ...text.**Reflection Prompt**
+    const intvInlineRe=new RegExp('[ \\t]*(\\*{1,2}|_{1,2})('+interventionTypes+')\\1[ \\t]*','gi');
+    processed=processed.replace(intvInlineRe,' ');
+    // Step 1: Convert \[...\] display math to $$...$$ for consistent handling
+    processed=processed.replace(/\\\[([\s\S]+?)\\\]/g,(m,f)=>'$$'+f+'$$');
+    // Step 2: Convert \(...\) inline math to $...$ for consistent handling
+    processed=processed.replace(/\\\(([\s\S]+?)\\\)/g,(m,f)=>'$'+f+'$');
+    // Step 3: Render display math $$...$$ (including multiline)
+    processed=processed.replace(/\$\$([\s\S]+?)\$\$/g,(m,f)=>{try{return '<div class="katex-display">'+katex.renderToString(f.trim(),{displayMode:true,throwOnError:false})+'</div>';}catch(e){return '<code>'+escapeHtml(m)+'</code>';}});
+    // Step 4: Render inline math $...$ — opening $ must NOT be followed by space,
+    // closing $ must NOT be preceded by space. This prevents matching currency like $2 or $1.50.
+    processed=processed.replace(/(?<!\$)\$(?!\s)(?!\$)([\s\S]+?)(?<!\s)(?<!\$)\$(?!\$)/g,(m,f)=>{try{return katex.renderToString(f.trim(),{displayMode:false,throwOnError:false});}catch(e){return '<code>'+escapeHtml(m)+'</code>';}});
+    // Step 5: Markdown via marked.parse()
     rendered=marked.parse(processed);
-  }catch(e){rendered=escapeHtml(content);}
-  msg.innerHTML=`<div class="message-role">${roleLabel}</div><div class="message-bubble">${rendered}</div>`;
+  }catch(e){rendered=escapeHtml(rawMarkdown);}
+  const copyIcon='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+  const copyCls=role==='user'?'msg-copy-btn hover-reveal':'msg-copy-btn always-show';
+  msg.innerHTML=`<div class="message-role">${roleLabel}</div><div class="message-bubble">${rendered}</div><button class="${copyCls}" title="Copy">${copyIcon}</button>`;
+  // DOM-level safety net: remove any element whose text content is solely an intervention label
+  const bubble=msg.querySelector('.message-bubble');
+  if(bubble){
+    const intvLabels=/^(Clarifying Question|Recall Prompt|Assumption Challenge|Counterexample|Hint|Reflection Prompt|Step Verification|Analogy|Error Identification)$/i;
+    bubble.querySelectorAll('h1,h2,h3,h4,h5,h6,p').forEach(el=>{
+      if(intvLabels.test(el.textContent.trim()))el.remove();
+    });
+  }
+  const copyBtn=msg.querySelector('.msg-copy-btn');
+  if(copyBtn){
+    const checkIcon='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+    copyBtn.addEventListener('click',async()=>{
+      try{await navigator.clipboard.writeText(rawMarkdown);}catch(e){const ta=document.createElement('textarea');ta.value=rawMarkdown;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}
+      copyBtn.innerHTML=checkIcon;copyBtn.classList.add('copied');
+      setTimeout(()=>{copyBtn.innerHTML=copyIcon;copyBtn.classList.remove('copied');},2000);
+    });
+  }
   chatMessages.appendChild(msg);chatMessages.scrollTop=chatMessages.scrollHeight;
 }
 
@@ -317,6 +402,41 @@ function setupEvents(){
   upgradeBtn.addEventListener('click',()=>window.location.href='pricing.html');
   $('logout-btn').addEventListener('click',async()=>{await sb.auth.signOut();window.location.href='auth.html';});
   if(mobileMenuBtn)mobileMenuBtn.addEventListener('click',()=>sidebar.classList.toggle('mobile-open'));
+  // Model selector
+  const modelSelectorBtn=$('model-selector-btn');
+  const modelDropdown=$('model-selector-dropdown');
+  const modelLabel=$('model-selector-label');
+  const modelDot=modelSelectorBtn?.querySelector('.model-selector-dot');
+  if(modelSelectorBtn&&modelDropdown){
+    modelSelectorBtn.addEventListener('click',e=>{
+      e.stopPropagation();
+      modelDropdown.classList.toggle('open');
+    });
+    document.addEventListener('click',e=>{
+      if(!e.target.closest('.model-selector'))modelDropdown.classList.remove('open');
+    });
+    modelDropdown.querySelectorAll('.model-option').forEach(opt=>{
+      opt.addEventListener('click',()=>{
+        const model=opt.dataset.model;
+        if(opt.classList.contains('locked')){
+          modelDropdown.classList.remove('open');
+          window.location.href='pricing.html';
+          return;
+        }
+        // Select this model
+        modelDropdown.querySelectorAll('.model-option').forEach(o=>o.classList.remove('active'));
+        opt.classList.add('active');
+        modelLabel.textContent=opt.querySelector('strong').textContent;
+        // Update dot color
+        const dotClass=[...opt.querySelector('.model-option-dot').classList].find(c=>['low','med','high'].includes(c))||'low';
+        modelDot.className='model-selector-dot';
+        modelDot.classList.add(dotClass);
+        modelDropdown.classList.remove('open');
+      });
+    });
+    // Set initial dot color
+    if(modelDot)modelDot.classList.add('low');
+  }
 }
 
 function setWelcomeMessage(){

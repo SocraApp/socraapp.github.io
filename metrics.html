@@ -75,21 +75,67 @@
       const contentEl = document.getElementById('metrics-content');
 
       try {
-        const { data, error } = await sb.from('cognitive_metrics').select('*').eq('user_id', session.user.id).order('date', { ascending: false }).limit(30);
+        const { data, error } = await sb.from('cognitive_metrics').select('*').eq('user_id', session.user.id).order('date', { ascending: false });
         if (error) throw error;
 
         loadingEl.classList.add('hidden');
 
-        const metrics = data || [];
-        if (!metrics.length) {
+        const rawMetrics = data || [];
+        if (!rawMetrics.length) {
           emptyEl.classList.remove('hidden');
           return;
         }
 
+        // Aggregate metrics by date (multiple chats per day → one daily summary)
+        const dailyMap = new Map();
+        rawMetrics.forEach(m => {
+          const existing = dailyMap.get(m.date);
+          if (existing) {
+            existing.rows.push(m);
+            existing.totalSessions += m.session_count || 0;
+            existing.totalStruggle += (m.avg_struggle_level || 0) * (m.session_count || 1);
+          } else {
+            dailyMap.set(m.date, {
+              date: m.date,
+              rows: [m],
+              totalSessions: m.session_count || 0,
+              totalStruggle: (m.avg_struggle_level || 0) * (m.session_count || 1)
+            });
+          }
+        });
+
+        // Compute weighted averages for each day
+        const metrics = [...dailyMap.values()].map(day => {
+          const totalSessions = day.totalSessions;
+          let reasoning = 0, consistency = 0, completeness = 0, originality = 0, confidence = 0, struggle = 0;
+          day.rows.forEach(r => {
+            const w = (r.session_count || 1) / totalSessions;
+            reasoning += (r.reasoning_quality || 0) * w;
+            consistency += (r.logical_consistency || 0) * w;
+            completeness += (r.completeness || 0) * w;
+            originality += (r.originality || 0) * w;
+            confidence += (r.confidence_alignment || 0) * w;
+            struggle += (r.avg_struggle_level || 0) * (r.session_count || 1);
+          });
+          return {
+            date: day.date,
+            session_count: totalSessions,
+            reasoning_quality: Math.round(reasoning * 10) / 10,
+            logical_consistency: Math.round(consistency * 10) / 10,
+            completeness: Math.round(completeness * 10) / 10,
+            originality: Math.round(originality * 10) / 10,
+            confidence_alignment: Math.round(confidence * 10) / 10,
+            avg_struggle_level: totalSessions > 0 ? Math.round(struggle / totalSessions * 10) / 10 : 0
+          };
+        }).sort((a, b) => b.date.localeCompare(a.date));
+
+        // Take the latest 30 days
+        const displayMetrics = metrics.slice(0, 30);
+
         contentEl.classList.remove('hidden');
 
-        // Fill summary cards with latest metrics
-        const latest = metrics[0];
+        // Fill summary cards with latest day's aggregate metrics
+        const latest = displayMetrics[0];
         const fields = {
           reasoning: 'reasoning_quality',
           consistency: 'logical_consistency',
@@ -105,8 +151,8 @@
         document.getElementById('metric-sessions').textContent = latest.session_count || 0;
         document.getElementById('metric-struggle').textContent = latest.avg_struggle_level ? latest.avg_struggle_level.toFixed(1) : '—';
 
-        // Chart
-        const cd = [...metrics].reverse();
+        // Chart — use the last 30 daily aggregates
+        const cd = [...displayMetrics].reverse();
         const labels = cd.map(d => new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
         new Chart(document.getElementById('metrics-chart'), {
           type: 'line',

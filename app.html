@@ -80,9 +80,23 @@
             </div>
           </div>
           <div class="composer-area">
+            <div class="composer-top-row">
+              <div class="model-selector" id="model-selector">
+                <button class="model-selector-btn" id="model-selector-btn">
+                  <span class="model-selector-dot"></span>
+                  <span class="model-selector-label" id="model-selector-label">Doxa</span>
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </button>
+                <div class="model-selector-dropdown" id="model-selector-dropdown">
+                  <button class="model-option active" data-model="doxa"><span class="model-option-dot low"></span><span class="model-option-info"><strong>Doxa</strong> <span class="model-tier">Low</span></span></button>
+                  <button class="model-option locked" data-model="elenchus"><span class="model-option-dot med"></span><span class="model-option-info"><strong>Elenchus</strong> <span class="model-tier">Medium</span></span><span class="model-lock-icon" title="Upgrade"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span></button>
+                  <button class="model-option locked" data-model="nous"><span class="model-option-dot high"></span><span class="model-option-info"><strong>Nous</strong> <span class="model-tier">High</span></span><span class="model-lock-icon" title="Upgrade"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span></button>
+                </div>
+              </div>
+            </div>
             <div class="composer-wrapper">
               <textarea class="composer-input" id="composer-input" placeholder="Share your thoughts... Socra will guide your reasoning." rows="1"></textarea>
-              <button class="composer-btn attach-btn" id="workspace-btn" title="Create workspace document"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg></button>
+              <button class="composer-btn attach-btn" id="workspace-btn" title="Create workspace document"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg><span>Document</span></button>
               <button class="composer-btn send-btn" id="send-btn" disabled title="Send"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></button>
             </div>
           </div>

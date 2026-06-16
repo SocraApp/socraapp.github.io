@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+<script>
+// GitHub Pages SPA redirect: captures /chat/UUID paths and redirects
+// to app.html which will read the path and open the correct chat.
+(function(){
+  var path = window.location.pathname;
+  // Match /chat/UUID pattern
+  var chatMatch = path.match(/^\/chat\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+  if (chatMatch) {
+    // Store the chat path so app.html can restore it
+    sessionStorage.setItem('socra_redirect', path);
+    window.location.replace('/app.html');
+  } else {
+    window.location.replace('/app.html');
+  }
+})();
+</script>
+</head>
+<body>
+<p>Redirecting...</p>
+</body>
+</html>
