@@ -4,20 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cognitive Portfolio — Socra</title>
-  <link rel="icon" type="image/png" href="assets/small-logo.png">
+  <link rel="icon" type="image/png" href="/assets/small-logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <nav class="nav">
-    <a href="index.html" class="nav-logo"><img src="assets/main-logo.png" alt="Socra"></a>
-    <div class="nav-links"><a href="app.html" class="nav-link">Back to App</a></div>
+    <a href="/index.html" class="nav-logo"><img src="/assets/main-logo.png" alt="Socra"></a>
   </nav>
   <section class="metrics-page">
     <div class="metrics-container">
-      <a href="app.html" class="metrics-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>Back to Chat</a>
+      <a href="/app.html" class="metrics-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>Back to Chat</a>
       <h1 style="font-size:28px;font-weight:700;color:var(--navy);margin-bottom:8px;">Cognitive Portfolio</h1>
       <p style="color:var(--text-secondary);margin-bottom:32px;max-width:500px;">Track your intellectual growth over time. These metrics reflect how your reasoning evolves with every session.</p>
       <div class="metrics-loading" id="metrics-loading" style="text-align:center;padding:60px 0;color:var(--text-muted);">Loading your portfolio...</div>
@@ -25,7 +24,7 @@
         <div style="font-size:48px;margin-bottom:16px;opacity:0.3;">&#9734;</div>
         <h3 style="color:var(--navy);margin-bottom:8px;">No Metrics Yet</h3>
         <p style="color:var(--text-secondary);max-width:400px;margin:0 auto 20px;">Start a Socratic conversation to begin tracking your cognitive growth. Metrics will appear here after your first few exchanges.</p>
-        <a href="app.html" class="btn btn-primary" style="display:inline-block;">Start a Conversation</a>
+        <a href="/app.html" class="btn btn-primary" style="display:inline-block;">Start a Conversation</a>
       </div>
       <div class="metrics-content hidden" id="metrics-content">
         <div class="metrics-summary" id="metrics-summary">
@@ -48,7 +47,7 @@
   </section>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-  <script src="js/supabase-client.js"></script>
+  <script src="/js/supabase-client.js"></script>
   <script>
     // Helper: wait for Supabase client
     function waitForSB() {
@@ -65,10 +64,10 @@
 
     (async () => {
       const sb = await waitForSB();
-      if (!sb) { window.location.href = 'auth.html'; return; }
+      if (!sb) { window.location.href = '/auth.html'; return; }
 
       const { data: { session } } = await sb.auth.getSession();
-      if (!session) { window.location.href = 'auth.html'; return; }
+      if (!session) { window.location.href = '/auth.html'; return; }
 
       const loadingEl = document.getElementById('metrics-loading');
       const emptyEl = document.getElementById('metrics-empty');
