@@ -161,25 +161,41 @@
         // Chart — use the last 30 daily aggregates
         const cd = [...displayMetrics].reverse();
         const labels = cd.map(d => new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const chartColors = isDark ? {
+          reasoning: { border: '#E5B95A', bg: 'rgba(229,185,90,0.15)' },
+          consistency: { border: '#4A6FA5', bg: 'rgba(74,111,165,0.15)' },
+          originality: { border: '#3FB68B', bg: 'rgba(63,182,139,0.15)' },
+          grid: '#30363D',
+          ticks: '#8B949E',
+          legend: '#8B949E'
+        } : {
+          reasoning: { border: '#1B2A4A', bg: 'rgba(27,42,74,0.08)' },
+          consistency: { border: '#C9A84C', bg: 'rgba(201,168,76,0.08)' },
+          originality: { border: '#2D8A56', bg: 'rgba(45,138,86,0.08)' },
+          grid: '#E2E5EA',
+          ticks: '#8D96A5',
+          legend: '#5A6577'
+        };
         new Chart(document.getElementById('metrics-chart'), {
           type: 'line',
           data: {
             labels,
             datasets: [
-              { label: 'Reasoning', data: cd.map(d => d.reasoning_quality), borderColor: '#1B2A4A', backgroundColor: 'rgba(27,42,74,0.08)', fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2 },
-              { label: 'Consistency', data: cd.map(d => d.logical_consistency), borderColor: '#C9A84C', backgroundColor: 'rgba(201,168,76,0.08)', fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2 },
-              { label: 'Originality', data: cd.map(d => d.originality), borderColor: '#2D8A56', fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2 }
+              { label: 'Reasoning', data: cd.map(d => d.reasoning_quality), borderColor: chartColors.reasoning.border, backgroundColor: chartColors.reasoning.bg, fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2 },
+              { label: 'Consistency', data: cd.map(d => d.logical_consistency), borderColor: chartColors.consistency.border, backgroundColor: chartColors.consistency.bg, fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2 },
+              { label: 'Originality', data: cd.map(d => d.originality), borderColor: chartColors.originality.border, fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2 }
             ]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-              y: { min: 0, max: 10, grid: { color: '#E2E5EA' }, ticks: { font: { family: 'Inter', size: 11 }, color: '#8D96A5' } },
-              x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 }, color: '#8D96A5' } }
+              y: { min: 0, max: 10, grid: { color: chartColors.grid }, ticks: { font: { family: 'Inter', size: 11 }, color: chartColors.ticks } },
+              x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 }, color: chartColors.ticks } }
             },
             plugins: {
-              legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12 }, color: '#5A6577', usePointStyle: true, padding: 16 } }
+              legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12 }, color: chartColors.legend, usePointStyle: true, padding: 16 } }
             }
           }
         });

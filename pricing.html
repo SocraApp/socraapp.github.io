@@ -4,19 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Pricing — Socra</title>
-  <link rel="icon" type="image/png" href="assets/small-logo.png">
+  <link rel="icon" type="image/png" href="/assets/small-logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <nav class="nav">
-    <a href="index.html" class="nav-logo"><img src="assets/main-logo.png" alt="Socra"></a>
+    <a href="/index.html" class="nav-logo"><img src="/assets/main-logo.png" alt="Socra"></a>
     <div class="nav-links">
-      <a href="index.html" class="nav-link">Home</a>
-      <a href="pricing.html" class="nav-link active">Pricing</a>
-      <a href="auth.html" class="btn btn-primary" id="nav-cta">Get Started</a>
+      <a href="/index.html" class="nav-link">Home</a>
+      <a href="/pricing.html" class="nav-link active">Pricing</a>
+      <a href="/auth.html" class="btn btn-primary" id="nav-cta">Get Started</a>
     </div>
   </nav>
   <section class="pricing-section">
@@ -69,21 +69,25 @@
     </div>
   </section>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase-client.js"></script>
+  <script src="/js/supabase-client.js"></script>
   <script>
     async function initPricing(){
       if(!sb){return;}
       const{data:{session}}=await sb.auth.getSession();
       const navCta=document.getElementById('nav-cta'),doxaCta=document.getElementById('doxa-cta');
       if(session){
-        navCta.textContent='Open App';navCta.href='app.html';
-        const{data:profile}=await sb.from('profiles').select('plan').eq('id',session.user.id).single();
-        const plan=profile?.plan||'doxa';
-        if(plan==='doxa'){document.getElementById('plan-doxa').classList.add('current-plan');doxaCta.textContent='Current Plan';doxaCta.className='btn btn-outline btn-disabled';doxaCta.disabled=true;}
-        else if(plan==='elenchus'){document.getElementById('plan-elenchus').classList.add('current-plan');document.getElementById('plan-elenchus').querySelector('.btn').textContent='Current Plan';document.getElementById('plan-elenchus').querySelector('.btn').disabled=true;}
-        else if(plan==='nous'){document.getElementById('plan-nous').classList.add('current-plan');document.getElementById('plan-nous').querySelector('.btn').textContent='Current Plan';document.getElementById('plan-nous').querySelector('.btn').disabled=true;}
+        navCta.textContent='Open App';navCta.href='/app.html';
+        // Load dark mode preference
+        try{
+          const{data:profile}=await sb.from('profiles').select('plan,dark_mode').eq('id',session.user.id).single();
+          if(profile?.dark_mode){document.documentElement.setAttribute('data-theme','dark');}
+          const plan=profile?.plan||'doxa';
+          if(plan==='doxa'){document.getElementById('plan-doxa').classList.add('current-plan');doxaCta.textContent='Current Plan';doxaCta.className='btn btn-outline btn-disabled';doxaCta.disabled=true;}
+          else if(plan==='elenchus'){document.getElementById('plan-elenchus').classList.add('current-plan');document.getElementById('plan-elenchus').querySelector('.btn').textContent='Current Plan';document.getElementById('plan-elenchus').querySelector('.btn').disabled=true;}
+          else if(plan==='nous'){document.getElementById('plan-nous').classList.add('current-plan');document.getElementById('plan-nous').querySelector('.btn').textContent='Current Plan';document.getElementById('plan-nous').querySelector('.btn').disabled=true;}
+        }catch(e){}
       }else{
-        doxaCta.addEventListener('click',()=>window.location.href='auth.html');
+        doxaCta.addEventListener('click',()=>window.location.href='/auth.html');
       }
     }
     // Try immediately if sb is already available

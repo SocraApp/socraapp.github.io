@@ -257,7 +257,10 @@ async function createNewChat(){
   closeWorkspacePanel();
   document.querySelectorAll('.chat-item').forEach(i=>i.classList.remove('active'));
   newChatBtn.classList.add('active');setWelcomeMessage();
-  history.pushState({},'',window.location.pathname.replace(/\/chat\/.*$/,'')+'/app.html');
+  // Only update URL if currently on a /chat/UUID path
+  if(window.location.pathname.match(/\/chat\//)){
+    history.pushState({},'','/app.html');
+  }
 }
 
 async function openChat(chatId,skipPush){
@@ -406,9 +409,9 @@ function setupEvents(){
   reopenWorkspaceBtn.addEventListener('click',openWorkspacePanel);
   workspaceTitle.addEventListener('change',async()=>{if(workspaceDoc)await sb.from('workspace_documents').update({title:workspaceTitle.value,updated_at:new Date().toISOString()}).eq('id',workspaceDoc.id);});
   welcomePresets.addEventListener('click',e=>{const p=e.target.closest('.welcome-preset');if(p){composerInput.value=p.dataset.prompt;autoResizeComposer();sendBtn.disabled=false;composerInput.focus();}});
-  $('profile-info').addEventListener('click',()=>window.location.href='metrics.html');
-  upgradeBtn.addEventListener('click',()=>window.location.href='pricing.html');
-  $('logout-btn').addEventListener('click',async()=>{await sb.auth.signOut();window.location.href='auth.html';});
+  $('profile-info').addEventListener('click',e=>{if(!e.target.closest('.settings-btn'))window.location.href='/metrics.html';});
+  upgradeBtn.addEventListener('click',()=>window.location.href='/pricing.html');
+  $('logout-btn').addEventListener('click',async()=>{await sb.auth.signOut();window.location.href='/auth.html';});
   if(mobileMenuBtn)mobileMenuBtn.addEventListener('click',()=>sidebar.classList.toggle('mobile-open'));
   // Model selector
   const modelSelectorBtn=$('model-selector-btn');
@@ -465,16 +468,14 @@ function closeSettings(){if(settingsPanel){settingsPanel.classList.remove('open'
 function applyDarkMode(enabled){document.documentElement.setAttribute('data-theme',enabled?'dark':'light');}
 async function toggleDarkMode(enabled){applyDarkMode(enabled);if(currentUser&&sb){try{await sb.from('profiles').update({dark_mode:enabled}).eq('id',currentUser.id);if(currentProfile)currentProfile.dark_mode=enabled;}catch(e){console.error('Failed to save dark mode preference:',e);}}}
 function setupSettingsEvents(){
-  if(settingsBtn)settingsBtn.addEventListener('click',openSettings);
+  if(settingsBtn)settingsBtn.addEventListener('click',e=>{e.stopPropagation();openSettings();});
   if(settingsClose)settingsClose.addEventListener('click',closeSettings);
   if(settingsOverlay)settingsOverlay.addEventListener('click',closeSettings);
   if(darkModeToggle)darkModeToggle.addEventListener('change',e=>toggleDarkMode(e.target.checked));
   const viewProfile=$('settings-view-profile');
-  if(viewProfile)viewProfile.addEventListener('click',()=>{closeSettings();window.location.href='metrics.html';});
+  if(viewProfile)viewProfile.addEventListener('click',()=>{closeSettings();window.location.href='/metrics.html';});
   const upgrade=$('settings-upgrade');
-  if(upgrade)upgrade.addEventListener('click',()=>{closeSettings();window.location.href='pricing.html';});
-  const logout=$('settings-logout');
-  if(logout)logout.addEventListener('click',async()=>{closeSettings();await sb.auth.signOut();window.location.href='auth.html';});
+  if(upgrade)upgrade.addEventListener('click',()=>{closeSettings();window.location.href='/pricing.html';});
   // ESC key to close
   document.addEventListener('keydown',e=>{if(e.key==='Escape'&&settingsPanel?.classList.contains('open'))closeSettings();});
 }

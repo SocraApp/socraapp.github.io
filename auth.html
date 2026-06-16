@@ -4,16 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign Up — Socra</title>
-  <link rel="icon" type="image/png" href="assets/small-logo.png">
+  <link rel="icon" type="image/png" href="/assets/small-logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <div class="auth-page">
     <div class="auth-container">
-      <div class="auth-logo"><a href="index.html"><img src="assets/main-logo.png" alt="Socra"></a></div>
+      <div class="auth-logo"><a href="/index.html"><img src="/assets/main-logo.png" alt="Socra"></a></div>
       <div class="auth-card">
         <div class="auth-tabs">
           <button class="auth-tab active" data-tab="signup">Sign Up</button>
@@ -37,7 +37,7 @@
     </div>
   </div>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="js/supabase-client.js"></script>
+  <script src="/js/supabase-client.js"></script>
   <script>
     // ===== UI logic runs immediately (no Supabase dependency) =====
     const tabs = document.querySelectorAll('.auth-tab');
@@ -94,7 +94,7 @@
 
       // Redirect if already logged in
       const { data: { session } } = await sb.auth.getSession();
-      if (session) { window.location.href = 'app.html'; return; }
+      if (session) { window.location.href = '/app.html'; return; }
 
       // Signup form handler
       sf.addEventListener('submit', async e => {
@@ -132,7 +132,7 @@
         // If session is null but user exists, the email is already registered.
         if (data.user && data.session) {
           // Successfully signed up AND auto-confirmed — go to app
-          window.location.href = 'app.html';
+          window.location.href = '/app.html';
         } else if (data.user && !data.session) {
           // Email already registered — show error and switch to login
           err.textContent = 'An account with this email already exists. Please log in instead.';
@@ -162,7 +162,7 @@
           err.classList.remove('hidden');
           return;
         }
-        window.location.href = 'app.html';
+        window.location.href = '/app.html';
       });
     })();
   </script>

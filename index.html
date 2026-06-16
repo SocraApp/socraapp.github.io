@@ -92,22 +92,28 @@
   <script src="/js/supabase-client.js"></script>
   <script>
     window.addEventListener('scroll',()=>{document.getElementById('nav').classList.toggle('scrolled',window.scrollY>20)});
-    window.addEventListener('supabase-ready',async()=>{
+    async function initIndex(){
       if(!sb)return;
-      const{data:{session}}=await sb.auth.getSession();
-      if(session){
-        const c=document.getElementById('nav-cta');
-        c.textContent='Open App';
-        c.href='app.html';
-        // Load and apply dark mode preference
-        try{
-          const{data:profile}=await sb.from('profiles').select('dark_mode').eq('id',session.user.id).single();
-          if(profile?.dark_mode){
-            document.documentElement.setAttribute('data-theme','dark');
-          }
-        }catch(e){}
-      }
-    });
+      try{
+        const{data:{session}}=await sb.auth.getSession();
+        if(session){
+          const c=document.getElementById('nav-cta');
+          c.textContent='Open App';
+          c.href='/app.html';
+          // Load and apply dark mode preference
+          try{
+            const{data:profile}=await sb.from('profiles').select('dark_mode').eq('id',session.user.id).single();
+            if(profile?.dark_mode){
+              document.documentElement.setAttribute('data-theme','dark');
+            }
+          }catch(e){}
+        }
+      }catch(e){}
+    }
+    // Try immediately if sb is already available
+    if(window.sb){initIndex();}
+    // Also listen for the supabase-ready event (in case CDN was slow)
+    window.addEventListener('supabase-ready',initIndex);
   </script>
 </body>
 </html>
