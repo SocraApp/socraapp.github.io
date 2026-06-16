@@ -10,7 +10,7 @@ const welcomeScreen=$('welcome-screen'),welcomeHeading=$('welcome-heading'),welc
 const welcomePresets=$('welcome-presets'),composerInput=$('composer-input'),sendBtn=$('send-btn');
 const workspaceBtn=$('workspace-btn'),workspacePanel=$('workspace-panel'),closeWorkspace=$('close-workspace');
 const workspaceTitle=$('workspace-title'),profileAvatar=$('profile-avatar'),profileName=$('profile-name');
-const profilePlan=$('profile-plan'),upgradeBtn=$('upgrade-btn'),formatHeading=$('format-heading');
+const profilePlan=$('profile-plan'),formatHeading=$('format-heading');
 const toastContainer=$('toast-container'),mobileMenuBtn=$('mobile-menu-btn');
 const reopenWorkspaceBtn=$('reopen-workspace-btn'),sidebarLogoFull=$('sidebar-logo-full'),sidebarLogoSmall=$('sidebar-logo-small');
 
@@ -98,7 +98,9 @@ async function loadProfile(){
   profileAvatar.textContent=n.charAt(0).toUpperCase();
   profileName.textContent=n;
   profilePlan.textContent=currentProfile.plan.charAt(0).toUpperCase()+currentProfile.plan.slice(1);
-  upgradeBtn.classList.toggle('hidden',currentProfile.plan==='nous');
+  // Show upgrade star in model selector if user is not on Nous plan
+  const upgradeStar=$('model-upgrade-star');
+  if(upgradeStar)upgradeStar.classList.toggle('hidden',currentProfile.plan==='nous');
 }
 
 async function loadChats(){
@@ -399,7 +401,9 @@ function setupEvents(){
   workspaceTitle.addEventListener('change',async()=>{if(workspaceDoc)await sb.from('workspace_documents').update({title:workspaceTitle.value,updated_at:new Date().toISOString()}).eq('id',workspaceDoc.id);});
   welcomePresets.addEventListener('click',e=>{const p=e.target.closest('.welcome-preset');if(p){composerInput.value=p.dataset.prompt;autoResizeComposer();sendBtn.disabled=false;composerInput.focus();}});
   $('profile-info').addEventListener('click',()=>window.location.href='metrics.html');
-  upgradeBtn.addEventListener('click',()=>window.location.href='pricing.html');
+  // Upgrade star click in model selector
+  const upgradeStar=$('model-upgrade-star');
+  if(upgradeStar)upgradeStar.addEventListener('click',e=>{e.stopPropagation();window.location.href='pricing.html';});
   $('logout-btn').addEventListener('click',async()=>{await sb.auth.signOut();window.location.href='auth.html';});
   if(mobileMenuBtn)mobileMenuBtn.addEventListener('click',()=>sidebar.classList.toggle('mobile-open'));
   // Model selector
