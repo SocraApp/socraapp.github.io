@@ -641,7 +641,7 @@ img{max-width:100%;height:auto;display:block}
 
 [data-theme="dark"] .profile-avatar {
   background: var(--gold);
-  color: var(--navy-dark);
+  color: #1B2A4A;
 }
 
 [data-theme="dark"] .profile-name {
@@ -703,7 +703,7 @@ img{max-width:100%;height:auto;display:block}
 
 [data-theme="dark"] .message.user .message-bubble {
   background: var(--navy);
-  color: var(--white);
+  color: #FFFFFF;
 }
 
 [data-theme="dark"] .message.assistant .message-bubble {
@@ -793,6 +793,7 @@ img{max-width:100%;height:auto;display:block}
 [data-theme="dark"] .model-selector-btn {
   background: transparent;
   color: var(--text-secondary);
+  border-color: #4A6FA5;
 }
 
 [data-theme="dark"] .model-selector-dropdown {
