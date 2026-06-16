@@ -41,6 +41,51 @@ async function init(){
       closeChatDropdown();
     }
   });
+  // Handle browser back/forward for chat URLs
+  window.addEventListener('popstate',()=>{
+    const chatId=getChatIdFromUrl();
+    if(chatId)openChat(chatId,true);
+    else{currentChat=null;workspaceDoc=null;chatMessages.innerHTML='';chatMessages.appendChild(welcomeScreen);welcomeScreen.style.display='flex';closeWorkspacePanel();document.querySelectorAll('.chat-item').forEach(i=>i.classList.remove('active'));newChatBtn.classList.add('active');}
+  });
+  // Auto-open chat if URL has a chat ID (either from direct /chat/UUID or 404 redirect)
+  let urlChatId=getChatIdFromUrl();
+  // Check for redirect from 404.html (GitHub Pages SPA routing)
+  const redirectPath=sessionStorage.getItem('socra_redirect');
+  if(redirectPath){
+    sessionStorage.removeItem('socra_redirect');
+    const redirectMatch=redirectPath.match(/\/chat\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+    if(redirectMatch){
+      urlChatId=redirectMatch[1];
+      // Restore the clean URL
+      history.replaceState({chatId:urlChatId},'',redirectPath);
+    }
+  }
+  if(urlChatId){
+    // Ensure chat is in our list (might need refresh), then open
+    const exists=chats.find(c=>c.id===urlChatId);
+    if(exists)await openChat(urlChatId,true);
+    else{await loadChats();const c2=chats.find(c=>c.id===urlChatId);if(c2)await openChat(urlChatId,true);}
+  }
+}
+
+// Extract chat UUID from URL: /chat/UUID or ?chat=UUID
+function getChatIdFromUrl(){
+  const path=window.location.pathname;
+  const pathMatch=path.match(/\/chat\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+  if(pathMatch)return pathMatch[1];
+  const params=new URLSearchParams(window.location.search);
+  return params.get('chat')||null;
+}
+
+// Update URL to reflect current chat (or clear it)
+function updateUrl(chatId){
+  if(chatId){
+    const base=window.location.pathname.replace(/\/chat\/.*$/,'').replace(/\/app\.html.*$/,'');
+    const newPath='/chat/'+chatId;
+    history.pushState({chatId},'',newPath);
+  }else{
+    history.pushState({},'',window.location.pathname.replace(/\/chat\/.*$/,'')+'/app.html');
+  }
 }
 
 async function loadProfile(){
@@ -204,12 +249,14 @@ async function createNewChat(){
   closeWorkspacePanel();
   document.querySelectorAll('.chat-item').forEach(i=>i.classList.remove('active'));
   newChatBtn.classList.add('active');setWelcomeMessage();
+  history.pushState({},'',window.location.pathname.replace(/\/chat\/.*$/,'')+'/app.html');
 }
 
-async function openChat(chatId){
+async function openChat(chatId,skipPush){
   const chat=chats.find(c=>c.id===chatId);if(!chat)return;
   currentChat=chat;newChatBtn.classList.remove('active');
   document.querySelectorAll('.chat-item').forEach(i=>i.classList.toggle('active',i.dataset.chatId===chatId));
+  if(!skipPush)history.pushState({chatId},'',window.location.pathname.replace(/\/chat\/.*$/,'').replace(/\/app\.html.*$/,'')+'/chat/'+chatId);
   const{data:messages}=await sb.from('messages').select('*').eq('chat_id',chatId).order('created_at',{ascending:true});
   chatMessages.innerHTML='';
   if(messages?.length){messages.forEach(msg=>renderMessage(msg.role,msg.content));chatMessages.scrollTop=chatMessages.scrollHeight;}
@@ -221,10 +268,10 @@ async function sendMessage(content){
   if(!content.trim()||isSending)return;
   isSending=true;sendBtn.disabled=true;composerInput.value='';autoResizeComposer();
   if(!currentChat){
-    const title=content.length>50?content.substring(0,50)+'...':content;
-    const{data:newChat,error}=await sb.from('chats').insert({user_id:currentUser.id,title}).select().single();
+    const{data:newChat,error}=await sb.from('chats').insert({user_id:currentUser.id,title:'New Conversation'}).select().single();
     if(error){showToast('Failed to create chat.',true);isSending=false;sendBtn.disabled=false;return;}
     currentChat=newChat;chats.unshift(currentChat);renderChatHistory();
+    history.pushState({chatId:currentChat.id},'',window.location.pathname.replace(/\/chat\/.*$/,'').replace(/\/app\.html.*$/,'')+'/chat/'+currentChat.id);
   }
   if(welcomeScreen.parentNode===chatMessages)chatMessages.removeChild(welcomeScreen);
   renderMessage('user',content);
@@ -239,10 +286,11 @@ async function sendMessage(content){
     renderMessage('assistant',response.content);
     await sb.from('messages').insert({chat_id:currentChat.id,role:'assistant',content:response.content,metrics:response.metrics});
     if(response.metrics)await metricsManager.saveMetrics(response.metrics,currentChat.id);
-    if(chats.find(c=>c.id===currentChat.id)?.title==='New Chat'){
-      const title=content.length>50?content.substring(0,50)+'...':content;
-      await sb.from('chats').update({title}).eq('id',currentChat.id);
-      currentChat.title=title;renderChatHistory();
+    // Update title from AI response
+    const newTitle=response.title||null;
+    if(newTitle&&currentChat.title==='New Conversation'){
+      await sb.from('chats').update({title:newTitle}).eq('id',currentChat.id);
+      currentChat.title=newTitle;renderChatHistory();
     }
   }catch(err){hideLoadingIndicator();renderMessage('assistant','I encountered an issue. Please try again.');showToast('Failed to get AI response.',true);}
   isSending=false;sendBtn.disabled=false;chatMessages.scrollTop=chatMessages.scrollHeight;
@@ -252,7 +300,7 @@ window.sendMessage=sendMessage;
 function renderMessage(role,content){
   const msg=document.createElement('div');msg.className=`message ${role}`;
   const roleLabel=role==='user'?'You':'Socra';
-  const rawMarkdown=content.replace(/<!--METRICS{[\s\S]*?}-->/g,'').trim();
+  const rawMarkdown=content.replace(/<!--METRICS{[\s\S]*?}-->/g,'').replace(/<!--TITLE:.+?-->/g,'').trim();
   let rendered;
   try{
     let processed=rawMarkdown;

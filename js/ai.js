@@ -107,7 +107,26 @@ Example of a complete response:
 That's a good start — you've identified the key variables. But what assumption are you making about the relationship between them?
 <!--METRICS{"reasoning_quality":5,"logical_consistency":4,"completeness":3,"originality":4,"confidence_alignment":5,"struggle_level":4,"intervention_type":"assumption_challenge","progress_indicator":4}-->
 
-This metrics block MUST appear in EVERY response you give, no exceptions.`;
+This metrics block MUST appear in EVERY response you give, no exceptions.
+
+---
+
+## CRITICAL: Conversation Title
+
+After the metrics block, you MUST also provide a short title (5-8 words) that summarizes the conversation topic. This title will be shown in the user's chat history sidebar.
+
+Format (use exactly this syntax on its own line after the metrics block):
+<!--TITLE:Your title here-->
+
+Rules:
+- Keep it 5-8 words, concise and descriptive
+- Focus on the topic or subject being discussed, not the intervention type
+- Do NOT include any intervention type label in the title
+- Examples: "Exploring Complex Numbers", "River Length Measurement Methods", "Python Debugging Strategy"
+
+Example of a complete response ending:
+<!--METRICS{"reasoning_quality":5,"logical_consistency":4,"completeness":3,"originality":4,"confidence_alignment":5,"struggle_level":4,"intervention_type":"assumption_challenge","progress_indicator":4}-->
+<!--TITLE:River Measurement Methods-->`;
 
 class AIClient {
   constructor(supabaseClient) { this.sb = supabaseClient; }
@@ -128,7 +147,9 @@ class AIClient {
 
   parseResponse(rawContent) {
     const metricsMatch = rawContent.match(/<!--METRICS({[\s\S]*?})-->/);
+    const titleMatch = rawContent.match(/<!--TITLE:(.+?)-->/);
     let metrics = null;
+    let title = null;
     let displayContent = rawContent;
 
     if (metricsMatch) {
@@ -141,7 +162,6 @@ class AIClient {
       displayContent = rawContent.replace(/<!--METRICS{[\s\S]*?}-->/, '').trim();
     } else {
       console.warn('[Socra] No metrics block found in AI response — generating fallback metrics');
-      // Generate fallback metrics when AI forgets the block
       metrics = {
         reasoning_quality: 5,
         logical_consistency: 5,
@@ -154,7 +174,13 @@ class AIClient {
       };
     }
 
-    return { content: displayContent, metrics };
+    if (titleMatch) {
+      title = titleMatch[1].trim();
+      displayContent = displayContent.replace(/<!--TITLE:.+?-->/, '').trim();
+      console.log('[Socra] Title received:', title);
+    }
+
+    return { content: displayContent, metrics, title };
   }
 }
 window.AIClient = AIClient;
