@@ -256,11 +256,15 @@ function renderMessage(role,content){
   let rendered;
   try{
     let processed=rawMarkdown;
-    // Step 1: Protect display math $$...$$ (including multiline)
+    // Step 1: Convert \[...\] display math to $$...$$ for consistent handling
+    processed=processed.replace(/\\\[([\s\S]+?)\\\]/g,(m,f)=>'$$'+f+'$$');
+    // Step 2: Convert \(...\) inline math to $...$ for consistent handling
+    processed=processed.replace(/\\\(([\s\S]+?)\\\)/g,(m,f)=>'$'+f+'$');
+    // Step 3: Render display math $$...$$ (including multiline)
     processed=processed.replace(/\$\$([\s\S]+?)\$\$/g,(m,f)=>{try{return '<div class="katex-display">'+katex.renderToString(f.trim(),{displayMode:true,throwOnError:false})+'</div>';}catch(e){return '<code>'+escapeHtml(m)+'</code>';}});
-    // Step 2: Protect inline math $...$
+    // Step 4: Render inline math $...$
     processed=processed.replace(/(?<!\$)\$(?!\$)([\s\S]+?)(?<!\$)\$(?!\$)/g,(m,f)=>{try{return katex.renderToString(f.trim(),{displayMode:false,throwOnError:false});}catch(e){return '<code>'+escapeHtml(m)+'</code>';}});
-    // Step 3: Markdown via marked.parse()
+    // Step 5: Markdown via marked.parse()
     rendered=marked.parse(processed);
   }catch(e){rendered=escapeHtml(rawMarkdown);}
   let bubbleContent=rendered;
