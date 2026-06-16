@@ -256,6 +256,11 @@ function renderMessage(role,content){
   let rendered;
   try{
     let processed=rawMarkdown;
+    // Strip intervention-type labels from raw markdown BEFORE rendering.
+    // Matches patterns like: **Assumption Challenge**, *Clarifying Question*, ## Recall Prompt, etc.
+    const interventionTypes='Clarifying Question|Recall Prompt|Assumption Challenge|Counterexample|Hint|Reflection Prompt|Step Verification|Analogy|Error Identification';
+    const intvRe=new RegExp('^(#{1,6}\\s*)?(\\*{1,2}|_{1,2})?\\s*('+interventionTypes+')\\s*(\\2)?\\s*$','gim');
+    processed=processed.replace(intvRe,'');
     // Step 1: Convert \[...\] display math to $$...$$ for consistent handling
     processed=processed.replace(/\\\[([\s\S]+?)\\\]/g,(m,f)=>'$$'+f+'$$');
     // Step 2: Convert \(...\) inline math to $...$ for consistent handling
@@ -268,12 +273,17 @@ function renderMessage(role,content){
     // Step 5: Markdown via marked.parse()
     rendered=marked.parse(processed);
   }catch(e){rendered=escapeHtml(rawMarkdown);}
-  // Strip intervention-type labels the AI may have added as headings (safety net)
-  rendered=rendered.replace(/<h[1-6][^>]*>\s*\*{0,2}(Clarifying Question|Recall Prompt|Assumption Challenge|Counterexample|Hint|Reflection Prompt|Step Verification|Analogy|Error Identification)\*{0,2}\s*<\/h[1-6]>/gi,'');
-  rendered=rendered.replace(/<p>\s*\*{0,2}(Clarifying Question|Recall Prompt|Assumption Challenge|Counterexample|Hint|Reflection Prompt|Step Verification|Analogy|Error Identification)\*{0,2}\s*<\/p>/gi,'');
   const copyIcon='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
   const copyCls=role==='user'?'msg-copy-btn hover-reveal':'msg-copy-btn always-show';
   msg.innerHTML=`<div class="message-role">${roleLabel}</div><div class="message-bubble">${rendered}</div><button class="${copyCls}" title="Copy">${copyIcon}</button>`;
+  // DOM-level safety net: remove any element whose text content is solely an intervention label
+  const bubble=msg.querySelector('.message-bubble');
+  if(bubble){
+    const intvLabels=/^(Clarifying Question|Recall Prompt|Assumption Challenge|Counterexample|Hint|Reflection Prompt|Step Verification|Analogy|Error Identification)$/i;
+    bubble.querySelectorAll('h1,h2,h3,h4,h5,h6,p').forEach(el=>{
+      if(intvLabels.test(el.textContent.trim()))el.remove();
+    });
+  }
   const copyBtn=msg.querySelector('.msg-copy-btn');
   if(copyBtn){
     const checkIcon='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
