@@ -1,24 +1,258 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<script>
-// GitHub Pages SPA redirect: captures /chat/UUID paths and redirects
-// to app.html which will read the path and open the correct chat.
-(function(){
-  var path = window.location.pathname;
-  // Match /chat/UUID pattern
-  var chatMatch = path.match(/^\/chat\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
-  if (chatMatch) {
-    // Store the chat path so app.html can restore it
-    sessionStorage.setItem('socra_redirect', path);
-    window.location.replace('/app.html');
-  } else {
-    window.location.replace('/app.html');
-  }
-})();
-</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 — Socra</title>
+  <link rel="icon" type="image/png" href="assets/small-logo.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #1B2A4A;
+      --navy-light: #2C3E6B;
+      --navy-dark: #0F1B33;
+      --gold: #C9A84C;
+      --gold-light: #D4B966;
+      --gold-dark: #A68B35;
+      --gold-10: rgba(201,168,76,0.12);
+      --white: #FFFFFF;
+      --surface: #F8F9FB;
+      --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+    body { font-family: var(--font); background: var(--navy-dark); color: var(--white); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+
+    /* --- Animated background dots --- */
+    .bg-dots { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+    .bg-dot {
+      position: absolute;
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--gold);
+      opacity: 0;
+      animation: float-dot linear infinite;
+    }
+    @keyframes float-dot {
+      0%   { opacity: 0; transform: translateY(0) scale(0.5); }
+      15%  { opacity: 0.5; }
+      85%  { opacity: 0.3; }
+      100% { opacity: 0; transform: translateY(-100vh) scale(1.2); }
+    }
+
+    /* --- Main content --- */
+    .not-found { position: relative; z-index: 1; text-align: center; padding: 40px 24px; max-width: 560px; }
+
+    /* Logo */
+    .not-found-logo { margin-bottom: 40px; }
+    .not-found-logo img { height: 52px; width: auto; border-radius: 6px; }
+
+    /* The big 404 — interactive hover glow */
+    .not-found-code {
+      font-size: 140px;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -6px;
+      color: transparent;
+      background: linear-gradient(135deg, var(--gold-light), var(--gold), var(--gold-dark));
+      -webkit-background-clip: text;
+      background-clip: text;
+      margin-bottom: 8px;
+      cursor: default;
+      user-select: none;
+      position: relative;
+      transition: transform 0.3s ease, filter 0.3s ease;
+      filter: drop-shadow(0 0 30px rgba(201,168,76,0.15));
+    }
+    .not-found-code:hover {
+      transform: scale(1.04);
+      filter: drop-shadow(0 0 60px rgba(201,168,76,0.4));
+    }
+
+    /* Socratic question reveal */
+    .not-found-question {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--gold-light);
+      margin-bottom: 16px;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fade-reveal 0.8s ease 0.6s forwards;
+    }
+    .not-found-answer {
+      font-size: 17px;
+      line-height: 1.7;
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 40px;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fade-reveal 0.8s ease 0.9s forwards;
+    }
+    @keyframes fade-reveal {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Typing cursor blink */
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1em;
+      background: var(--gold);
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink {
+      50% { opacity: 0; }
+    }
+
+    /* Buttons */
+    .not-found-actions {
+      display: flex;
+      gap: 14px;
+      justify-content: center;
+      flex-wrap: wrap;
+      opacity: 0;
+      transform: translateY(10px);
+      animation: fade-reveal 0.8s ease 1.2s forwards;
+    }
+    .btn-back {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 32px;
+      font-size: 15px; font-weight: 600;
+      color: var(--navy-dark);
+      background: linear-gradient(135deg, var(--gold-light), var(--gold));
+      border: none; border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      letter-spacing: 0.02em;
+    }
+    .btn-back:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(201,168,76,0.35); }
+    .btn-back:active { transform: translateY(0); }
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 32px;
+      font-size: 15px; font-weight: 600;
+      color: var(--gold);
+      background: transparent;
+      border: 1.5px solid rgba(201,168,76,0.4);
+      border-radius: 9999px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      letter-spacing: 0.02em;
+    }
+    .btn-secondary:hover { border-color: var(--gold); background: rgba(201,168,76,0.08); transform: translateY(-2px); }
+
+    /* Subtle quote at bottom */
+    .not-found-quote {
+      position: absolute;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 13px;
+      color: rgba(255,255,255,0.2);
+      font-style: italic;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .not-found-code { font-size: 80px; letter-spacing: -3px; }
+      .not-found-question { font-size: 18px; }
+      .not-found-answer { font-size: 15px; }
+      .not-found-logo img { height: 40px; }
+    }
+  </style>
 </head>
 <body>
-<p>Redirecting...</p>
+  <div class="bg-dots" id="bg-dots"></div>
+
+  <div class="not-found">
+    <div class="not-found-logo"><img src="assets/main-logo.png" alt="Socra"></div>
+    <div class="not-found-code" id="code-404">404</div>
+    <div class="not-found-question" id="question"></div>
+    <div class="not-found-answer" id="answer"></div>
+    <div class="not-found-actions">
+      <button class="btn-back" onclick="history.back()"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>Go Back</button>
+      <a href="app.html" class="btn-secondary"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>Open Socra</a>
+    </div>
+  </div>
+
+  <div class="not-found-quote">"The only true wisdom is in knowing you know nothing." — Socrates</div>
+
+  <script>
+    // --- SPA redirect: only /chat/UUID paths ---
+    (function(){
+      var path = window.location.pathname;
+      var chatMatch = path.match(/^\/chat\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+      if (chatMatch) {
+        sessionStorage.setItem('socra_redirect', path);
+        window.location.replace('/app.html');
+        return; // Stop rendering the 404 page
+      }
+      // Otherwise, show the 404 page (continue below)
+    })();
+
+    // --- Animated background dots ---
+    (function(){
+      var container = document.getElementById('bg-dots');
+      var count = 30;
+      for (var i = 0; i < count; i++) {
+        var dot = document.createElement('div');
+        dot.className = 'bg-dot';
+        dot.style.left = (Math.random() * 100) + '%';
+        dot.style.bottom = -(Math.random() * 20) + '%';
+        dot.style.animationDuration = (6 + Math.random() * 10) + 's';
+        dot.style.animationDelay = (Math.random() * 8) + 's';
+        dot.style.width = dot.style.height = (2 + Math.random() * 4) + 'px';
+        container.appendChild(dot);
+      }
+    })();
+
+    // --- Socratic question rotation ---
+    (function(){
+      var questions = [
+        { q: 'Is a path that does not exist truly a path?', a: 'Perhaps not — but the one back home certainly is.' },
+        { q: 'Can a lost thought find its way home?', a: 'Every wandering mind returns with the right question.' },
+        { q: 'What lies beyond the boundaries of knowledge?', a: 'The recognition that there is always more to discover.' },
+        { q: 'If a page cannot be found, does it mean it never existed?', a: 'Or perhaps it simply awaits a different question.' },
+        { q: 'Have you considered that the destination may be the journey itself?', a: 'Sometimes the wrong path leads to the right insight.' },
+      ];
+      var pick = questions[Math.floor(Math.random() * questions.length)];
+      var qEl = document.getElementById('question');
+      var aEl = document.getElementById('answer');
+
+      // Typewriter effect on the question
+      var chars = pick.q.split('');
+      var idx = 0;
+      qEl.innerHTML = '<span class="cursor"></span>';
+      function typeNext() {
+        if (idx < chars.length) {
+          qEl.innerHTML = '"' + chars.slice(0, idx + 1).join('') + '"<span class="cursor"></span>';
+          idx++;
+          setTimeout(typeNext, 40 + Math.random() * 30);
+        } else {
+          // Remove cursor after a beat, then fade in answer
+          setTimeout(function(){ qEl.innerHTML = '"' + pick.q + '"'; }, 1200);
+        }
+      }
+      // Start typing after the fade-reveal animation begins
+      setTimeout(typeNext, 700);
+      aEl.textContent = pick.a;
+    })();
+
+    // --- Interactive 404 text: mouse-follow glow ---
+    (function(){
+      var code = document.getElementById('code-404');
+      document.addEventListener('mousemove', function(e){
+        var x = (e.clientX / window.innerWidth - 0.5) * 20;
+        var y = (e.clientY / window.innerHeight - 0.5) * 20;
+        code.style.transform = 'perspective(600px) rotateY(' + x*0.3 + 'deg) rotateX(' + (-y*0.3) + 'deg)';
+      });
+    })();
+  </script>
 </body>
 </html>
