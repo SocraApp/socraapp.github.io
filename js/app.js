@@ -394,8 +394,6 @@ function setupEvents(){
   composerInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage(composerInput.value);}});
   composerInput.addEventListener('input',()=>{autoResizeComposer();sendBtn.disabled=!composerInput.value.trim()||isSending;});
   workspaceBtn.addEventListener('click',createWorkspaceDocument);
-  const sidebarWorkspaceBtn=$('new-workspace-btn-sidebar');
-  if(sidebarWorkspaceBtn)sidebarWorkspaceBtn.addEventListener('click',createWorkspaceDocument);
   closeWorkspace.addEventListener('click',closeWorkspacePanel);
   reopenWorkspaceBtn.addEventListener('click',openWorkspacePanel);
   workspaceTitle.addEventListener('change',async()=>{if(workspaceDoc)await sb.from('workspace_documents').update({title:workspaceTitle.value,updated_at:new Date().toISOString()}).eq('id',workspaceDoc.id);});
