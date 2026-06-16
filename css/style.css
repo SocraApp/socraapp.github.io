@@ -335,9 +335,37 @@ img{max-width:100%;height:auto;display:block}
 .message-bubble code{font-family:'SFMono-Regular',Consolas,monospace;font-size:0.9em}
 .message.user .message-bubble code{background:rgba(255,255,255,0.15);padding:1px 5px;border-radius:3px}
 .message.assistant .message-bubble code{background:var(--surface-2);padding:1px 5px;border-radius:3px}
-.message-bubble pre{background:var(--surface-2);padding:14px;border-radius:var(--r-md);overflow-x:auto;margin:10px 0}
+.message-bubble pre{background:var(--surface-2);padding:14px;border-radius:var(--r-md);overflow-x:auto;margin:10px 0;position:relative}
+.message-bubble pre code{background:none;padding:0;font-size:0.9em;line-height:1.5}
+.message-bubble :not(pre)>code{font-family:'SFMono-Regular',Consolas,monospace;font-size:0.9em}
 .message.user .message-bubble pre{background:rgba(255,255,255,0.1)}
 .message-bubble .katex-display{margin:12px 0;overflow-x:auto}
+
+/* Markdown formatting in chat messages */
+.message-bubble h1,.message-bubble h2,.message-bubble h3,.message-bubble h4,.message-bubble h5,.message-bubble h6{margin:14px 0 8px;font-weight:600;line-height:1.3;color:var(--text-primary)}
+.message-bubble h1{font-size:1.5em;border-bottom:1px solid var(--border);padding-bottom:6px}
+.message-bubble h2{font-size:1.3em;border-bottom:1px solid var(--border);padding-bottom:5px}
+.message-bubble h3{font-size:1.15em}
+.message-bubble h4{font-size:1.05em}
+.message-bubble h1:first-child,.message-bubble h2:first-child,.message-bubble h3:first-child{margin-top:0}
+.message-bubble strong{font-weight:600;color:var(--text-primary)}
+.message-bubble em{font-style:italic}
+.message-bubble blockquote{border-left:3px solid var(--gold);padding:6px 14px;margin:10px 0;background:var(--gold-06);border-radius:0 var(--r-sm) var(--r-sm) 0;color:var(--text-secondary)}
+.message-bubble blockquote p{margin-bottom:4px}
+.message-bubble hr{border:none;border-top:1px solid var(--border);margin:14px 0}
+.message-bubble a{color:var(--navy);text-decoration:underline;text-decoration-color:var(--navy-10);text-underline-offset:2px;transition:text-decoration-color var(--fast)}
+.message-bubble a:hover{text-decoration-color:var(--navy)}
+.message-bubble table{border-collapse:collapse;margin:10px 0;font-size:0.95em;width:100%}
+.message-bubble th,.message-bubble td{border:1px solid var(--border);padding:6px 10px;text-align:left}
+.message-bubble th{background:var(--surface-2);font-weight:600}
+.message-bubble img{max-width:100%;border-radius:var(--r-md);margin:8px 0}
+.message-bubble .katex{font-size:1.05em}
+
+/* Copy button on assistant messages */
+.msg-copy-btn{display:inline-flex;align-items:center;gap:5px;margin-top:10px;padding:4px 10px;border:1px solid var(--border);border-radius:var(--r-sm);background:var(--surface);color:var(--text-muted);font-size:12px;cursor:pointer;transition:all var(--fast);user-select:none}
+.msg-copy-btn:hover{background:var(--surface-2);color:var(--text-secondary);border-color:var(--border-dark)}
+.msg-copy-btn.copied{color:var(--success);border-color:var(--success);background:rgba(45,138,86,0.06)}
+.msg-copy-btn svg{flex-shrink:0}
 
 .ai-loading{display:flex;align-items:flex-start;margin-bottom:20px;animation:fadeUp 0.3s ease}
 .ai-loading-bubble{background:var(--white);border:1.5px solid var(--border);border-radius:var(--r-lg);border-bottom-left-radius:var(--r-sm);padding:18px 22px;max-width:80%}

@@ -252,15 +252,49 @@ window.sendMessage=sendMessage;
 function renderMessage(role,content){
   const msg=document.createElement('div');msg.className=`message ${role}`;
   const roleLabel=role==='user'?'You':'Socra';
+  const rawMarkdown=content.replace(/<!--METRICS{[\s\S]*?}-->/g,'').trim();
   let rendered;
   try{
-    const clean=content.replace(/<!--METRICS{[\s\S]*?}-->/g,'').trim();
-    let processed=clean;
-    processed=processed.replace(/\$\$([^$]+)\$\$/g,(m,f)=>{try{return '<div class="katex-display">'+katex.renderToString(f,{displayMode:true,throwOnError:false})+'</div>';}catch(e){return '<code>'+m+'</code>';}});
-    processed=processed.replace(/(?<!\$)\$(?!\$)([^$\n]+)(?<!\$)\$(?!\$)/g,(m,f)=>{try{return katex.renderToString(f,{displayMode:false,throwOnError:false});}catch(e){return '<code>'+m+'</code>';}});
+    let processed=rawMarkdown;
+    // Step 1: Protect display math $$...$$ (including multiline)
+    processed=processed.replace(/\$\$([\s\S]+?)\$\$/g,(m,f)=>{try{return '<div class="katex-display">'+katex.renderToString(f.trim(),{displayMode:true,throwOnError:false})+'</div>';}catch(e){return '<code>'+escapeHtml(m)+'</code>';}});
+    // Step 2: Protect inline math $...$
+    processed=processed.replace(/(?<!\$)\$(?!\$)([\s\S]+?)(?<!\$)\$(?!\$)/g,(m,f)=>{try{return katex.renderToString(f.trim(),{displayMode:false,throwOnError:false});}catch(e){return '<code>'+escapeHtml(m)+'</code>';}});
+    // Step 3: Markdown via marked.parse()
     rendered=marked.parse(processed);
-  }catch(e){rendered=escapeHtml(content);}
-  msg.innerHTML=`<div class="message-role">${roleLabel}</div><div class="message-bubble">${rendered}</div>`;
+  }catch(e){rendered=escapeHtml(rawMarkdown);}
+  let bubbleContent=rendered;
+  // Add copy button for assistant messages
+  if(role==='assistant'){
+    bubbleContent+=`<button class="msg-copy-btn" title="Copy response"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>Copy</span></button>`;
+  }
+  msg.innerHTML=`<div class="message-role">${roleLabel}</div><div class="message-bubble">${bubbleContent}</div>`;
+  // Attach copy handler after innerHTML is set
+  if(role==='assistant'){
+    const copyBtn=msg.querySelector('.msg-copy-btn');
+    if(copyBtn){
+      copyBtn.addEventListener('click',async()=>{
+        try{
+          await navigator.clipboard.writeText(rawMarkdown);
+          copyBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Copied!</span>';
+          copyBtn.classList.add('copied');
+          setTimeout(()=>{
+            copyBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>Copy</span>';
+            copyBtn.classList.remove('copied');
+          },2000);
+        }catch(e){
+          // Fallback for older browsers
+          const ta=document.createElement('textarea');ta.value=rawMarkdown;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();
+          copyBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg><span>Copied!</span>';
+          copyBtn.classList.add('copied');
+          setTimeout(()=>{
+            copyBtn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg><span>Copy</span>';
+            copyBtn.classList.remove('copied');
+          },2000);
+        }
+      });
+    }
+  }
   chatMessages.appendChild(msg);chatMessages.scrollTop=chatMessages.scrollHeight;
 }
 
