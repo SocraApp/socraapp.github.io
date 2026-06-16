@@ -501,7 +501,7 @@ img{max-width:100%;height:auto;display:block}
   --text-muted: #6E7681;
   --navy: #4A6FA5;
   --navy-light: #5D7EBD;
-  --navy-dark: #3A5A8A;
+  --navy-dark: #A0B4D4;
   --navy-10: rgba(74,111,165,0.25);
   --navy-06: rgba(74,111,165,0.15);
   --gold: #E5B95A;
@@ -1421,6 +1421,17 @@ img{max-width:100%;height:auto;display:block}
   fill: var(--gold);
 }
 
+[data-theme="dark"] .upgrade-btn:hover {
+  background: var(--gold);
+  color: #1B2A4A;
+}
+
 [data-theme="dark"] .logout-btn {
   color: var(--text-muted);
+}
+
+[data-theme="dark"] .logout-btn:hover {
+  background: var(--error);
+  color: var(--white);
+  border-color: var(--error);
 }
