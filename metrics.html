@@ -4,20 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cognitive Portfolio — Socra</title>
-  <link rel="icon" type="image/png" href="assets/small-logo.png">
+  <link rel="icon" type="image/png" href="/assets/small-logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <nav class="nav">
-    <a href="index.html" class="nav-logo"><img src="assets/main-logo.png" alt="Socra"></a>
-    <div class="nav-links"><a href="app.html" class="nav-link">Back to App</a></div>
+    <a href="/index.html" class="nav-logo"><img src="/assets/main-logo.png" alt="Socra"></a>
   </nav>
   <section class="metrics-page">
     <div class="metrics-container">
-      <a href="app.html" class="metrics-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>Back to Chat</a>
+      <a href="/app.html" class="metrics-back"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>Back to Chat</a>
       <h1 style="font-size:28px;font-weight:700;color:var(--navy);margin-bottom:8px;">Cognitive Portfolio</h1>
       <p style="color:var(--text-secondary);margin-bottom:32px;max-width:500px;">Track your intellectual growth over time. These metrics reflect how your reasoning evolves with every session.</p>
       <div class="metrics-loading" id="metrics-loading" style="text-align:center;padding:60px 0;color:var(--text-muted);">Loading your portfolio...</div>
@@ -25,7 +24,7 @@
         <div style="font-size:48px;margin-bottom:16px;opacity:0.3;">&#9734;</div>
         <h3 style="color:var(--navy);margin-bottom:8px;">No Metrics Yet</h3>
         <p style="color:var(--text-secondary);max-width:400px;margin:0 auto 20px;">Start a Socratic conversation to begin tracking your cognitive growth. Metrics will appear here after your first few exchanges.</p>
-        <a href="app.html" class="btn btn-primary" style="display:inline-block;">Start a Conversation</a>
+        <a href="/app.html" class="btn btn-primary" style="display:inline-block;">Start a Conversation</a>
       </div>
       <div class="metrics-content hidden" id="metrics-content">
         <div class="metrics-summary" id="metrics-summary">
@@ -48,7 +47,7 @@
   </section>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
-  <script src="js/supabase-client.js"></script>
+  <script src="/js/supabase-client.js"></script>
   <script>
     // Helper: wait for Supabase client
     function waitForSB() {
@@ -65,10 +64,18 @@
 
     (async () => {
       const sb = await waitForSB();
-      if (!sb) { window.location.href = 'auth.html'; return; }
+      if (!sb) { window.location.href = '/auth.html'; return; }
 
       const { data: { session } } = await sb.auth.getSession();
-      if (!session) { window.location.href = 'auth.html'; return; }
+      if (!session) { window.location.href = '/auth.html'; return; }
+
+      // Load and apply dark mode preference
+      try {
+        const { data: profile } = await sb.from('profiles').select('dark_mode').eq('id', session.user.id).single();
+        if (profile?.dark_mode) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      } catch (e) { /* ignore */ }
 
       const loadingEl = document.getElementById('metrics-loading');
       const emptyEl = document.getElementById('metrics-empty');
@@ -154,25 +161,41 @@
         // Chart — use the last 30 daily aggregates
         const cd = [...displayMetrics].reverse();
         const labels = cd.map(d => new Date(d.date + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const chartColors = isDark ? {
+          reasoning: { border: '#E5B95A', bg: 'rgba(229,185,90,0.15)' },
+          consistency: { border: '#4A6FA5', bg: 'rgba(74,111,165,0.15)' },
+          originality: { border: '#3FB68B', bg: 'rgba(63,182,139,0.15)' },
+          grid: '#30363D',
+          ticks: '#8B949E',
+          legend: '#8B949E'
+        } : {
+          reasoning: { border: '#1B2A4A', bg: 'rgba(27,42,74,0.08)' },
+          consistency: { border: '#C9A84C', bg: 'rgba(201,168,76,0.08)' },
+          originality: { border: '#2D8A56', bg: 'rgba(45,138,86,0.08)' },
+          grid: '#E2E5EA',
+          ticks: '#8D96A5',
+          legend: '#5A6577'
+        };
         new Chart(document.getElementById('metrics-chart'), {
           type: 'line',
           data: {
             labels,
             datasets: [
-              { label: 'Reasoning', data: cd.map(d => d.reasoning_quality), borderColor: '#1B2A4A', backgroundColor: 'rgba(27,42,74,0.08)', fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2 },
-              { label: 'Consistency', data: cd.map(d => d.logical_consistency), borderColor: '#C9A84C', backgroundColor: 'rgba(201,168,76,0.08)', fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2 },
-              { label: 'Originality', data: cd.map(d => d.originality), borderColor: '#2D8A56', fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2 }
+              { label: 'Reasoning', data: cd.map(d => d.reasoning_quality), borderColor: chartColors.reasoning.border, backgroundColor: chartColors.reasoning.bg, fill: true, tension: 0.3, pointRadius: 3, borderWidth: 2 },
+              { label: 'Consistency', data: cd.map(d => d.logical_consistency), borderColor: chartColors.consistency.border, backgroundColor: chartColors.consistency.bg, fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2 },
+              { label: 'Originality', data: cd.map(d => d.originality), borderColor: chartColors.originality.border, fill: false, tension: 0.3, pointRadius: 3, borderWidth: 2 }
             ]
           },
           options: {
             responsive: true,
             maintainAspectRatio: false,
             scales: {
-              y: { min: 0, max: 10, grid: { color: '#E2E5EA' }, ticks: { font: { family: 'Inter', size: 11 }, color: '#8D96A5' } },
-              x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 }, color: '#8D96A5' } }
+              y: { min: 0, max: 10, grid: { color: chartColors.grid }, ticks: { font: { family: 'Inter', size: 11 }, color: chartColors.ticks } },
+              x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 }, color: chartColors.ticks } }
             },
             plugins: {
-              legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12 }, color: '#5A6577', usePointStyle: true, padding: 16 } }
+              legend: { position: 'bottom', labels: { font: { family: 'Inter', size: 12 }, color: chartColors.legend, usePointStyle: true, padding: 16 } }
             }
           }
         });
