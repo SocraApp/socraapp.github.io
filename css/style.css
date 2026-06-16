@@ -251,7 +251,10 @@ img{max-width:100%;height:auto;display:block}
 .live-editor{flex:1;padding:20px 24px;overflow-y:auto;outline:none;font-size:var(--body);line-height:1.8;color:var(--text-primary);background:var(--white);min-height:200px;white-space:pre-wrap;word-wrap:break-word}
 
 /* ── Obsidian-style Syntax Visibility ── */
-.md-syntax{font-size:0;line-height:0;display:inline;overflow:hidden;vertical-align:middle;transition:font-size 0.12s ease,color 0.12s ease;user-select:none;pointer-events:none;color:var(--text-muted)}
+/* No transition — when md-active is set directly in the HTML output (pre-computed
+   at render time), there is no state change to animate. Any residual toggle from
+   onCursorChange should also be instant to avoid amplifying micro-flashes. */
+.md-syntax{font-size:0;line-height:0;display:inline;overflow:hidden;vertical-align:middle;user-select:none;pointer-events:none;color:var(--text-muted)}
 .md-syntax.md-active{font-size:inherit;line-height:inherit;user-select:auto;pointer-events:auto;color:var(--text-muted);opacity:0.7}
 .md-syntax.md-active:hover{opacity:1}
 
