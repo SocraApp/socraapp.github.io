@@ -257,10 +257,13 @@ function renderMessage(role,content){
   try{
     let processed=rawMarkdown;
     // Strip intervention-type labels from raw markdown BEFORE rendering.
-    // Matches patterns like: **Assumption Challenge**, *Clarifying Question*, ## Recall Prompt, etc.
     const interventionTypes='Clarifying Question|Recall Prompt|Assumption Challenge|Counterexample|Hint|Reflection Prompt|Step Verification|Analogy|Error Identification';
-    const intvRe=new RegExp('^(#{1,6}\\s*)?(\\*{1,2}|_{1,2})?\\s*('+interventionTypes+')\\s*(\\2)?\\s*$','gim');
-    processed=processed.replace(intvRe,'');
+    // Line-level: matches labels on their own line (## Heading, **Bold Label**, plain text)
+    const intvLineRe=new RegExp('^[ \\t]*(#{1,6}[ \\t]*)?(\\*{1,2}|_{1,2})?[ \\t]*('+interventionTypes+')[ \\t]*(\\2)?[ \\t]*$','gim');
+    processed=processed.replace(intvLineRe,'');
+    // Inline: matches labels embedded in text like ...text.**Reflection Prompt**
+    const intvInlineRe=new RegExp('[ \\t]*(\\*{1,2}|_{1,2})('+interventionTypes+')\\1[ \\t]*','gi');
+    processed=processed.replace(intvInlineRe,' ');
     // Step 1: Convert \[...\] display math to $$...$$ for consistent handling
     processed=processed.replace(/\\\[([\s\S]+?)\\\]/g,(m,f)=>'$$'+f+'$$');
     // Step 2: Convert \(...\) inline math to $...$ for consistent handling
