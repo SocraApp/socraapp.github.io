@@ -262,27 +262,23 @@ function renderMessage(role,content){
     processed=processed.replace(/\\\(([\s\S]+?)\\\)/g,(m,f)=>'$'+f+'$');
     // Step 3: Render display math $$...$$ (including multiline)
     processed=processed.replace(/\$\$([\s\S]+?)\$\$/g,(m,f)=>{try{return '<div class="katex-display">'+katex.renderToString(f.trim(),{displayMode:true,throwOnError:false})+'</div>';}catch(e){return '<code>'+escapeHtml(m)+'</code>';}});
-    // Step 4: Render inline math $...$
-    processed=processed.replace(/(?<!\$)\$(?!\$)([\s\S]+?)(?<!\$)\$(?!\$)/g,(m,f)=>{try{return katex.renderToString(f.trim(),{displayMode:false,throwOnError:false});}catch(e){return '<code>'+escapeHtml(m)+'</code>';}});
+    // Step 4: Render inline math $...$ — opening $ must NOT be followed by space,
+    // closing $ must NOT be preceded by space. This prevents matching currency like $2 or $1.50.
+    processed=processed.replace(/(?<!\$)\$(?!\s)(?!\$)([\s\S]+?)(?<!\s)(?<!\$)\$(?!\$)/g,(m,f)=>{try{return katex.renderToString(f.trim(),{displayMode:false,throwOnError:false});}catch(e){return '<code>'+escapeHtml(m)+'</code>';}});
     // Step 5: Markdown via marked.parse()
     rendered=marked.parse(processed);
   }catch(e){rendered=escapeHtml(rawMarkdown);}
-  let copyBtnHtml='';
-  if(role==='assistant'){
-    copyBtnHtml='<button class="msg-copy-btn" title="Copy"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button>';
-  }
-  msg.innerHTML=`<div class="message-role">${roleLabel}</div><div class="message-row"><div class="message-bubble">${rendered}</div>${copyBtnHtml}</div>`;
-  if(role==='assistant'){
-    const copyBtn=msg.querySelector('.msg-copy-btn');
-    if(copyBtn){
-      const copyIcon='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
-      const checkIcon='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-      copyBtn.addEventListener('click',async()=>{
-        try{await navigator.clipboard.writeText(rawMarkdown);}catch(e){const ta=document.createElement('textarea');ta.value=rawMarkdown;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}
-        copyBtn.innerHTML=checkIcon;copyBtn.classList.add('copied');
-        setTimeout(()=>{copyBtn.innerHTML=copyIcon;copyBtn.classList.remove('copied');},2000);
-      });
-    }
+  const copyIcon='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+  const copyCls=role==='user'?'msg-copy-btn hover-reveal':'msg-copy-btn always-show';
+  msg.innerHTML=`<div class="message-role">${roleLabel}</div><div class="message-bubble">${rendered}</div><button class="${copyCls}" title="Copy">${copyIcon}</button>`;
+  const copyBtn=msg.querySelector('.msg-copy-btn');
+  if(copyBtn){
+    const checkIcon='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+    copyBtn.addEventListener('click',async()=>{
+      try{await navigator.clipboard.writeText(rawMarkdown);}catch(e){const ta=document.createElement('textarea');ta.value=rawMarkdown;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();}
+      copyBtn.innerHTML=checkIcon;copyBtn.classList.add('copied');
+      setTimeout(()=>{copyBtn.innerHTML=copyIcon;copyBtn.classList.remove('copied');},2000);
+    });
   }
   chatMessages.appendChild(msg);chatMessages.scrollTop=chatMessages.scrollHeight;
 }
