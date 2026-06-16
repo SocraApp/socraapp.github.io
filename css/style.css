@@ -744,6 +744,15 @@ img{max-width:100%;height:auto;display:block}
   color: var(--text-primary);
 }
 
+/* Markdown headings in dark mode */
+[data-theme="dark"] .md-h1,
+[data-theme="dark"] .md-h2,
+[data-theme="dark"] .md-h3,
+[data-theme="dark"] .md-h4,
+[data-theme="dark"] .md-h5 {
+  color: #4A6FA5;
+}
+
 [data-theme="dark"] .msg-copy-btn {
   color: var(--text-muted);
 }
@@ -811,7 +820,7 @@ img{max-width:100%;height:auto;display:block}
 }
 
 [data-theme="dark"] .model-option.active {
-  background: var(--surface-3);
+  background: var(--gold-10);
 }
 
 [data-theme="dark"] .model-tier {
@@ -1127,7 +1136,7 @@ img{max-width:100%;height:auto;display:block}
 }
 
 [data-theme="dark"] .pricing-card.current-plan {
-  border-color: var(--gold);
+  border-color: #4A6FA5;
 }
 
 /* Dark mode for auth page */
