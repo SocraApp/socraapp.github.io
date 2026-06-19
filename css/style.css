@@ -303,10 +303,10 @@ img { max-width: 100%; height: auto; display: block; }
 .sidebar.collapsed .new-chat-btn { justify-content: center; padding: 10px; margin: 6px 8px; width: calc(100% - 16px); }
 .sidebar.collapsed .new-chat-btn span { display: none; }
 
-/* Sidebar link button (e.g. Cognitive Portfolio) — same shell as .new-chat-btn
+/* Sidebar link button (e.g. Cognitive Portfolio, View Documents) — same shell as .new-chat-btn
    but never has the .active state, and text-decoration: none on hover. */
 .sidebar-link-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 0 12px 4px; border-radius: var(--r); color: var(--ink); font-weight: 500; transition: all var(--fast); width: calc(100% - 24px); border: 1px solid var(--border); background: var(--surface-1); text-decoration: none; }
-.sidebar-link-btn:hover { background: var(--surface-2); border-color: var(--border-strong); color: var(--ink); text-decoration: none; }
+.sidebar-link-btn:hover { background: var(--primary-06); border-color: var(--primary-10); color: var(--primary-hover); text-decoration: none; }
 .sidebar.collapsed .sidebar-link-btn { justify-content: center; padding: 10px; margin: 0 8px 4px; width: calc(100% - 16px); }
 .sidebar.collapsed .sidebar-link-btn span { display: none; }
 
@@ -464,12 +464,12 @@ img { max-width: 100%; height: auto; display: block; }
 .documents-view-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 32px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .documents-view-header h2 { font-size: 22px; font-weight: 700; color: var(--ink); }
 .documents-close-btn { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: var(--r); color: var(--ink-muted); transition: all var(--fast); }
-.documents-close-btn:hover { background: var(--surface-2); color: var(--ink); }
+.documents-close-btn:hover { background: var(--primary-06); color: var(--primary-hover); }
 .documents-list { flex: 1; overflow-y: auto; padding: 24px 32px; }
 .documents-loading, .documents-empty { text-align: center; padding: 60px 20px; color: var(--ink-muted); font-size: 15px; }
 .documents-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
 .document-card { background: var(--canvas); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 18px 20px; cursor: pointer; transition: all var(--fast); display: flex; flex-direction: column; gap: 8px; }
-.document-card:hover { border-color: var(--border-strong); transform: translateY(-2px); box-shadow: var(--shadow-card); }
+.document-card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow-card); }
 .document-card-title { font-size: 16px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .document-card-preview { font-size: 14px; color: var(--ink-muted); line-height: 1.5; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; min-height: 63px; }
 .document-card-meta { font-size: 12px; color: var(--ink-muted); display: flex; gap: 8px; align-items: center; }
@@ -480,7 +480,7 @@ img { max-width: 100%; height: auto; display: block; }
 .document-single-view.hidden { display: none; }
 .document-single-header { display: flex; align-items: center; gap: 12px; padding: 16px 24px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .document-back-btn { display: flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 14px; font-weight: 500; color: var(--ink-muted); border-radius: var(--r); transition: all var(--fast); }
-.document-back-btn:hover { background: var(--surface-2); color: var(--ink); }
+.document-back-btn:hover { background: var(--primary-06); color: var(--primary-hover); }
 .document-single-title { flex: 1; font-size: 18px; font-weight: 600; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .document-open-chat-btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; font-size: 13px; font-weight: 600; color: #FFFFFF; background: var(--primary); border: none; border-radius: var(--r-full); transition: all var(--fast); flex-shrink: 0; }
 .document-open-chat-btn:hover { background: var(--primary-hover); transform: translateY(-1px); }
@@ -498,7 +498,7 @@ img { max-width: 100%; height: auto; display: block; }
 /* Dark mode for documents views */
 [data-theme="dark"] .documents-view { background: var(--canvas); }
 [data-theme="dark"] .document-card { background: var(--surface-1); border-color: var(--border); }
-[data-theme="dark"] .document-card:hover { border-color: var(--border-strong); }
+[data-theme="dark"] .document-card:hover { border-color: var(--primary); }
 [data-theme="dark"] .document-single-view { background: var(--canvas); }
 [data-theme="dark"] .document-open-chat-btn { color: #1C1C1C; }
 .workspace-panel { width: 58%; min-width: 0; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: var(--canvas); }
@@ -1206,7 +1206,7 @@ img { max-width: 100%; height: auto; display: block; }
    Only override hover/active states. */
 [data-theme="dark"] .new-chat-btn:hover { background: var(--surface-2); border-color: var(--border-strong); color: var(--ink); }
 [data-theme="dark"] .new-chat-btn.active { background: var(--primary-10); color: var(--primary-hover); border-color: transparent; }
-[data-theme="dark"] .sidebar-link-btn:hover { background: var(--surface-2); border-color: var(--border-strong); color: var(--ink); }
+[data-theme="dark"] .sidebar-link-btn:hover { background: var(--primary-06); border-color: var(--primary-10); color: var(--primary-hover); }
 [data-theme="dark"] .chat-item { color: var(--ink-muted); }
 [data-theme="dark"] .chat-item:hover { background: var(--surface-2); color: var(--ink); }
 [data-theme="dark"] .chat-item.active { background: var(--surface-2); color: var(--ink); }
