@@ -166,12 +166,72 @@ class AIClient {
 
   async sendMessage(messages) {
     const fullMessages = [{ role: 'system', content: SOCRA_SYSTEM_PROMPT }, ...messages];
+
+    // Inject a dynamic reminder as the LAST message (maximum recency bias).
+    // This checks the user's most recent message for solution-like patterns
+    // and explicitly tells the AI what to do. This is needed because the
+    // reasoning model sometimes ignores the system prompt's conclusion rules.
+    const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+    let looksLikeSolution = false;
+    if (lastUserMsg) {
+      const userText = lastUserMsg.content.toLowerCase();
+      // Detect patterns that indicate the user is stating a solution/answer
+      const solutionPatterns = [
+        /x\s*=\s*[+-]?\s*i\b/,           // x = i, x = -i
+        /x\s*=\s*\d/,                      // x = 5
+        /the answer is/,                   // "the answer is..."
+        /solution[s]? (is|are)/,           // "solutions are..."
+        /therefore/,                       // "therefore x = ..."
+        /so (x|the|it)/,                   // "so x = ..."
+        /thus/,                            // "thus..."
+        /\([+-]?i\)\s*\^?\s*2\s*=\s*-?\d/, // (-i)^2 = -1 (verification)
+        /\bis\s+(-?\d+)/,                  // "is 5" / "is -1"
+        /equals?\s+-?\d/,                  // "equals -1"
+      ];
+      looksLikeSolution = solutionPatterns.some(p => p.test(userText));
+
+      if (looksLikeSolution) {
+        // Add a strong reminder as the last system message
+        fullMessages.push({
+          role: 'system',
+          content: `STOP AND READ CAREFULLY: The user's last message appears to state a solution or answer. Their message was: "${lastUserMsg.content.substring(0, 500)}". If this is a correct solution to the problem being discussed, you MUST acknowledge it as correct, briefly explain why it's correct, congratulate the user, and STOP. Do NOT ask another question. Do NOT ask them to verify, write, or compute anything they already stated. Use intervention_type "conclusion" in your metrics.`
+        });
+      }
+    }
+
     try {
       const { data, error } = await this.sb.functions.invoke('chat', { body: { messages: fullMessages } });
       if (error) throw new Error('Failed to get AI response.');
       if (data?.error) throw new Error(data.error);
       const aiMessage = data?.choices?.[0]?.message?.content || '';
-      return this.parseResponse(aiMessage);
+      const result = this.parseResponse(aiMessage);
+
+      // Post-check: if the user's last message looked like a solution but the AI
+      // responded with a question (not a conclusion), do a second call with an
+      // even stronger instruction. This catches cases where the model ignores
+      // the reminder.
+      if (lastUserMsg && looksLikeSolution && result.content) {
+        const responseText = result.content.toLowerCase();
+        const isQuestion = responseText.includes('?') && !responseText.includes('correct') && !responseText.includes('exactly') && !responseText.includes('right') && !responseText.includes('well done') && !responseText.includes('congratul');
+        if (isQuestion) {
+          console.log('[Socra] AI responded with a question despite solution detection — retrying with stronger instruction');
+          const retryMessages = [...fullMessages];
+          // Replace the last system reminder with an even stronger one
+          retryMessages[retryMessages.length - 1] = {
+            role: 'system',
+            content: `CRITICAL OVERRIDE: The user has ALREADY stated the correct answer: "${lastUserMsg.content.substring(0, 500)}". You must NOT ask any question. You must NOT ask them to verify, compute, or write anything. Your response MUST be: (1) confirm their answer is correct, (2) briefly explain why, (3) say "Well done!" or similar. Use intervention_type "conclusion". This is non-negotiable — do not ask a question.`
+          };
+          const { data: retryData, error: retryError } = await this.sb.functions.invoke('chat', { body: { messages: retryMessages } });
+          if (!retryError && retryData?.choices?.[0]?.message?.content) {
+            const retryResult = this.parseResponse(retryData.choices[0].message.content);
+            if (retryResult.content && !retryResult.content.includes('?')) {
+              return retryResult;
+            }
+          }
+        }
+      }
+
+      return result;
     } catch (err) {
       console.error('AI error:', err);
       throw err;
