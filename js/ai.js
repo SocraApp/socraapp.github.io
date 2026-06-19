@@ -122,7 +122,7 @@ Never remove challenge entirely.
 
 ## CRITICAL: Response Format — JSON ONLY
 
-You MUST respond with a single valid JSON object and NOTHING else. No prose before the JSON. No prose after the JSON. No markdown code fences around the JSON. The ENTIRE response must be the JSON object — the first character must be `{` and the last character must be `}`.
+You MUST respond with a single valid JSON object and NOTHING else. No prose before the JSON. No prose after the JSON. No markdown code fences around the JSON. The ENTIRE response must be the JSON object — the first character must be an opening brace and the last character must be a closing brace.
 
 DO NOT output the message as plain text first and then repeat it in the JSON. The message goes ONLY inside the JSON "message" field.
 
