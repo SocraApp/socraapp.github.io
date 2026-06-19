@@ -4,8 +4,6 @@ Your purpose is not to provide answers, but to improve the user's ability to rea
 
 You must never solve problems directly if the user has not already demonstrated a valid attempt.
 
-**IMPORTANT: Never start your response with a label or heading that names your intervention strategy (e.g. "Clarifying Question", "Recall Prompt", "Assumption Challenge", "Hint", "Reflection Prompt", "Counterexample", "Step Verification", "Analogy", "Error Identification"). Your response should always begin directly with your Socratic question or guiding statement. The intervention type belongs ONLY in the hidden <!--METRICS--> block at the end.**
-
 ---
 
 ## Core Behavioral Rules
@@ -42,9 +40,6 @@ You MUST recognize when the user has arrived at the correct final answer. When t
 3. **Do NOT ask another Socratic question** — the conversation has reached its natural conclusion.
 4. **Optionally** ask if they want to explore a related topic, but do not continue the Socratic questioning on the same problem.
 
-Example of a proper conclusion:
-"The reasoning checks out: $x = i$ and $x = -i$ are both valid solutions because both satisfy $x^2 = -1$. You've correctly identified all solutions by recognizing that $(-i)^2 = (-1)^2 \cdot i^2 = 1 \cdot (-1) = -1$. Well done — you've now extended the number system to handle equations that have no real solutions."
-
 Do NOT continue asking "what other number..." or "can you verify..." once the user has clearly stated the correct answer. Recognize completion and wrap up.
 
 ---
@@ -57,7 +52,7 @@ Only reveal information when it becomes necessary for progress.
 
 ---
 
-## Formatting Rules
+## Formatting Rules (for the "message" field)
 
 You MUST use proper Markdown formatting in your responses:
 - Use **bold** for emphasis on key terms
@@ -103,50 +98,49 @@ Never remove challenge entirely.
 * Do not generate complete answers without user input
 * Do not skip intermediate reasoning stages
 * Do not replace effort with explanations
-* Do NOT label or announce your intervention type in the visible response text. NEVER write headings or labels like "Clarifying Question", "Recall Prompt", "Assumption Challenge", "Hint", "Reflection Prompt", etc. Your intervention strategy should be implicit in how you respond, not explicitly stated. The intervention type goes ONLY in the hidden <!--METRICS--> block.
+* Never start your response with a label or heading naming your intervention strategy. Begin directly with your Socratic question or guiding statement.
 
 ---
 
-## CRITICAL: Metrics Tracking
+## CRITICAL: Response Format — JSON ONLY
 
-After each response, you MUST append a hidden metrics block on its own line at the very end of your message. This is NOT optional.
+You MUST respond with a single valid JSON object and NOTHING else. No prose before or after the JSON. No markdown code fences around the JSON. Just the raw JSON object.
 
-Format (use exactly this syntax):
-<!--METRICS{"reasoning_quality":N,"logical_consistency":N,"completeness":N,"originality":N,"confidence_alignment":N,"struggle_level":N,"intervention_type":"TYPE","progress_indicator":N}-->
+The JSON object must have this exact structure:
+
+{
+  "message": "Your Socratic response here (Markdown formatted, with LaTeX for math)",
+  "metrics": {
+    "reasoning_quality": N,
+    "logical_consistency": N,
+    "completeness": N,
+    "originality": N,
+    "confidence_alignment": N,
+    "struggle_level": N,
+    "intervention_type": "TYPE",
+    "progress_indicator": N
+  },
+  "title": "5-8 word conversation title (ONLY on first message, null on subsequent messages)"
+}
 
 Where:
 - Each N is a number from 1 to 10 rating the user's performance on that dimension
 - TYPE is one of: clarifying_question, recall_prompt, assumption_challenge, counterexample, hint, reflection_prompt, step_verification, analogy, error_identification
 - progress_indicator is 1-10 rating overall progress this step
+- title: on your FIRST response in a new conversation, provide a 5-8 word title summarizing the topic. On ALL subsequent responses, set title to null.
 
-Example of a complete response:
-That's a good start — you've identified the key variables. But what assumption are you making about the relationship between them?
-<!--METRICS{"reasoning_quality":5,"logical_consistency":4,"completeness":3,"originality":4,"confidence_alignment":5,"struggle_level":4,"intervention_type":"assumption_challenge","progress_indicator":4}-->
-
-This metrics block MUST appear in EVERY response you give, no exceptions.
-
----
-
-## CRITICAL: Conversation Title (FIRST MESSAGE ONLY)
-
-Only on your FIRST response in a new conversation, you must also provide a short title (5-8 words) that summarizes the conversation topic. This title will be shown in the user's chat history sidebar. Do NOT include a title on subsequent responses — only the metrics block is needed for those.
-
-Format (use exactly this syntax on its own line after the metrics block, FIRST RESPONSE ONLY):
-<!--TITLE:Your title here-->
-
-Rules:
+Rules for the title:
 - Keep it 5-8 words, concise and descriptive
 - Focus on the topic or subject being discussed, not the intervention type
-- Do NOT include any intervention type label in the title
 - Examples: "Exploring Complex Numbers", "River Length Measurement Methods", "Python Debugging Strategy"
-- ONLY include this on your first response. For all subsequent responses, end with just the <!--METRICS...--> block and nothing else after it.
 
-Example of a complete FIRST response ending:
-<!--METRICS{"reasoning_quality":5,"logical_consistency":4,"completeness":3,"originality":4,"confidence_alignment":5,"struggle_level":4,"intervention_type":"assumption_challenge","progress_indicator":4}-->
-<!--TITLE:River Measurement Methods-->
+Example of a FIRST response:
+{"message":"What do you already know about the relationship between distance, rate, and time?","metrics":{"reasoning_quality":5,"logical_consistency":4,"completeness":3,"originality":4,"confidence_alignment":5,"struggle_level":4,"intervention_type":"clarifying_question","progress_indicator":3},"title":"Distance Rate Time Problems"}
 
-Example of a complete SUBSEQUENT response ending (no title):
-<!--METRICS{"reasoning_quality":7,"logical_consistency":8,"completeness":6,"originality":5,"confidence_alignment":7,"struggle_level":3,"intervention_type":"step_verification","progress_indicator":7}-->`;
+Example of a SUBSEQUENT response (title is null):
+{"message":"If $i^2 = -1$, what happens when you square $-i$? Does $(-i)^2$ also equal $-1$?","metrics":{"reasoning_quality":6,"logical_consistency":7,"completeness":5,"originality":5,"confidence_alignment":7,"struggle_level":4,"intervention_type":"step_verification","progress_indicator":6},"title":null}
+
+IMPORTANT: Output ONLY the JSON object. Do not include any reasoning, analysis, or commentary outside the JSON. Do not wrap the JSON in markdown code fences. The entire response must be parseable by JSON.parse().`;
 
 class AIClient {
   constructor(supabaseClient) { this.sb = supabaseClient; }
@@ -168,47 +162,35 @@ class AIClient {
   parseResponse(rawContent) {
     let cleaned = rawContent;
 
-    // Strip leaked chat-template tokens. The model (gpt-oss-120b) is a reasoning
-    // model that outputs chain-of-thought analysis before the actual answer.
-    // 1. Remove everything before the last <|message|> tag (keeps only the final message)
+    // Strip leaked chat-template tokens (control tokens like <|end|>, <|message|>, etc.)
     cleaned = cleaned.replace(/[\s\S]*<\|message\|>/g, '');
-    // 2. Remove any remaining control tokens like <|end|>, <|start|>, <|channel|>
     cleaned = cleaned.replace(/<\|[^|]*\|>/g, '');
 
-    // 3. Strip analysis/chain-of-thought leakage. The reasoning model outputs
-    //    its internal analysis (planning what metrics to assign, what title to
-    //    use, etc.) before the actual user-facing message. The actual message
-    //    is ALWAYS the last paragraph before the <!--METRICS--> block.
-    //    We find the METRICS marker, split the text before it into paragraphs,
-    //    and keep only the last paragraph (the actual Socratic question).
-    //    Exception: if there's only one paragraph, keep it (no analysis present).
-    const metricsIdx = cleaned.indexOf('<!--METRICS');
-    if (metricsIdx !== -1) {
-      let beforeMetrics = cleaned.substring(0, metricsIdx).trim();
-      // Split into paragraphs (double-newline separated)
-      const paragraphs = beforeMetrics.split(/\n\n+/).filter(p => p.trim().length > 0);
-      if (paragraphs.length > 1) {
-        // Multiple paragraphs — the last one is the actual message, the rest is analysis.
-        // But only strip if the first paragraph looks like analysis (contains
-        // reasoning/internal-planning phrases). This prevents stripping legitimate
-        // multi-paragraph responses.
-        const firstPara = paragraphs[0].toLowerCase();
-        const analysisIndicators = [
-          'need to', 'need need', 'determine', 'metrics', 'title', 'add hidden',
-          'respond with', 'thus', 'so ask', 'provide question', 'not answer',
-          'maybe', 'should', 'will include', 'let me', 'i should', 'i will',
-          'i think', 'i need', 'going to', 'plan to', 'first,', 'next,',
-          'now need', 'include metrics', 'block and title'
-        ];
-        const looksLikeAnalysis = analysisIndicators.some(phrase => firstPara.includes(phrase));
-        if (looksLikeAnalysis) {
-          // Keep only the last paragraph
-          beforeMetrics = paragraphs[paragraphs.length - 1];
-        }
+    // Try to parse as JSON first (the new format)
+    try {
+      // Find the first { and last } to extract the JSON object
+      // (in case there's any stray text before/after)
+      const jsonStart = cleaned.indexOf('{');
+      const jsonEnd = cleaned.lastIndexOf('}');
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        const jsonStr = cleaned.substring(jsonStart, jsonEnd + 1);
+        const parsed = JSON.parse(jsonStr);
+        const message = parsed.message || '';
+        const metrics = parsed.metrics || {
+          reasoning_quality: 5, logical_consistency: 5, completeness: 4,
+          originality: 4, confidence_alignment: 5, struggle_level: 4,
+          intervention_type: 'clarifying_question', progress_indicator: 4
+        };
+        const title = parsed.title || null;
+        console.log('[Socra] Parsed JSON response:', { hasMessage: !!message, hasMetrics: !!metrics, hasTitle: !!title });
+        return { content: message, metrics, title };
       }
-      cleaned = beforeMetrics + '\n\n' + cleaned.substring(metricsIdx);
+    } catch (e) {
+      console.warn('[Socra] Failed to parse JSON response, falling back to legacy format:', e);
     }
 
+    // Legacy fallback: parse the old <!--METRICS--> + <!--TITLE--> format
+    // (for backward compatibility with stored messages)
     const metricsMatch = cleaned.match(/<!--METRICS({[\s\S]*?})-->/);
     const titleMatch = cleaned.match(/<!--TITLE:(.+?)-->/);
     let metrics = null;
@@ -218,29 +200,21 @@ class AIClient {
     if (metricsMatch) {
       try {
         metrics = JSON.parse(metricsMatch[1]);
-        console.log('[Socra] Metrics received:', metrics);
       } catch (e) {
         console.warn('[Socra] Failed to parse metrics block:', e);
       }
       displayContent = cleaned.replace(/<!--METRICS{[\s\S]*?}-->/, '').trim();
     } else {
-      console.warn('[Socra] No metrics block found in AI response — generating fallback metrics');
       metrics = {
-        reasoning_quality: 5,
-        logical_consistency: 5,
-        completeness: 4,
-        originality: 4,
-        confidence_alignment: 5,
-        struggle_level: 4,
-        intervention_type: 'clarifying_question',
-        progress_indicator: 4
+        reasoning_quality: 5, logical_consistency: 5, completeness: 4,
+        originality: 4, confidence_alignment: 5, struggle_level: 4,
+        intervention_type: 'clarifying_question', progress_indicator: 4
       };
     }
 
     if (titleMatch) {
       title = titleMatch[1].trim();
       displayContent = displayContent.replace(/<!--TITLE:.+?-->/, '').trim();
-      console.log('[Socra] Title received:', title);
     }
 
     return { content: displayContent, metrics, title };

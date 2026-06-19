@@ -338,19 +338,28 @@ async function deleteChat(chatId){
 }
 
 async function createNewChat(){
+  // If on documents view, close it and go to app.html
+  if(!documentsView.classList.contains('hidden')||!documentSingleView.classList.contains('hidden')){
+    closeDocumentsViews();
+    history.pushState({},'','/app.html');
+  }
   currentChat=null;workspaceDoc=null;
   chatMessages.innerHTML='';chatMessages.appendChild(welcomeScreen);welcomeScreen.style.display='flex';
   closeWorkspacePanel();
   document.querySelectorAll('.chat-item').forEach(i=>i.classList.remove('active'));
   newChatBtn.classList.add('active');setWelcomeMessage();setWelcomeMode(true);
   document.title='Socra';
-  // Only update URL if currently on a /chat/UUID path
-  if(window.location.pathname.match(/\/chat\//)){
+  // Only update URL if currently on a /chat/UUID or /documents path
+  if(window.location.pathname.match(/\/chat\//)||window.location.pathname.includes('/documents')){
     history.pushState({},'','/app.html');
   }
 }
 
 async function openChat(chatId,skipPush){
+  // If on documents view, close it first
+  if(!documentsView.classList.contains('hidden')||!documentSingleView.classList.contains('hidden')){
+    closeDocumentsViews();
+  }
   const chat=chats.find(c=>c.id===chatId);if(!chat)return;
   currentChat=chat;newChatBtn.classList.remove('active');
   document.querySelectorAll('.chat-item').forEach(i=>i.classList.toggle('active',i.dataset.chatId===chatId));
@@ -508,6 +517,13 @@ function closeWorkspacePanel(){workspacePanel.classList.add('hidden');if(workspa
 // ============================================
 // Documents View (list + single document)
 // ============================================
+// Helper: close all documents views and show the chat split
+function closeDocumentsViews(){
+  documentsView.classList.add('hidden');
+  documentSingleView.classList.add('hidden');
+  $('workspace-chat-split').classList.remove('hidden');
+}
+
 async function openDocumentsView(){
   // Hide the chat split, show the documents list
   $('workspace-chat-split').classList.add('hidden');
@@ -524,9 +540,7 @@ async function openDocumentsView(){
 }
 
 function closeDocumentsView(){
-  documentsView.classList.add('hidden');
-  documentSingleView.classList.add('hidden');
-  $('workspace-chat-split').classList.remove('hidden');
+  closeDocumentsViews();
   // Go back to the current chat (or new chat)
   if(window.location.pathname.includes('/documents')){
     history.pushState({},'','/app.html');
@@ -570,18 +584,17 @@ async function openSingleDocument(docId){
   try{
     const{data,error}=await sb.from('workspace_documents').select('*').eq('id',docId).single();
     if(error||!data)throw error;
-    // Show single document view
-    documentsView.classList.add('hidden');
-    documentSingleView.classList.remove('hidden');
-    documentSingleTitle.textContent=data.title||'Untitled Document';
-    documentSingleContent.innerHTML=data.content?marked.parse(data.content):'<p style="color:var(--ink-muted)">This document is empty.</p>';
-    // Store chat_id for the Open Chat button
-    documentOpenChatBtn.dataset.chatId=data.chat_id;
-    // Update URL: /app.html/documents/UUID
+    // Close documents views, show the chat split with the workspace panel open
+    closeDocumentsViews();
+    $('workspace-chat-split').classList.remove('hidden');
+    // Open the corresponding chat (this loads the workspace document into the live editor)
+    const exists=chats.find(c=>c.id===data.chat_id);
+    if(!exists){await loadChats();}
+    await openChat(data.chat_id);
+    // The openChat call above will load the workspace document via loadWorkspaceDocument.
+    // Update URL to reflect we're viewing this specific document
     history.pushState({docId},'','/app.html/documents/'+docId);
     document.title=(data.title||'Untitled Document')+' — Socra';
-    // Apply syntax highlighting to code blocks in the rendered content
-    enhanceCodeBlocks(documentSingleContent);
   }catch(err){
     console.error('Failed to load document:',err);
     showToast('Failed to load document.',true);
@@ -597,8 +610,7 @@ function closeSingleDocument(){
 
 async function openChatFromDocument(chatId){
   // Close documents views, show the chat split, open the chat
-  documentsView.classList.add('hidden');
-  documentSingleView.classList.add('hidden');
+  closeDocumentsViews();
   $('workspace-chat-split').classList.remove('hidden');
   // Ensure the chat is in our list, then open it
   const exists=chats.find(c=>c.id===chatId);

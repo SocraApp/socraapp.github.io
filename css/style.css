@@ -225,16 +225,16 @@ img { max-width: 100%; height: auto; display: block; }
 .pricing-card .btn { width: 100%; }
 
 /* Per-plan accent colors — match the model selector dot colors:
-   Doxa = sky blue (#38BDF8, fixed), Elenchus = gold (#C9A84C, fixed), Nous = gold (#C9A84C, fixed).
+   Doxa = sky blue (#38BDF8, fixed), Elenchus = green (#2D8A56, fixed), Nous = gold (#C9A84C, fixed).
    This visually ties each pricing card to its corresponding model tier. */
 #plan-doxa { border-color: #38BDF8; }
-#plan-elenchus { border-color: #C9A84C; }
+#plan-elenchus { border-color: #2D8A56; }
 #plan-nous { border-color: #C9A84C; }
 /* Recommended badge inherits the plan's accent color */
-#plan-elenchus.featured::before { background: #C9A84C; color: #FFFFFF; }
+#plan-elenchus.featured::before { background: #2D8A56; color: #FFFFFF; }
 /* Current Plan badge inherits the plan's accent color */
 #plan-doxa.current-plan::after { background: #38BDF8; color: #FFFFFF; }
-#plan-elenchus.current-plan::after { background: #C9A84C; color: #FFFFFF; }
+#plan-elenchus.current-plan::after { background: #2D8A56; color: #FFFFFF; }
 #plan-nous.current-plan::after { background: #C9A84C; color: #FFFFFF; }
 
 
@@ -726,7 +726,7 @@ img { max-width: 100%; height: auto; display: block; }
 .model-selector-btn { display: flex; align-items: center; gap: 6px; padding: 4px 10px 4px 8px; border: 1px solid var(--border); border-radius: var(--r-full); background: var(--surface-1); color: var(--ink-muted); font-size: 12px; font-weight: 500; cursor: pointer; transition: all var(--fast); letter-spacing: 0.01em; }
 .model-selector-btn:hover { background: var(--surface-2); border-color: var(--border-strong); color: var(--ink); }
 .model-selector-dot { width: 7px; height: 7px; border-radius: 50%; background: #38BDF8; } /* Doxa = sky blue (fixed) */
-.model-selector-dot.med { background: #C9A84C; } /* Elenchus = gold (fixed) */
+.model-selector-dot.med { background: #2D8A56; } /* Elenchus = green (fixed) */
 .model-selector-dot.high { background: #C9A84C; } /* Nous = gold (fixed) */
 .model-selector-dropdown { position: absolute; bottom: calc(100% + 6px); left: 0; min-width: 220px; background: var(--canvas); border: 1px solid var(--border); border-radius: var(--r-md); box-shadow: var(--shadow-elevated); padding: 6px; display: none; z-index: 100; }
 .model-selector-dropdown.open { display: block; }
@@ -737,13 +737,14 @@ img { max-width: 100%; height: auto; display: block; }
 .model-option.locked:hover { color: var(--ink-muted); background: var(--surface-2); }
 .model-option-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .model-option-dot.low { background: #38BDF8; } /* Doxa = sky blue (fixed) */
-.model-option-dot.med { background: #C9A84C; } /* Elenchus = gold (fixed) */
+.model-option-dot.med { background: #2D8A56; } /* Elenchus = green (fixed) */
 .model-option-dot.high { background: #C9A84C; } /* Nous = gold (fixed) */
 .model-option.locked .model-option-dot { opacity: 0.4; }
+/* Lock/star icons for Elenchus + Nous = fixed gold */
+.model-lock-icon { display: flex; align-items: center; color: #C9A84C; margin-left: auto; flex-shrink: 0; transition: color var(--fast); }
+.model-option.locked:hover .model-lock-icon { color: #C9A84C; }
 .model-option-info { display: flex; align-items: center; gap: 6px; flex: 1; flex-wrap: wrap; }
 .model-tier { font-size: 11px; color: var(--ink-muted); font-weight: 400; }
-.model-lock-icon { display: flex; align-items: center; color: var(--primary); margin-left: auto; flex-shrink: 0; transition: color var(--fast); }
-.model-option.locked:hover .model-lock-icon { color: var(--primary-hover); }
 
 /* Composer wrapper — default (welcome + workspace-closed): row layout with
    align-items: flex-end. The textarea min-height matches the send button
@@ -1127,15 +1128,15 @@ img { max-width: 100%; height: auto; display: block; }
 [data-theme="dark"] .pricing-price .annual { color: var(--primary-hover); }
 [data-theme="dark"] .pricing-features li { color: var(--ink-muted); }
 [data-theme="dark"] .pricing-features .check-icon { color: var(--primary); }
-[data-theme="dark"] .pricing-card.featured { border-color: #C9A84C; background: var(--surface-2); }
+[data-theme="dark"] .pricing-card.featured { border-color: #2D8A56; background: var(--surface-2); }
 [data-theme="dark"] .pricing-card.current-plan { border-color: var(--ink); }
 /* Dark-mode per-plan accent colors (same fixed colors as light mode) */
 [data-theme="dark"] #plan-doxa { border-color: #38BDF8; }
-[data-theme="dark"] #plan-elenchus { border-color: #C9A84C; }
+[data-theme="dark"] #plan-elenchus { border-color: #2D8A56; }
 [data-theme="dark"] #plan-nous { border-color: #C9A84C; }
-[data-theme="dark"] #plan-elenchus.featured::before { background: #C9A84C; color: #1C1C1C; }
+[data-theme="dark"] #plan-elenchus.featured::before { background: #2D8A56; color: #1C1C1C; }
 [data-theme="dark"] #plan-doxa.current-plan::after { background: #38BDF8; color: #1C1C1C; }
-[data-theme="dark"] #plan-elenchus.current-plan::after { background: #C9A84C; color: #1C1C1C; }
+[data-theme="dark"] #plan-elenchus.current-plan::after { background: #2D8A56; color: #1C1C1C; }
 [data-theme="dark"] #plan-nous.current-plan::after { background: #C9A84C; color: #1C1C1C; }
 
 /* Auth */
