@@ -293,17 +293,17 @@ img { max-width: 100%; height: auto; display: block; }
 /* sidebar-search removed — replaced by Spotlight popup */
 
 /* New chat button — flat, minimal like ChatGPT.
-   Default background is #1E1D1B (dark) with light text for contrast.
-   Active + hover states keep their existing colors. */
-.new-chat-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 6px 12px 4px; border-radius: var(--r); color: #FFFFFF; font-weight: 500; transition: all var(--fast); width: calc(100% - 24px); border: 1px solid var(--border); background: #1E1D1B; }
-.new-chat-btn:hover { background: var(--surface-2); border-color: var(--border-strong); color: var(--ink); }
+   Default background matches the sidebar surface (var(--surface-1)) so the
+   button blends in. Active + hover states keep their existing colors. */
+.new-chat-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 6px 12px 4px; border-radius: var(--r); color: var(--ink); font-weight: 500; transition: all var(--fast); width: calc(100% - 24px); border: 1px solid var(--border); background: var(--surface-1); }
+.new-chat-btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
 .new-chat-btn.active { background: var(--primary-10); color: var(--primary-hover); border-color: transparent; }
 .sidebar.collapsed .new-chat-btn { justify-content: center; padding: 10px; margin: 6px 8px; width: calc(100% - 16px); }
 .sidebar.collapsed .new-chat-btn span { display: none; }
 
 /* Sidebar link button (e.g. Cognitive Portfolio) — same shell as .new-chat-btn
    but never has the .active state, and text-decoration: none on hover. */
-.sidebar-link-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 0 12px 4px; border-radius: var(--r); color: #FFFFFF; font-weight: 500; transition: all var(--fast); width: calc(100% - 24px); border: 1px solid var(--border); background: #1E1D1B; text-decoration: none; }
+.sidebar-link-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 0 12px 4px; border-radius: var(--r); color: var(--ink); font-weight: 500; transition: all var(--fast); width: calc(100% - 24px); border: 1px solid var(--border); background: var(--surface-1); text-decoration: none; }
 .sidebar-link-btn:hover { background: var(--surface-2); border-color: var(--border-strong); color: var(--ink); text-decoration: none; }
 .sidebar.collapsed .sidebar-link-btn { justify-content: center; padding: 10px; margin: 0 8px 4px; width: calc(100% - 16px); }
 .sidebar.collapsed .sidebar-link-btn span { display: none; }
@@ -921,7 +921,7 @@ img { max-width: 100%; height: auto; display: block; }
 .settings-overlay.open { opacity: 1; visibility: visible; }
 
 /* Settings panel — wider, ChatGPT-style with sidebar nav + content */
-.settings-panel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.96); width: 640px; max-width: calc(100vw - 40px); max-height: calc(100vh - 60px); background: var(--canvas); border-radius: var(--r-xl); box-shadow: var(--shadow-overlay); z-index: 2200; opacity: 0; visibility: hidden; transition: all var(--norm); display: flex; flex-direction: column; overflow: hidden; }
+.settings-panel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.96); width: 640px; max-width: calc(100vw - 40px); height: 70vh; max-height: calc(100vh - 60px); min-height: 400px; background: var(--canvas); border-radius: var(--r-xl); box-shadow: var(--shadow-overlay); z-index: 2200; opacity: 0; visibility: hidden; transition: all var(--norm); display: flex; flex-direction: column; overflow: hidden; }
 .settings-panel.open { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); }
 .settings-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .settings-title { display: flex; align-items: center; gap: 10px; }

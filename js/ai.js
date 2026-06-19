@@ -111,11 +111,11 @@ This metrics block MUST appear in EVERY response you give, no exceptions.
 
 ---
 
-## CRITICAL: Conversation Title
+## CRITICAL: Conversation Title (FIRST MESSAGE ONLY)
 
-After the metrics block, you MUST also provide a short title (5-8 words) that summarizes the conversation topic. This title will be shown in the user's chat history sidebar.
+Only on your FIRST response in a new conversation, you must also provide a short title (5-8 words) that summarizes the conversation topic. This title will be shown in the user's chat history sidebar. Do NOT include a title on subsequent responses — only the metrics block is needed for those.
 
-Format (use exactly this syntax on its own line after the metrics block):
+Format (use exactly this syntax on its own line after the metrics block, FIRST RESPONSE ONLY):
 <!--TITLE:Your title here-->
 
 Rules:
@@ -123,10 +123,14 @@ Rules:
 - Focus on the topic or subject being discussed, not the intervention type
 - Do NOT include any intervention type label in the title
 - Examples: "Exploring Complex Numbers", "River Length Measurement Methods", "Python Debugging Strategy"
+- ONLY include this on your first response. For all subsequent responses, end with just the <!--METRICS...--> block and nothing else after it.
 
-Example of a complete response ending:
+Example of a complete FIRST response ending:
 <!--METRICS{"reasoning_quality":5,"logical_consistency":4,"completeness":3,"originality":4,"confidence_alignment":5,"struggle_level":4,"intervention_type":"assumption_challenge","progress_indicator":4}-->
-<!--TITLE:River Measurement Methods-->`;
+<!--TITLE:River Measurement Methods-->
+
+Example of a complete SUBSEQUENT response ending (no title):
+<!--METRICS{"reasoning_quality":7,"logical_consistency":8,"completeness":6,"originality":5,"confidence_alignment":7,"struggle_level":3,"intervention_type":"step_verification","progress_indicator":7}-->`;
 
 class AIClient {
   constructor(supabaseClient) { this.sb = supabaseClient; }
@@ -148,17 +152,45 @@ class AIClient {
   parseResponse(rawContent) {
     let cleaned = rawContent;
 
-    // Strip leaked chat-template tokens. Some models emit raw control tokens
-    // like <|end|><|start|>assistant<|channel|>analysis...<|message|> when the
-    // server-side chat template isn't applied correctly. We remove everything
-    // up to and including the last <|message|> tag (the analysis/CoT section),
-    // then strip any remaining control tokens.
+    // Strip leaked chat-template tokens. The model (gpt-oss-120b) is a reasoning
+    // model that outputs chain-of-thought analysis before the actual answer.
+    // The analysis section is delimited by <|message|> tags, or — when those
+    // tags are absent — by the pattern of the analysis ending and the actual
+    // Socratic question beginning.
     // 1. Remove everything before the last <|message|> tag (keeps only the final message)
     cleaned = cleaned.replace(/[\s\S]*<\|message\|>/g, '');
-    // 2. Remove any remaining control tokens
+    // 2. Remove any remaining control tokens like <|end|>, <|start|>, <|channel|>
     cleaned = cleaned.replace(/<\|[^|]*\|>/g, '');
-    // 3. Also strip common variants without angle brackets
-    cleaned = cleaned.replace(/<\|end\|>|<\|start\|>|<\|channel\|>|<\|message\|>/g, '');
+
+    // 3. Strip analysis/chain-of-thought leakage. The reasoning model sometimes
+    //    outputs its internal analysis (planning what metrics to assign, what
+    //    title to use, etc.) before the actual user-facing message. The actual
+    //    message is the last substantive paragraph before the <!--METRICS--> block.
+    //    We find the METRICS marker and work backwards to the last paragraph break
+    //    (double newline), keeping only that final paragraph as the message.
+    const metricsIdx = cleaned.indexOf('<!--METRICS');
+    if (metricsIdx !== -1) {
+      // Get everything before the METRICS block
+      let beforeMetrics = cleaned.substring(0, metricsIdx);
+      // Find the last double-newline (paragraph break). Everything after it is
+      // the actual user-facing message.
+      const lastBreak = beforeMetrics.lastIndexOf('\n\n');
+      if (lastBreak !== -1 && lastBreak > 0) {
+        // Check if the text before the last break looks like analysis (contains
+        // common analysis phrases or is multiple paragraphs). If the content
+        // before the break is short (single paragraph), keep everything.
+        const analysisPart = beforeMetrics.substring(0, lastBreak).trim();
+        const messagePart = beforeMetrics.substring(lastBreak).trim();
+        // Heuristic: if the analysis part contains phrases like "metrics",
+        // "title", "need to", "determine", "add hidden", "respond with", etc.
+        // OR if it's more than 2 paragraphs, treat it as leaked analysis.
+        const analysisPhrases = /metrics|title|need to|determine|add hidden|respond with|thus|so ask|provide question|not answer/i;
+        if (analysisPhrases.test(analysisPart) || analysisPart.split(/\n\n+/).length > 2) {
+          beforeMetrics = messagePart;
+        }
+      }
+      cleaned = beforeMetrics + cleaned.substring(metricsIdx);
+    }
 
     const metricsMatch = cleaned.match(/<!--METRICS({[\s\S]*?})-->/);
     const titleMatch = cleaned.match(/<!--TITLE:(.+?)-->/);

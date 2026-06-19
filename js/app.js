@@ -158,16 +158,17 @@ async function loadProfile(){
   // Sync theme + accent from server profile to localStorage + apply.
   // SocraTheme.initProfile handles localStorage caching (anti-flicker) + re-application.
   if(window.SocraTheme)SocraTheme.initProfile(currentProfile);
-  const theme=currentProfile.theme||'system';
+  // Read the effective values from localStorage (source of truth after initProfile syncs).
+  // This ensures the Settings pickers show the user's actual current preference,
+  // even if the server value was null/missing.
+  const theme=window.SocraTheme?SocraTheme.getTheme():(currentProfile.theme||'system');
   if(themeSelect)themeSelect.value=theme;
-  const accent=currentProfile.accent_color||'';
-  // Show the effective accent color in the picker. When no custom accent is set,
-  // show the CSS default for the current mode (#252422 light / #E8E6E1 dark)
-  // so the picker reflects what the user actually sees.
+  const accent=window.SocraTheme?SocraTheme.getAccentColor():(currentProfile.accent_color||'');
   if(accentColorInput){
     if(accent){
       accentColorInput.value=accent;
     }else{
+      // No custom accent — show the CSS default for the current mode
       const isDark=document.documentElement.getAttribute('data-theme')==='dark';
       accentColorInput.value=isDark?'#E8E6E1':'#252422';
     }
@@ -383,10 +384,26 @@ window.sendMessage=sendMessage;
 function renderMessage(role,content){
   const msg=document.createElement('div');msg.className=`message ${role}`;
   const roleLabel=role==='user'?'You':'Socra';
-  // Strip leaked chat-template tokens + metrics/title blocks from stored messages
-  const rawMarkdown=content
+  // Strip leaked chat-template tokens + analysis/CoT leakage + metrics/title blocks
+  let cleaned=content
     .replace(/[\s\S]*<\|message\|>/g,'')      // remove everything before the last <|message|> tag
-    .replace(/<\|[^|]*\|>/g,'')                // remove any remaining control tokens
+    .replace(/<\|[^|]*\|>/g,'');               // remove any remaining control tokens
+  // Strip analysis/chain-of-thought leakage: keep only the last paragraph before METRICS
+  const metricsIdx=cleaned.indexOf('<!--METRICS');
+  if(metricsIdx!==-1){
+    let beforeMetrics=cleaned.substring(0,metricsIdx);
+    const lastBreak=beforeMetrics.lastIndexOf('\n\n');
+    if(lastBreak!==-1&&lastBreak>0){
+      const analysisPart=beforeMetrics.substring(0,lastBreak).trim();
+      const messagePart=beforeMetrics.substring(lastBreak).trim();
+      const analysisPhrases=/metrics|title|need to|determine|add hidden|respond with|thus|so ask|provide question|not answer/i;
+      if(analysisPhrases.test(analysisPart)||analysisPart.split(/\n\n+/).length>2){
+        beforeMetrics=messagePart;
+      }
+    }
+    cleaned=beforeMetrics+cleaned.substring(metricsIdx);
+  }
+  const rawMarkdown=cleaned
     .replace(/<!--METRICS{[\s\S]*?}-->/g,'')  // remove metrics blocks
     .replace(/<!--TITLE:.+?-->/g,'')          // remove title blocks
     .trim();
@@ -704,7 +721,29 @@ function scrollSpotlightToSelected(){
 }
 
 // Settings Panel Functions
-function openSettings(){if(settingsPanel){settingsPanel.classList.add('open');settingsOverlay.classList.add('open');document.body.style.overflow='hidden';}}
+function openSettings(){
+  if(settingsPanel){
+    settingsPanel.classList.add('open');
+    settingsOverlay.classList.add('open');
+    document.body.style.overflow='hidden';
+    // Sync pickers with current localStorage values (source of truth)
+    syncSettingsUI();
+  }
+}
+function syncSettingsUI(){
+  if(window.SocraTheme){
+    if(themeSelect)themeSelect.value=SocraTheme.getTheme();
+    const accent=SocraTheme.getAccentColor();
+    if(accentColorInput){
+      if(accent){
+        accentColorInput.value=accent;
+      }else{
+        const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+        accentColorInput.value=isDark?'#E8E6E1':'#252422';
+      }
+    }
+  }
+}
 function closeSettings(){if(settingsPanel){settingsPanel.classList.remove('open');settingsOverlay.classList.remove('open');document.body.style.overflow='';}}
 // ============================================
 // Theme system: delegates to SocraTheme (shared in /js/theme.js)
