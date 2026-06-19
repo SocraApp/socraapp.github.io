@@ -119,7 +119,7 @@ img { max-width: 100%; height: auto; display: block; }
 .nav { position: fixed; top: 0; left: 0; right: 0; height: var(--nav-h); background: var(--canvas); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--pad); z-index: 1000; transition: box-shadow var(--norm); }
 .nav.scrolled { box-shadow: var(--shadow-card); }
 .nav-logo { display: flex; align-items: center; gap: 8px; }
-.nav-logo img { height: 40px; width: auto; border-radius: 4px; }
+.nav-logo img { height: 36px; width: 36px; border-radius: 8px; object-fit: contain; }
 .nav-links { display: flex; align-items: center; gap: 32px; }
 .nav-links a.nav-link { font-size: var(--body); font-weight: 500; color: var(--ink-muted); transition: color var(--fast); position: relative; padding: 4px 0; }
 .nav-links a.nav-link::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 2px; background: var(--primary); border-radius: 1px; transition: width var(--norm); }
@@ -236,7 +236,7 @@ img { max-width: 100%; height: auto; display: block; }
 .auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--surface-1); padding: var(--pad); }
 .auth-container { width: 100%; max-width: 440px; }
 .auth-logo { display: flex; justify-content: center; margin-bottom: 40px; }
-.auth-logo img { height: 56px; width: auto; border-radius: 4px; }
+.auth-logo img { width: 56px; height: 56px; border-radius: 12px; object-fit: contain; }
 .auth-card { background: var(--canvas); border: 1.5px solid var(--border); border-radius: var(--r-lg); padding: 36px; box-shadow: var(--shadow-elevated); }
 .auth-tabs { display: flex; border-bottom: 1.5px solid var(--border); margin-bottom: 28px; }
 .auth-tab { flex: 1; padding: 12px; text-align: center; font-weight: 600; color: var(--ink-muted); border-bottom: 2px solid transparent; transition: all var(--fast); cursor: pointer; }
@@ -263,7 +263,11 @@ img { max-width: 100%; height: auto; display: block; }
 .sidebar.collapsed { width: var(--sidebar-collapsed); min-width: var(--sidebar-collapsed); }
 .sidebar-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; min-height: 60px; }
 .sidebar-logo-full, .sidebar-logo-small { display: flex; align-items: center; cursor: pointer; }
-.sidebar-logo-full img { height: 36px; width: auto; border-radius: 4px; }
+/* Both the expanded and collapsed sidebar use the small (square) logo.
+   The expanded version renders at 32px (matching the collapsed size for consistency),
+   so the brand mark looks identical whether the sidebar is open or closed. */
+.sidebar-logo-full img { width: 32px; height: 32px; border-radius: 8px; transition: transform var(--fast); object-fit: contain; }
+.sidebar-logo-full:hover img { transform: scale(1.05); }
 .sidebar-logo-small { display: none; }
 .sidebar-logo-small img { width: 32px; height: 32px; border-radius: 8px; transition: transform var(--fast); object-fit: contain; }
 .sidebar-logo-small:hover img { transform: scale(1.05); }
@@ -294,7 +298,19 @@ img { max-width: 100%; height: auto; display: block; }
 .chat-item { display: flex; align-items: center; padding: 8px 10px; border-radius: var(--r); cursor: pointer; transition: background var(--fast); gap: 8px; margin-bottom: 1px; position: relative; color: var(--ink); }
 .chat-item:hover { background: var(--surface-2); }
 .chat-item.active { background: var(--surface-2); color: var(--ink); font-weight: 500; }
-.chat-item-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+/* Title truncation: when not hovered, ellipsis runs to the end of the row.
+   When hovered, reserve space on the right for the three-dot menu (24px wide
+   + 4px gap) so the ellipsis never touches the menu icon. */
+.chat-item-title {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font-size: 14px;
+  padding-right: 0;
+  transition: padding-right var(--fast);
+}
+.chat-item:hover .chat-item-title,
+.chat-item.active .chat-item-title {
+  padding-right: 28px; /* 24px menu button + 4px gap */
+}
 .chat-item-actions { display: none; align-items: center; gap: 2px; flex-shrink: 0; }
 .chat-item:hover .chat-item-actions { display: flex; }
 .chat-item-menu-btn { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border-radius: var(--r-sm); color: var(--ink-muted); transition: all var(--fast); }
@@ -312,7 +328,7 @@ img { max-width: 100%; height: auto; display: block; }
 
 /* Profile + logout section — ChatGPT-style minimal */
 .sidebar-profile { border-top: 1px solid var(--border); padding: 8px 12px 12px; background: var(--surface-1); }
-.profile-info { display: flex; align-items: center; gap: 10px; padding: 6px 4px 8px; cursor: pointer; border-radius: var(--r); transition: background var(--fast); }
+.profile-info { display: flex; align-items: center; gap: 10px; padding: 6px 8px; cursor: pointer; border-radius: var(--r); transition: background var(--fast); margin-bottom: 8px; }
 .profile-info:hover { background: var(--surface-2); }
 .profile-info .profile-avatar { width: 30px; height: 30px; border-radius: var(--r-full); background: var(--primary); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; flex-shrink: 0; }
 .profile-info .profile-details { flex: 1; min-width: 0; }
@@ -471,7 +487,7 @@ img { max-width: 100%; height: auto; display: block; }
 .welcome-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; padding: 40px 20px; animation: fadeUp 0.4s var(--ease); }
 .welcome-icon { display: none; } /* logo block deprecated in favor of wordmark */
 .welcome-icon img { width: 56px; height: 56px; border-radius: 12px; }
-.welcome-wordmark { font-size: 44px; font-weight: 700; letter-spacing: -0.02em; color: var(--ink); margin-bottom: 8px; line-height: 1.2; }
+.welcome-wordmark { font-size: 44px; font-weight: 700; letter-spacing: 0.08em; color: var(--ink); margin-bottom: 8px; line-height: 1.2; }
 .welcome-subtitle { font-size: 15px; color: var(--ink-muted); margin-bottom: 36px; max-width: 480px; line-height: 1.6; }
 .welcome-screen h2 { font-size: 22px; margin-bottom: 8px; color: var(--ink); font-weight: 600; display: none; } /* legacy h2 hidden — replaced by wordmark */
 .welcome-screen p { color: var(--ink-muted); max-width: 480px; margin-bottom: 32px; line-height: 1.7; display: none; }

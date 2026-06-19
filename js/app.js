@@ -15,7 +15,7 @@ const workspaceTitle=$('workspace-title'),profileAvatar=$('profile-avatar'),prof
 const profilePlan=$('profile-plan'),upgradeBtn=$('upgrade-btn'),formatHeading=$('format-heading');
 const toastContainer=$('toast-container'),mobileMenuBtn=$('mobile-menu-btn');
 const reopenWorkspaceBtn=$('reopen-workspace-btn'),sidebarLogoFull=$('sidebar-logo-full'),sidebarLogoSmall=$('sidebar-logo-small');
-const settingsBtn=$('settings-btn'),settingsPanel=$('settings-panel'),settingsOverlay=$('settings-overlay');
+const settingsBtn=null,settingsPanel=$('settings-panel'),settingsOverlay=$('settings-overlay');
 const settingsClose=$('settings-close'),darkModeToggle=$('dark-mode-toggle');
 
 // Configure marked to treat single newlines as <br>
@@ -480,7 +480,7 @@ function setupEvents(){
     if(target===welcomeComposerInput){if(welcomeSendBtn)welcomeSendBtn.disabled=false;}else{sendBtn.disabled=false;}
     target.focus();
   }});
-  $('profile-info').addEventListener('click',e=>{if(!e.target.closest('.settings-btn'))window.location.href='/metrics.html';});
+  $('profile-info').addEventListener('click',()=>{openSettings();});
   upgradeBtn.addEventListener('click',()=>window.location.href='/pricing.html');
   $('logout-btn').addEventListener('click',async()=>{await sb.auth.signOut();window.location.href='/auth.html';});
   if(mobileMenuBtn)mobileMenuBtn.addEventListener('click',()=>sidebar.classList.toggle('mobile-open'));
