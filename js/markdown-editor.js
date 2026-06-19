@@ -97,17 +97,12 @@ class MarkdownEditor {
     this.editorEl.addEventListener('blur', () => this.hideAllSyntax());
 
     this.editorEl.addEventListener('click', (e) => {
-      // Only send question when clicking the ::before circle (leftmost ~24px)
-      // Otherwise, let the cursor be placed normally for editing
+      // Question block: clicking anywhere on it sends the question to the chat
       const qb = e.target.closest('.question-block');
       if (qb) {
-        const rect = qb.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        // The ::before circle is ~18px + 6px margin = ~24px from the left
-        if (clickX <= 24) {
-          const text = qb.textContent.trim();
-          if (text && window.sendMessage) window.sendMessage(text);
-        }
+        const text = qb.textContent.trim();
+        if (text && window.sendMessage) window.sendMessage(text);
+        return; // Don't do code block handling
       }
       // If clicking on a highlighted code block, switch to editable mode
       // by setting the cursor inside the code block and re-rendering
@@ -117,20 +112,34 @@ class MarkdownEditor {
         const siblings = Array.from(this.editorEl.children);
         const hlIdx = siblings.indexOf(highlighted);
         if (hlIdx > 0) {
-          // The fence-open line is the sibling before the highlighted block
           const fenceOpenLine = siblings[hlIdx - 1];
           const openLineIdx = parseInt(fenceOpenLine.dataset?.line || '0');
-          // Set cursor to the first code line (line after fence-open)
+          // Calculate which code line was clicked based on click Y position
           const lines = this.rawMarkdown.split('\n');
+          const pre = highlighted.querySelector('pre');
+          const preRect = pre ? pre.getBoundingClientRect() : highlighted.getBoundingClientRect();
+          const lineHeight = parseFloat(getComputedStyle(pre || highlighted).lineHeight) || 21.6;
+          const clickY = e.clientY - preRect.top;
+          const clickedLineOffset = Math.max(0, Math.floor(clickY / lineHeight));
+          // Calculate the raw position of the clicked code line
           let lineStart = 0;
           for (let i = 0; i <= openLineIdx && i < lines.length; i++) {
             lineStart += lines[i].length + 1;
           }
-          this.cursorPos = lineStart;
-          this.selectionStart = lineStart;
-          this.selectionEnd = lineStart;
+          // Add the clicked line offset
+          let targetPos = lineStart;
+          for (let i = 0; i < clickedLineOffset && (openLineIdx + 1 + i) < lines.length; i++) {
+            targetPos += lines[openLineIdx + 1 + i].length + 1;
+          }
+          // Also try to place cursor at the X position within the line
+          const charWidth = lineHeight * 0.6; // approximate
+          const clickX = e.clientX - preRect.left;
+          const charOffsetInLine = Math.max(0, Math.min(Math.floor(clickX / charWidth), lines[openLineIdx + 1 + clickedLineOffset]?.length || 0));
+          targetPos += charOffsetInLine;
+          this.cursorPos = targetPos;
+          this.selectionStart = targetPos;
+          this.selectionEnd = targetPos;
           this.render();
-          // Place cursor at the start of the first code line
           requestAnimationFrame(() => this.placeCursorFromModel());
         }
       }

@@ -555,9 +555,9 @@ img { max-width: 100%; height: auto; display: block; }
 .live-editor hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 
 /* Question blocks — charcoal accent */
-.live-editor .question-block { background: var(--primary-06); border-left: 3px solid var(--primary); padding: 6px 12px; border-radius: 0 var(--r) var(--r) 0; margin: 4px 0; display: inline; color: var(--ink); }
+.live-editor .question-block { background: var(--primary-06); border-left: 3px solid var(--primary); padding: 10px 16px; border-radius: 0 var(--r) var(--r) 0; cursor: pointer; margin: 8px 0; transition: background var(--fast); display: inline-flex; align-items: center; gap: 10px; color: var(--ink); }
 .live-editor .question-block:hover { background: var(--primary-10); }
-.live-editor .question-block::before { content: '?'; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: var(--primary); color: #FFFFFF; border-radius: var(--r-full); font-size: 12px; font-weight: 700; margin-right: 6px; vertical-align: middle; }
+.live-editor .question-block::before { content: '?'; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: var(--primary); color: #FFFFFF; border-radius: var(--r-full); font-size: 13px; font-weight: 700; flex-shrink: 0; }
 
 /* KaTeX */
 .md-katex { display: inline; }
@@ -1210,6 +1210,7 @@ img { max-width: 100%; height: auto; display: block; }
    Only override hover/active states. */
 [data-theme="dark"] .new-chat-btn:hover { background: var(--primary-06); border-color: var(--primary-10); color: var(--primary-hover); }
 [data-theme="dark"] .new-chat-btn.active { background: var(--primary-10); color: var(--primary-hover); border-color: transparent; }
+[data-theme="dark"] .sidebar-link-btn { color: var(--ink); }
 [data-theme="dark"] .sidebar-link-btn:hover { background: var(--primary-06); border-color: var(--primary-10); color: var(--primary-hover); }
 [data-theme="dark"] .sidebar-link-btn.active { background: var(--primary-10); color: var(--primary-hover); border-color: transparent; }
 [data-theme="dark"] .chat-item { color: var(--ink-muted); }
