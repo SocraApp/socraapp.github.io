@@ -457,7 +457,17 @@ function setupEvents(){
   sidebarLogoFull.addEventListener('click',e=>{e.preventDefault();createNewChat();});
   // Collapsed sidebar: small logo expands the sidebar
   sidebarLogoSmall.addEventListener('click',e=>{e.preventDefault();sidebar.classList.remove('collapsed');});
-  searchToggle.addEventListener('click',()=>{sidebarSearch.classList.toggle('active');if(sidebarSearch.classList.contains('active'))chatSearchInput.focus();});
+  searchToggle.addEventListener('click',()=>{
+    const willOpen=!sidebarSearch.classList.contains('active');
+    sidebarSearch.classList.toggle('active');
+    if(willOpen){
+      chatSearchInput.focus();
+    }else{
+      // Closing the search bar: clear the query and show all chats again
+      chatSearchInput.value='';
+      renderChatHistory('');
+    }
+  });
   chatSearchInput.addEventListener('input',()=>renderChatHistory(chatSearchInput.value));
   newChatBtn.addEventListener('click',createNewChat);
   sendBtn.addEventListener('click',()=>sendMessage(composerInput.value));
