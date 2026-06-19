@@ -281,8 +281,73 @@ class MarkdownEditor {
     const activeElId = this._computeActiveElementId(cursorLineIdx);
     const html = this.renderDocument(this.rawMarkdown, cursorLineIdx, activeElId);
     this.editorEl.innerHTML = html;
+    // Post-process: apply syntax highlighting to complete, non-active code blocks
+    this._highlightCodeBlocks(cursorLineIdx);
     this.placeCursorFromModel();
     this.onCursorChange();
+  }
+
+  /**
+   * Apply highlight.js to fenced code blocks that are complete (have both
+   * opening and closing fences) and NOT active (cursor is outside the block).
+   * Active blocks keep their per-line editable structure so the user can
+   * type freely; non-active blocks get collapsed into a single highlighted
+   * <pre><code> for proper syntax coloring.
+   */
+  _highlightCodeBlocks(cursorLineIdx) {
+    if (!window.hljs) return;
+    const fenceOpenLines = this.editorEl.querySelectorAll('.md-code-fence-line[data-type="code-fence-open"], .md-code-fence-line');
+    // We need to walk the editor's children and find fence-open + content + fence-close groups
+    const lines = Array.from(this.editorEl.children);
+    for (let i = 0; i < lines.length; i++) {
+      const openLine = lines[i];
+      // Check if this is a fence-open line (contains a code-fence-open syntax span)
+      const openSpan = openLine.querySelector('[data-type="code-fence-open"]');
+      if (!openSpan) continue;
+      // Check if the fence-open syntax is hidden (not active) — only highlight when cursor is outside
+      if (openSpan.classList.contains('md-active')) continue;
+      // Find the code content lines and the closing fence
+      const contentLines = [];
+      let j = i + 1;
+      while (j < lines.length) {
+        const closeSpan = lines[j].querySelector('[data-type="code-fence-close"]');
+        if (closeSpan) break;
+        // Collect code content
+        const codeEl = lines[j].querySelector('.md-code-block-content');
+        if (codeEl) contentLines.push(codeEl.textContent);
+        j++;
+      }
+      // If no closing fence found, skip (incomplete block)
+      if (j >= lines.length) continue;
+      // Check if cursor is inside this block — if so, don't highlight (keep editable)
+      const openLineIdx = parseInt(openLine.dataset.line);
+      const closeLineIdx = parseInt(lines[j].dataset.line);
+      if (cursorLineIdx > openLineIdx && cursorLineIdx <= closeLineIdx) continue;
+      // Extract language from the fence-open info string
+      const langSpan = openLine.querySelector('.md-code-lang');
+      const lang = langSpan ? langSpan.textContent.trim() : '';
+      // Build the full code text
+      const codeText = contentLines.join('\n');
+      // Highlight
+      try {
+        let result;
+        if (lang && hljs.getLanguage(lang)) {
+          result = hljs.highlight(codeText, { language: lang, ignoreIllegals: true });
+        } else {
+          result = hljs.highlightAuto(codeText);
+        }
+        // Replace the content lines with a single highlighted <pre><code> block
+        const pre = document.createElement('div');
+        pre.className = 'md-code-highlighted';
+        pre.innerHTML = `<pre class="hljs"><code class="hljs">${result.value}</code></pre>`;
+        // Insert the highlighted block after the fence-open line
+        openLine.parentNode.insertBefore(pre, lines[i + 1]);
+        // Remove the original content lines (they're now between pre and the close fence)
+        for (let k = i + 1; k < j; k++) {
+          lines[k].style.display = 'none';
+        }
+      } catch (e) { /* leave as-is on error */ }
+    }
   }
 
   /**

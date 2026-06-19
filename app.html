@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Socra — Think</title>
+  <title>Socra</title>
   <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
   <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
@@ -11,6 +11,58 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <link rel="stylesheet" href="/css/style.css">
+  <script>
+    // Anti-flicker: apply theme + accent color ASAP, before Supabase loads.
+    // We cache preferences in localStorage so they're available instantly on
+    // every page load, then sync to the server when the user signs in.
+    (function(){
+      try {
+        var theme = localStorage.getItem('socra_theme') || 'system';
+        var accent = localStorage.getItem('socra_accent') || '';
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var isDark = theme === 'dark' || (theme === 'system' && prefersDark);
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        // Swap hljs theme to match
+        var hljsLink = document.getElementById('hljs-theme');
+        if (hljsLink) hljsLink.href = isDark
+          ? 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css'
+          : 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css';
+        // Apply custom accent color if set
+        if (accent) applyAccentColor(accent, isDark);
+      } catch(e) {}
+
+      // Helper: apply accent color + auto-adapt for dark mode
+      function applyAccentColor(hex, isDark) {
+        if (!hex) return;
+        var root = document.documentElement;
+        // Convert hex to RGB
+        var m = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+        if (!m) return;
+        var r = parseInt(m[1], 16), g = parseInt(m[2], 16), b = parseInt(m[3], 16);
+        // In dark mode, lighten the accent for visibility; in light mode, darken slightly for hover
+        var adapted = isDark ? lighten(r, g, b, 0.4) : [r, g, b];
+        var hover = isDark ? lighten(r, g, b, 0.6) : darken(r, g, b, 0.15);
+        root.style.setProperty('--primary', rgb(adapted));
+        root.style.setProperty('--primary-hover', rgb(hover));
+        root.style.setProperty('--primary-10', 'rgba(' + adapted.join(',') + ',0.10)');
+        root.style.setProperty('--primary-06', 'rgba(' + adapted.join(',') + ',0.06)');
+      }
+      function lighten(r, g, b, amt) {
+        return [
+          Math.min(255, Math.round(r + (255 - r) * amt)),
+          Math.min(255, Math.round(g + (255 - g) * amt)),
+          Math.min(255, Math.round(b + (255 - b) * amt))
+        ];
+      }
+      function darken(r, g, b, amt) {
+        return [Math.round(r * (1 - amt)), Math.round(g * (1 - amt)), Math.round(b * (1 - amt))];
+      }
+      function rgb(arr) { return 'rgb(' + arr[0] + ',' + arr[1] + ',' + arr[2] + ')'; }
+
+      // Expose for later use by app.js
+      window.__applyAccentColor = applyAccentColor;
+    })();
+  </script>
 </head>
 <body>
   <div class="app-layout">
@@ -35,7 +87,6 @@
           <div class="profile-avatar" id="profile-avatar">?</div>
           <div class="profile-details"><div class="profile-name" id="profile-name">Loading...</div><div class="profile-plan" id="profile-plan">Doxa</div></div>
         </div>
-        <button class="logout-btn full-width" id="logout-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>Log Out</button>
       </div>
     </aside>
     <main class="main-content">
@@ -77,9 +128,7 @@
               <div class="welcome-composer">
                 <div class="welcome-composer-wrapper">
                   <textarea class="welcome-composer-input" id="welcome-composer-input" placeholder="Share your thoughts... Socra will guide your reasoning." rows="1"></textarea>
-                  <div class="welcome-composer-btn-row">
-                    <button class="welcome-composer-btn" id="welcome-send-btn" disabled title="Send"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg></button>
-                  </div>
+                  <button class="welcome-composer-btn" id="welcome-send-btn" disabled title="Send"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg></button>
                 </div>
                 <div class="welcome-model-row">
                   <div class="model-selector" id="welcome-model-selector">
@@ -115,10 +164,13 @@
             </div>
             <div class="composer-wrapper">
               <textarea class="composer-input" id="composer-input" placeholder="Share your thoughts... Socra will guide your reasoning." rows="1"></textarea>
+              <!-- Standalone send button: visible in row layout (welcome + workspace-closed) -->
+              <button class="composer-btn send-btn standalone" id="send-btn" disabled title="Send"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg></button>
+              <!-- Action row: visible in column layout (workspace-open). Contains Document button (left) + Send button (right). -->
               <div class="composer-action-row">
                 <button class="composer-btn attach-btn" id="workspace-btn" title="Create workspace document"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg><span>Document</span></button>
                 <div class="spacer"></div>
-                <button class="composer-btn send-btn" id="send-btn" disabled title="Send"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg></button>
+                <button class="composer-btn send-btn" id="send-btn-action" disabled title="Send"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg></button>
               </div>
             </div>
           </div>
@@ -139,42 +191,74 @@
 
   <div class="toast-container" id="toast-container"></div>
   
-  <!-- Settings Panel -->
+  <!-- Settings Panel (full, ChatGPT-style with sidebar navigation) -->
   <div class="settings-overlay" id="settings-overlay"></div>
-  <div class="settings-panel" id="settings-panel">
+  <div class="settings-panel" id="settings-panel" role="dialog" aria-modal="true" aria-label="Settings">
     <div class="settings-header">
       <h2>Settings</h2>
       <button class="settings-close" id="settings-close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
     </div>
-    <div class="settings-content">
-      <div class="settings-section">
-        <h3>Appearance</h3>
-        <div class="settings-row">
-          <div class="settings-row-info">
-            <span class="settings-row-label">Dark Mode</span>
-            <span class="settings-row-desc">Reduce eye strain in low-light environments</span>
+    <div class="settings-body">
+      <nav class="settings-nav">
+        <button class="settings-nav-btn active" data-section="personalization">Personalization</button>
+        <button class="settings-nav-btn" data-section="account">Account</button>
+        <button class="settings-nav-btn" data-section="upgrade">Upgrade Plan</button>
+      </nav>
+      <div class="settings-content">
+        <!-- Personalization section -->
+        <div class="settings-section active" id="settings-section-personalization">
+          <h3>Theme</h3>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <span class="settings-row-label">Appearance</span>
+              <span class="settings-row-desc">System follows your OS preference</span>
+            </div>
+            <select class="settings-select" id="theme-select">
+              <option value="system">System</option>
+              <option value="light">Light</option>
+              <option value="dark">Dark</option>
+            </select>
           </div>
-          <label class="settings-toggle">
-            <input type="checkbox" id="dark-mode-toggle">
-            <span class="settings-toggle-slider"></span>
-          </label>
+          <h3>Accent Color</h3>
+          <div class="settings-row">
+            <div class="settings-row-info">
+              <span class="settings-row-label">Custom accent</span>
+              <span class="settings-row-desc">Used for buttons, links, and highlights</span>
+            </div>
+            <div class="accent-picker">
+              <input type="color" class="accent-color-input" id="accent-color-input" value="#252422">
+              <button class="accent-reset-btn" id="accent-reset-btn" title="Reset to default">Reset</button>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="settings-section">
-        <h3>Account</h3>
-        <div class="settings-row clickable" id="settings-view-profile">
-          <div class="settings-row-info">
-            <span class="settings-row-label">View Profile</span>
-            <span class="settings-row-desc">See your cognitive portfolio and stats</span>
+        <!-- Account section -->
+        <div class="settings-section" id="settings-section-account">
+          <h3>Account</h3>
+          <div class="settings-row clickable" id="settings-view-profile">
+            <div class="settings-row-info">
+              <span class="settings-row-label">View Profile</span>
+              <span class="settings-row-desc">See your cognitive portfolio and stats</span>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          <div class="settings-row clickable danger" id="settings-logout">
+            <div class="settings-row-info">
+              <span class="settings-row-label">Log Out</span>
+              <span class="settings-row-desc">Sign out of your account</span>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+          </div>
         </div>
-        <div class="settings-row clickable" id="settings-upgrade">
-          <div class="settings-row-info">
-            <span class="settings-row-label">Upgrade Plan</span>
-            <span class="settings-row-desc">Unlock more features and better models</span>
+        <!-- Upgrade section -->
+        <div class="settings-section" id="settings-section-upgrade">
+          <h3>Upgrade Plan</h3>
+          <div class="settings-row clickable" id="settings-upgrade">
+            <div class="settings-row-info">
+              <span class="settings-row-label">View Pricing</span>
+              <span class="settings-row-desc">Unlock more features and better models</span>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
           </div>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
         </div>
       </div>
     </div>

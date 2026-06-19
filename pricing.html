@@ -3,13 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pricing — Socra</title>
+  <title>Socra—Pricing</title>
   <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
   <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
   <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
   <link rel="icon" type="image/png" sizes="64x64" href="/assets/favicon-64.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
   <link rel="stylesheet" href="/css/style.css">
+  <script>
+    // Anti-flicker: apply theme ASAP from localStorage
+    (function(){
+      try {
+        var theme = localStorage.getItem('socra_theme') || 'system';
+        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var isDark = theme === 'dark' || (theme === 'system' && prefersDark);
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        var accent = localStorage.getItem('socra_accent') || '';
+        if (accent && window.__applyAccentColor) window.__applyAccentColor(accent, isDark);
+      } catch(e) {}
+    })();
+  </script>
 </head>
 <body>
   <nav class="nav">
@@ -78,10 +91,11 @@
       const navCta=document.getElementById('nav-cta'),doxaCta=document.getElementById('doxa-cta');
       if(session){
         navCta.textContent='Open App';navCta.href='/app.html';
-        // Load dark mode preference
+        // Load theme preference (sync server -> localStorage for anti-flicker)
         try{
-          const{data:profile}=await sb.from('profiles').select('plan,dark_mode').eq('id',session.user.id).single();
-          if(profile?.dark_mode){document.documentElement.setAttribute('data-theme','dark');}
+          const{data:profile}=await sb.from('profiles').select('plan,theme,accent_color').eq('id',session.user.id).single();
+          if(profile?.theme){localStorage.setItem('socra_theme',profile.theme);}
+          if(profile?.accent_color){localStorage.setItem('socra_accent',profile.accent_color);}
           const plan=profile?.plan||'doxa';
           if(plan==='doxa'){document.getElementById('plan-doxa').classList.add('current-plan');doxaCta.textContent='Current Plan';doxaCta.className='btn btn-outline btn-disabled';doxaCta.disabled=true;}
           else if(plan==='elenchus'){document.getElementById('plan-elenchus').classList.add('current-plan');document.getElementById('plan-elenchus').querySelector('.btn').textContent='Current Plan';document.getElementById('plan-elenchus').querySelector('.btn').disabled=true;}

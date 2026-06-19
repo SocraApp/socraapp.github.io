@@ -8,6 +8,9 @@ CREATE TABLE public.profiles (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   name TEXT NOT NULL,
   plan TEXT NOT NULL DEFAULT 'doxa' CHECK (plan IN ('doxa', 'elenchus', 'nous')),
+  theme TEXT NOT NULL DEFAULT 'system' CHECK (theme IN ('system', 'light', 'dark')),
+  accent_color TEXT,
+  dark_mode BOOLEAN DEFAULT false, -- deprecated, kept for back-compat
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -110,3 +113,10 @@ CREATE INDEX IF NOT EXISTS idx_messages_created_at ON public.messages(created_at
 CREATE INDEX IF NOT EXISTS idx_workspace_documents_chat_id ON public.workspace_documents(chat_id);
 CREATE INDEX IF NOT EXISTS idx_cognitive_metrics_user_date ON public.cognitive_metrics(user_id, date DESC);
 CREATE INDEX IF NOT EXISTS idx_cognitive_metrics_chat_id ON public.cognitive_metrics(chat_id);
+
+-- Migration: add theme + accent_color columns to existing profiles tables.
+-- Run these if your database already has the profiles table without these columns.
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS theme TEXT NOT NULL DEFAULT 'system' CHECK (theme IN ('system', 'light', 'dark'));
+-- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS accent_color TEXT;
+-- Migrate old dark_mode boolean to the new theme column:
+-- UPDATE public.profiles SET theme = 'dark' WHERE dark_mode = true AND theme = 'system';

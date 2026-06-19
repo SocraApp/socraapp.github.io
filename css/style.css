@@ -346,16 +346,17 @@ img { max-width: 100%; height: auto; display: block; }
 .sidebar.collapsed .chat-item { justify-content: center; padding: 8px; }
 .sidebar.collapsed .chat-item-actions { display: none; }
 
-/* Profile + logout section — ChatGPT-style minimal */
-.sidebar-profile { border-top: 1px solid var(--border); padding: 8px 12px 12px; background: var(--surface-1); }
-.profile-info { display: flex; align-items: center; gap: 10px; padding: 6px 8px; cursor: pointer; border-radius: var(--r); transition: background var(--fast); margin-bottom: 8px; }
+/* Profile section — sits at the bottom of the sidebar, just the profile-info
+   row (logout moved into Settings). */
+.sidebar-profile { border-top: 1px solid var(--border); padding: 8px 12px; background: var(--surface-1); flex-shrink: 0; }
+.profile-info { display: flex; align-items: center; gap: 10px; padding: 6px 8px; cursor: pointer; border-radius: var(--r); transition: background var(--fast); }
 .profile-info:hover { background: var(--surface-2); }
 .profile-info .profile-avatar { width: 30px; height: 30px; border-radius: var(--r-full); background: var(--primary); color: #FFFFFF; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; flex-shrink: 0; }
 .profile-info .profile-details { flex: 1; min-width: 0; }
 .profile-info .settings-btn { margin-left: auto; flex-shrink: 0; }
 .profile-name { font-size: 14px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
 .profile-plan { font-size: 12px; color: var(--ink-muted); text-transform: capitalize; }
-.sidebar.collapsed .profile-details, .sidebar.collapsed .settings-btn, .sidebar.collapsed .logout-btn { display: none; }
+.sidebar.collapsed .profile-details, .sidebar.collapsed .settings-btn { display: none; }
 .sidebar.collapsed .profile-info { justify-content: center; padding: 6px; }
 
 /* Logout button — full width */
@@ -489,6 +490,10 @@ img { max-width: 100%; height: auto; display: block; }
 .md-code-line { background: var(--surface-1); border-left: 3px solid var(--border-strong); padding-left: 12px; }
 .md-code-lang { font-family: var(--font-mono); font-size: 0.85em; color: var(--ink-muted); margin-left: 4px; }
 .md-code-block-content { font-family: var(--font-mono); font-size: 0.9em; color: var(--ink); display: block; white-space: pre-wrap; word-break: break-all; background: transparent; padding: 0; }
+/* Highlighted code block (when cursor is outside the block) — uses hljs syntax colors */
+.md-code-highlighted { background: var(--surface-1); border-left: 3px solid var(--border-strong); padding: 8px 12px; margin: 0; }
+.md-code-highlighted pre { margin: 0; background: transparent; padding: 0; border: none; overflow-x: auto; }
+.md-code-highlighted code { font-family: var(--font-mono); font-size: 0.9em; line-height: 1.6; background: transparent; padding: 0; color: var(--ink); display: block; white-space: pre-wrap; word-break: break-all; }
 
 /* Format bar — flat, minimal */
 .format-bar { display: flex; align-items: center; gap: 2px; padding: 6px 14px; border-bottom: 1px solid var(--border); background: var(--surface-1); flex-wrap: wrap; }
@@ -533,12 +538,16 @@ img { max-width: 100%; height: auto; display: block; }
 .welcome-composer { width: 100%; max-width: 640px; margin: 0 auto; }
 /* Model row sits BELOW the input bar, aligned to the left edge of the input */
 .welcome-model-row { display: flex; justify-content: flex-start; margin-top: 10px; padding-left: 4px; }
-/* Composer wrapper is a column: textarea on top (full width), send button on a new line at the bottom-right */
-.welcome-composer-wrapper { display: flex; flex-direction: column; gap: 6px; background: var(--canvas); border: 1.5px solid var(--border); border-radius: var(--r-xl); padding: 12px 12px 8px 16px; transition: border-color var(--fast), box-shadow var(--fast); box-shadow: var(--shadow-card); }
+/* Welcome composer wrapper: row layout. Textarea takes available width,
+   send button sits inline at the right (vertically centered with the
+   placeholder). When the textarea grows to multiple lines, the wrapper
+   grows taller and the button naturally drops to the vertical center,
+   appearing below the text. */
+.welcome-composer-wrapper { display: flex; align-items: center; gap: 8px; background: var(--canvas); border: 1.5px solid var(--border); border-radius: var(--r-xl); padding: 8px 8px 8px 16px; transition: border-color var(--fast), box-shadow var(--fast); box-shadow: var(--shadow-card); }
 .welcome-composer-wrapper:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-10); }
-.welcome-composer-input { width: 100%; resize: none; border: none; background: transparent; font-size: var(--body); line-height: 1.5; max-height: 120px; min-height: 24px; padding: 0; color: var(--ink); overflow-y: hidden; box-sizing: content-box; display: block; }
+.welcome-composer-input { flex: 1; resize: none; border: none; background: transparent; font-size: var(--body); line-height: 1.5; max-height: 120px; min-height: 24px; padding: 4px 0; color: var(--ink); overflow-y: hidden; box-sizing: content-box; }
 .welcome-composer-input::placeholder { color: var(--ink-muted); }
-.welcome-composer-btn-row { display: flex; justify-content: flex-end; }
+.welcome-composer-btn-row { display: flex; justify-content: flex-end; flex-shrink: 0; }
 .welcome-composer-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: var(--r-full); background: var(--primary); color: #FFFFFF; transition: all var(--fast); flex-shrink: 0; }
 .welcome-composer-btn:hover { background: var(--primary-hover); transform: scale(1.04); }
 .welcome-composer-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
@@ -686,20 +695,37 @@ img { max-width: 100%; height: auto; display: block; }
 .model-lock-icon { display: flex; align-items: center; color: var(--primary); margin-left: auto; flex-shrink: 0; transition: color var(--fast); }
 .model-option.locked:hover .model-lock-icon { color: var(--primary-hover); }
 
-/* Composer wrapper — full width.
-   Column layout: textarea on top (full width), action row on a new line below
-   containing the Document button (left) and Send button (right).
-   gap is 10px so the Document button has breathing room below the textarea. */
-.composer-wrapper { display: flex; flex-direction: column; gap: 10px; background: var(--canvas); border: 1.5px solid var(--border); border-radius: var(--r-xl); padding: 12px 12px 8px 16px; transition: border-color var(--fast), box-shadow var(--fast); }
+/* Composer wrapper — default (welcome + workspace-closed): row layout.
+   Textarea takes available width, send button sits inline at the right
+   (vertically centered with the placeholder). When the textarea grows to
+   multiple lines, the wrapper grows taller and the button drops to the
+   vertical center, appearing below the text.
+   When the workspace is open (.workspace-open on chat-panel), switch to
+   column layout: textarea on top (full width), action row below with
+   Document button (left) + Send button (right). */
+.composer-wrapper { display: flex; align-items: center; gap: 8px; background: var(--canvas); border: 1.5px solid var(--border); border-radius: var(--r-xl); padding: 8px 8px 8px 16px; transition: border-color var(--fast), box-shadow var(--fast); }
 .composer-wrapper:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-10); }
-.composer-input { width: 100%; resize: none; border: none; background: transparent; font-size: var(--body); line-height: 1.5; max-height: 120px; min-height: 24px; padding: 0; color: var(--ink); overflow-y: hidden; box-sizing: content-box; display: block; }
+.composer-input { flex: 1; resize: none; border: none; background: transparent; font-size: var(--body); line-height: 1.5; max-height: 120px; min-height: 24px; padding: 4px 0; color: var(--ink); overflow-y: hidden; box-sizing: content-box; }
 .composer-input::placeholder { color: var(--ink-muted); }
-.composer-action-row { display: flex; align-items: center; gap: 8px; }
-.composer-action-row .spacer { flex: 1; }
 .composer-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: var(--r-full); transition: all var(--fast); flex-shrink: 0; }
 .composer-btn.send-btn { background: var(--primary); color: #FFFFFF; }
 .composer-btn.send-btn:hover { background: var(--primary-hover); transform: scale(1.05); }
 .composer-btn.send-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+/* In the default row layout, hide the action-row wrapper and Document button —
+   only the textarea + send button are shown inline. */
+.composer-wrapper .composer-action-row { display: none; }
+.composer-wrapper .composer-action-row .composer-btn.send-btn { display: none; }
+
+/* Workspace-open layout: column with textarea on top, action row below.
+   The action row contains the Document button (left) + Send button (right).
+   Hide the standalone send button, show the action row. */
+.chat-panel.workspace-open .composer-wrapper { display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 12px 8px 16px; }
+.chat-panel.workspace-open .composer-input { width: 100%; display: block; }
+.chat-panel.workspace-open .composer-wrapper .composer-btn.send-btn.standalone { display: none; }
+.chat-panel.workspace-open .composer-wrapper .composer-action-row { display: flex; align-items: center; gap: 8px; }
+.chat-panel.workspace-open .composer-wrapper .composer-action-row .spacer { flex: 1; }
+.chat-panel.workspace-open .composer-wrapper .composer-action-row .composer-btn.send-btn { display: flex; }
+.composer-action-row .spacer { flex: 1; }
 .composer-btn.attach-btn { color: var(--primary-hover); background: var(--primary-06); border: 1px solid var(--primary-10); font-weight: 600; font-size: 12px; width: auto; padding: 0 12px; gap: 5px; }
 .composer-btn.attach-btn span { display: inline; }
 .composer-btn.attach-btn:hover { background: var(--primary); color: #FFFFFF; border-color: var(--primary); }
@@ -892,25 +918,47 @@ img { max-width: 100%; height: auto; display: block; }
 .settings-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(4px); z-index: 2100; opacity: 0; visibility: hidden; transition: opacity var(--norm), visibility var(--norm); }
 .settings-overlay.open { opacity: 1; visibility: visible; }
 
-.settings-panel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.96); width: 420px; max-width: calc(100vw - 40px); max-height: calc(100vh - 60px); background: var(--canvas); border-radius: var(--r-xl); box-shadow: var(--shadow-overlay); z-index: 2200; opacity: 0; visibility: hidden; transition: all var(--norm); display: flex; flex-direction: column; overflow: hidden; }
+/* Settings panel — wider, ChatGPT-style with sidebar nav + content */
+.settings-panel { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.96); width: 640px; max-width: calc(100vw - 40px); max-height: calc(100vh - 60px); background: var(--canvas); border-radius: var(--r-xl); box-shadow: var(--shadow-overlay); z-index: 2200; opacity: 0; visibility: hidden; transition: all var(--norm); display: flex; flex-direction: column; overflow: hidden; }
 .settings-panel.open { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); }
 .settings-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 24px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .settings-header h2 { font-size: 18px; font-weight: 600; color: var(--ink); }
 .settings-close { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: var(--r); color: var(--ink-muted); transition: all var(--fast); }
 .settings-close:hover { background: var(--surface-1); color: var(--ink); }
-.settings-content { flex: 1; overflow-y: auto; padding: 16px 24px 24px; }
-.settings-section { margin-bottom: 20px; }
-.settings-section:last-child { margin-bottom: 0; }
-.settings-section h3 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); margin-bottom: 12px; }
+/* Body: sidebar nav (left) + content (right) */
+.settings-body { flex: 1; display: flex; overflow: hidden; }
+.settings-nav { width: 180px; flex-shrink: 0; border-right: 1px solid var(--border); padding: 12px 8px; overflow-y: auto; }
+.settings-nav-btn { display: block; width: 100%; text-align: left; padding: 9px 12px; border-radius: var(--r); font-size: 14px; font-weight: 500; color: var(--ink-muted); transition: all var(--fast); cursor: pointer; }
+.settings-nav-btn:hover { background: var(--surface-1); color: var(--ink); }
+.settings-nav-btn.active { background: var(--surface-2); color: var(--ink); }
+.settings-content { flex: 1; overflow-y: auto; padding: 20px 24px; }
+/* Sections — only the active one is shown */
+.settings-section { display: none; }
+.settings-section.active { display: block; }
+.settings-section h3 { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ink-muted); margin: 0 0 12px; }
+.settings-section h3:not(:first-child) { margin-top: 24px; }
 .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; margin: 0 -14px 4px; border-radius: var(--r-md); }
 .settings-row:last-child { margin-bottom: 0; }
 .settings-row.clickable { cursor: pointer; transition: background var(--fast); }
 .settings-row.clickable:hover { background: var(--surface-1); }
+.settings-row.clickable.danger .settings-row-label { color: var(--error); }
 .settings-row-info { flex: 1; }
 .settings-row-label { display: block; font-size: 15px; font-weight: 500; color: var(--ink); margin-bottom: 2px; }
 .settings-row-desc { display: block; font-size: 13px; color: var(--ink-muted); }
 .settings-row.clickable svg { color: var(--ink-muted); flex-shrink: 0; }
 
+/* Theme dropdown + accent picker */
+.settings-select { padding: 6px 10px; border: 1px solid var(--border-strong); border-radius: var(--r); background: var(--canvas); font-size: 14px; color: var(--ink); font-family: var(--font); cursor: pointer; flex-shrink: 0; }
+.settings-select:focus { border-color: var(--primary); outline: none; }
+.accent-picker { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.accent-color-input { width: 36px; height: 36px; border: 1px solid var(--border-strong); border-radius: var(--r); cursor: pointer; padding: 2px; background: var(--canvas); }
+.accent-color-input::-webkit-color-swatch-wrapper { padding: 0; }
+.accent-color-input::-webkit-color-swatch { border: none; border-radius: 4px; }
+.accent-color-input::-moz-color-swatch { border: none; border-radius: 4px; }
+.accent-reset-btn { padding: 6px 12px; font-size: 13px; font-weight: 500; color: var(--ink-muted); background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r); cursor: pointer; transition: all var(--fast); }
+.accent-reset-btn:hover { background: var(--surface-3); color: var(--ink); }
+
+/* Legacy toggle (kept for back-compat, unused now) */
 .settings-toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
 .settings-toggle input { opacity: 0; width: 0; height: 0; }
 .settings-toggle-slider { position: absolute; cursor: pointer; inset: 0; background: var(--border-strong); border-radius: 24px; transition: all var(--norm); }
@@ -921,6 +969,14 @@ img { max-width: 100%; height: auto; display: block; }
 
 .settings-btn { display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: var(--r); color: var(--ink-muted); transition: all var(--fast); }
 .settings-btn:hover { background: var(--surface-1); color: var(--ink); }
+
+/* Responsive: stack the settings nav above the content on narrow screens */
+@media (max-width: 600px) {
+  .settings-panel { width: calc(100vw - 20px); }
+  .settings-body { flex-direction: column; }
+  .settings-nav { width: 100%; border-right: none; border-bottom: 1px solid var(--border); display: flex; gap: 4px; padding: 8px; overflow-x: auto; }
+  .settings-nav-btn { white-space: nowrap; }
+}
 
 /* ============================================
    DARK MODE — Perplexity palette (#161514 canvas, #1E1D1B sidebar)
@@ -1194,6 +1250,14 @@ img { max-width: 100%; height: auto; display: block; }
 [data-theme="dark"] .settings-header { border-color: var(--border); }
 [data-theme="dark"] .settings-header h2 { color: var(--ink); }
 [data-theme="dark"] .settings-close:hover { background: var(--surface-2); color: var(--ink); }
+[data-theme="dark"] .settings-nav { border-color: var(--border); }
+[data-theme="dark"] .settings-nav-btn { color: var(--ink-muted); }
+[data-theme="dark"] .settings-nav-btn:hover { background: var(--surface-2); color: var(--ink); }
+[data-theme="dark"] .settings-nav-btn.active { background: var(--surface-2); color: var(--ink); }
+[data-theme="dark"] .settings-select { background: var(--surface-2); border-color: var(--border); color: var(--ink); }
+[data-theme="dark"] .accent-color-input { background: var(--surface-2); border-color: var(--border); }
+[data-theme="dark"] .accent-reset-btn { background: var(--surface-3); border-color: var(--border); color: var(--ink-muted); }
+[data-theme="dark"] .accent-reset-btn:hover { background: var(--surface-2); color: var(--ink); }
 [data-theme="dark"] .settings-section h3 { color: var(--ink-muted); }
 [data-theme="dark"] .settings-row.clickable:hover { background: var(--surface-2); }
 [data-theme="dark"] .settings-row-label { color: var(--ink); }
