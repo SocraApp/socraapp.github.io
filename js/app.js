@@ -544,16 +544,9 @@ function setupEvents(){
 }
 
 function setWelcomeMessage(){
-  const n=currentProfile?.name||'';
-  // The wordmark stays "Socra" — only the subtitle rotates.
-  welcomeHeading.textContent='Socra';
-  const g=[
-    n?`Welcome back, ${n}. I am your Socratic reasoning partner.`:'I am your Socratic reasoning partner. I will not give you answers — I will help you find them yourself.',
-    n?`${n}, let's think together. The best way to learn is to reason through problems yourself.`:'The best way to learn is to reason through problems yourself. I will be your guide.',
-    'True understanding comes from within. Share a problem, a question, or a topic you want to explore.',
-    n?`Hello, ${n}. Every great thinker started with a question — what's yours?`:"Every great thinker started with a question. What's yours?"
-  ];
-  welcomeText.textContent=g[Math.floor(Math.random()*g.length)];
+  // The wordmark is now a text-logo image (welcome-heading <img>) and the
+  // subtitle is hidden, so there's nothing dynamic to set. Kept as a no-op
+  // for back-compat with call sites that still invoke it.
 }
 
 // Toggle between welcome layout (centered wordmark + compact composer) and chat layout (full-width bottom composer)
