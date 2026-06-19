@@ -177,7 +177,7 @@ async function loadProfile(){
   upgradeBtn.classList.toggle('hidden',currentProfile.plan==='nous');
   // Update plan selector label
   const planLabel=$('plan-selector-label');
-  if(planLabel){const planName=currentProfile.plan.charAt(0).toUpperCase()+currentProfile.plan.slice(1);planLabel.textContent='Socra—'+planName;}
+  if(planLabel){const planName=currentProfile.plan.charAt(0).toUpperCase()+currentProfile.plan.slice(1);planLabel.textContent='Socra - '+planName;}
   // Update plan selector active option
   document.querySelectorAll('.plan-option').forEach(o=>o.classList.toggle('active',o.dataset.plan===currentProfile.plan));
   // Sync theme + accent from server profile to localStorage + apply.
@@ -682,19 +682,10 @@ function setupPlanSelector(){
   document.addEventListener('click',e=>{
     if(!e.target.closest('.plan-selector')){dropdown.classList.remove('open');btn.setAttribute('aria-expanded','false');}
   });
-  // Upgrade buttons inside the dropdown
-  dropdown.querySelectorAll('.plan-option-upgrade-btn').forEach(upgradeBtn=>{
-    upgradeBtn.addEventListener('click',e=>{
-      e.stopPropagation();
-      window.location.href='/pricing.html';
-    });
-  });
-  // Locked plan options also navigate to pricing
+  // Locked plan options navigate to pricing
   dropdown.querySelectorAll('.plan-option.locked').forEach(opt=>{
-    opt.addEventListener('click',e=>{
-      if(!e.target.closest('.plan-option-upgrade-btn')){
-        window.location.href='/pricing.html';
-      }
+    opt.addEventListener('click',()=>{
+      window.location.href='/pricing.html';
     });
   });
 }
