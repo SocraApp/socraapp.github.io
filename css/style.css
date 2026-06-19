@@ -480,6 +480,10 @@ img { max-width: 100%; height: auto; display: block; }
 .workspace-panel.hidden { display: none; }
 .chat-panel { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--canvas); }
 .workspace-panel ~ .chat-panel { width: 42%; }
+/* When in document-only mode (opened from Documents view), the workspace panel
+   takes the full width and the chat panel is hidden. */
+.workspace-chat-split.doc-only-mode .workspace-panel { width: 100%; border-right: none; }
+.workspace-chat-split.doc-only-mode .chat-panel { display: none; }
 
 .workspace-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid var(--border); background: var(--canvas); }
 .workspace-title-input { border: none; background: transparent; font-size: var(--body); font-weight: 500; color: var(--ink); width: 200px; }

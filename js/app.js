@@ -103,7 +103,7 @@ async function init(){
   window.addEventListener('popstate',()=>{
     const chatId=getChatIdFromUrl();
     if(chatId)openChat(chatId,true);
-    else{currentChat=null;workspaceDoc=null;chatMessages.innerHTML='';chatMessages.appendChild(welcomeScreen);welcomeScreen.style.display='flex';setWelcomeMessage();setWelcomeMode(true);closeWorkspacePanel();document.querySelectorAll('.chat-item').forEach(i=>i.classList.remove('active'));newChatBtn.classList.add('active');document.title='Socra';}
+    else{currentChat=null;workspaceDoc=null;chatMessages.innerHTML='';chatMessages.appendChild(welcomeScreen);welcomeScreen.style.display='flex';setWelcomeMessage();setWelcomeMode(true);closeWorkspacePanel();exitDocOnlyMode();if(reopenWorkspaceBtn)reopenWorkspaceBtn.classList.add('hidden');document.querySelectorAll('.chat-item').forEach(i=>i.classList.remove('active'));newChatBtn.classList.add('active');document.title='Socra';}
   });
   // Auto-open chat if URL has a chat ID (either from direct /chat/UUID or 404 redirect)
   let urlChatId=getChatIdFromUrl();
@@ -343,6 +343,10 @@ async function createNewChat(){
     closeDocumentsViews();
     history.pushState({},'','/app.html');
   }
+  // Exit doc-only mode if active
+  exitDocOnlyMode();
+  // Hide the "Reopen Document" button
+  if(reopenWorkspaceBtn)reopenWorkspaceBtn.classList.add('hidden');
   currentChat=null;workspaceDoc=null;
   chatMessages.innerHTML='';chatMessages.appendChild(welcomeScreen);welcomeScreen.style.display='flex';
   closeWorkspacePanel();
@@ -360,6 +364,8 @@ async function openChat(chatId,skipPush){
   if(!documentsView.classList.contains('hidden')||!documentSingleView.classList.contains('hidden')){
     closeDocumentsViews();
   }
+  // Exit doc-only mode if active
+  exitDocOnlyMode();
   const chat=chats.find(c=>c.id===chatId);if(!chat)return;
   currentChat=chat;newChatBtn.classList.remove('active');
   document.querySelectorAll('.chat-item').forEach(i=>i.classList.toggle('active',i.dataset.chatId===chatId));
@@ -529,6 +535,10 @@ async function openDocumentsView(){
   $('workspace-chat-split').classList.add('hidden');
   documentSingleView.classList.add('hidden');
   documentsView.classList.remove('hidden');
+  // Hide the "Reopen Document" button — we're leaving the chat context
+  if(reopenWorkspaceBtn)reopenWorkspaceBtn.classList.add('hidden');
+  // Exit doc-only mode if active
+  exitDocOnlyMode();
   // Deactivate sidebar buttons
   document.querySelectorAll('.chat-item').forEach(i=>i.classList.remove('active'));
   newChatBtn.classList.remove('active');
@@ -584,15 +594,27 @@ async function openSingleDocument(docId){
   try{
     const{data,error}=await sb.from('workspace_documents').select('*').eq('id',docId).single();
     if(error||!data)throw error;
-    // Close documents views, show the chat split with the workspace panel open
+    // Close documents views, show the workspace-chat-split
     closeDocumentsViews();
     $('workspace-chat-split').classList.remove('hidden');
-    // Open the corresponding chat (this loads the workspace document into the live editor)
-    const exists=chats.find(c=>c.id===data.chat_id);
-    if(!exists){await loadChats();}
-    await openChat(data.chat_id);
-    // The openChat call above will load the workspace document via loadWorkspaceDocument.
-    // Update URL to reflect we're viewing this specific document
+    // Hide the "Reopen Document" button since we're opening the document now
+    if(reopenWorkspaceBtn)reopenWorkspaceBtn.classList.add('hidden');
+    // Load the document into the workspace editor WITHOUT opening the chat.
+    // We set currentChat to the doc's chat so saveWorkspaceDocument works,
+    // but we don't call openChat() (which would load messages + show chat).
+    workspaceDoc=data;
+    editor.setContent(data.content||'');
+    workspaceTitle.value=data.title||'Untitled Document';
+    openWorkspacePanel();
+    // Enter doc-only mode: workspace panel takes full width, chat panel hidden
+    $('workspace-chat-split').classList.add('doc-only-mode');
+    chatPanel.classList.add('workspace-open');
+    // Show the "Show Chat" button, hide the close-workspace button (closing goes back to documents)
+    const showChatBtn=$('show-chat-btn');
+    if(showChatBtn)showChatBtn.style.display='flex';
+    // Set currentChat so the "Show Chat" button can open it
+    currentChat={id:data.chat_id,title:data.title||'Untitled Document'};
+    // Update URL
     history.pushState({docId},'','/app.html/documents/'+docId);
     document.title=(data.title||'Untitled Document')+' — Socra';
   }catch(err){
@@ -602,15 +624,39 @@ async function openSingleDocument(docId){
 }
 
 function closeSingleDocument(){
-  documentSingleView.classList.add('hidden');
+  // Go back to the documents list
+  exitDocOnlyMode();
+  workspacePanel.classList.add('hidden');
   documentsView.classList.remove('hidden');
+  $('workspace-chat-split').classList.add('hidden');
   history.pushState({},'','/app.html/documents');
   document.title='Socra—Documents';
+}
+
+function exitDocOnlyMode(){
+  // Exit doc-only mode: restore the split view (workspace + chat)
+  $('workspace-chat-split').classList.remove('doc-only-mode');
+  const showChatBtn=$('show-chat-btn');
+  if(showChatBtn)showChatBtn.style.display='none';
+}
+
+async function showChatFromDoc(){
+  // Exit doc-only mode and open the full chat
+  exitDocOnlyMode();
+  // Now open the chat properly (loads messages + keeps workspace panel open in split view)
+  if(currentChat&&currentChat.id){
+    const chatId=currentChat.id;
+    currentChat=null; // reset so openChat reloads it
+    const exists=chats.find(c=>c.id===chatId);
+    if(!exists){await loadChats();}
+    await openChat(chatId);
+  }
 }
 
 async function openChatFromDocument(chatId){
   // Close documents views, show the chat split, open the chat
   closeDocumentsViews();
+  exitDocOnlyMode();
   $('workspace-chat-split').classList.remove('hidden');
   // Ensure the chat is in our list, then open it
   const exists=chats.find(c=>c.id===chatId);
@@ -626,6 +672,9 @@ function setupDocumentsEvents(){
     const chatId=documentOpenChatBtn.dataset.chatId;
     if(chatId)openChatFromDocument(chatId);
   });
+  // Show Chat button (in workspace header when in doc-only mode)
+  const showChatBtn=$('show-chat-btn');
+  if(showChatBtn)showChatBtn.addEventListener('click',showChatFromDoc);
 }
 
 function setupFormatBar(){
@@ -654,7 +703,14 @@ function setupEvents(){
     welcomeComposerInput.addEventListener('input',()=>{autoResizeComposer();if(welcomeSendBtn)welcomeSendBtn.disabled=!welcomeComposerInput.value.trim()||isSending;});
   }
   workspaceBtn.addEventListener('click',createWorkspaceDocument);
-  closeWorkspace.addEventListener('click',closeWorkspacePanel);
+  closeWorkspace.addEventListener('click',()=>{
+    // If in doc-only mode (opened from Documents view), go back to documents list
+    if($('workspace-chat-split').classList.contains('doc-only-mode')){
+      closeSingleDocument();
+    }else{
+      closeWorkspacePanel();
+    }
+  });
   reopenWorkspaceBtn.addEventListener('click',openWorkspacePanel);
   workspaceTitle.addEventListener('change',async()=>{if(workspaceDoc)await sb.from('workspace_documents').update({title:workspaceTitle.value,updated_at:new Date().toISOString()}).eq('id',workspaceDoc.id);});
   // Welcome presets have been removed from the UI; keep this listener defensive in case the element reappears.
