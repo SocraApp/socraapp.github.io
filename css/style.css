@@ -773,11 +773,12 @@ img { max-width: 100%; height: auto; display: block; }
 /* Workspace-open layout: column with textarea on top, action row below.
    The action row has Document button (left) + Send button (right).
    Hide the standalone Document + send buttons; show the action row. */
-.chat-panel.workspace-open .composer-wrapper { display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 12px 8px 16px; }
+.chat-panel.workspace-open .composer-wrapper { display: flex !important; flex-direction: column !important; align-items: stretch !important; gap: 10px; padding: 12px 12px 8px 16px; }
 .chat-panel.workspace-open .composer-input { width: 100%; display: block; flex: none; min-height: 32px; }
 /* Hide standalone buttons in workspace-open mode */
-.chat-panel.workspace-open .composer-wrapper > .composer-btn.standalone { display: none; }
-.chat-panel.workspace-open .composer-wrapper .composer-action-row { display: flex; align-items: center; gap: 8px; }
+.chat-panel.workspace-open .composer-wrapper > .composer-btn.standalone { display: none !important; }
+/* Show the action row in workspace-open mode */
+.chat-panel.workspace-open .composer-wrapper .composer-action-row { display: flex !important; align-items: center; gap: 8px; }
 .chat-panel.workspace-open .composer-wrapper .composer-action-row .spacer { flex: 1; }
 .composer-action-row .spacer { flex: 1; }
 .composer-btn.attach-btn { color: var(--primary-hover); background: var(--primary-06); border: 1px solid var(--primary-10); font-weight: 600; font-size: 12px; width: auto; padding: 0 12px; gap: 5px; }
