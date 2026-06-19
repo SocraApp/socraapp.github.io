@@ -4,7 +4,7 @@ let currentUser=null,currentProfile=null,currentChat=null,chats=[],editor=null,a
 let openDropdown=null; // Track currently open chat dropdown
 const $=id=>document.getElementById(id);
 const sidebar=$('sidebar'),sidebarToggle=$('sidebar-toggle'),searchToggle=$('search-toggle');
-const sidebarSearch=$('sidebar-search'),chatSearchInput=$('chat-search-input'),newChatBtn=$('new-chat-btn');
+const newChatBtn=$('new-chat-btn');
 const chatHistory=$('chat-history'),chatHistoryEmpty=$('chat-history-empty'),chatMessages=$('chat-messages');
 const welcomeScreen=$('welcome-screen'),welcomeHeading=$('welcome-heading'),welcomeText=$('welcome-text');
 const welcomePresets=$('welcome-presets'),composerInput=$('composer-input'),sendBtn=$('send-btn');
@@ -295,7 +295,7 @@ async function deleteChat(chatId){
       setWelcomeMessage();setWelcomeMode(true);
       closeWorkspacePanel();
     }
-    renderChatHistory(chatSearchInput.value);
+    renderChatHistory('');
     showToast('Chat deleted.');
   }catch(err){
     showToast('Failed to delete chat.',true);
@@ -457,18 +457,9 @@ function setupEvents(){
   sidebarLogoFull.addEventListener('click',e=>{e.preventDefault();createNewChat();});
   // Collapsed sidebar: small logo expands the sidebar
   sidebarLogoSmall.addEventListener('click',e=>{e.preventDefault();sidebar.classList.remove('collapsed');});
-  searchToggle.addEventListener('click',()=>{
-    const willOpen=!sidebarSearch.classList.contains('active');
-    sidebarSearch.classList.toggle('active');
-    if(willOpen){
-      chatSearchInput.focus();
-    }else{
-      // Closing the search bar: clear the query and show all chats again
-      chatSearchInput.value='';
-      renderChatHistory('');
-    }
-  });
-  chatSearchInput.addEventListener('input',()=>renderChatHistory(chatSearchInput.value));
+  // Spotlight search — Mac Spotlight-style popup
+  searchToggle.addEventListener('click',openSpotlight);
+  setupSpotlight();
   newChatBtn.addEventListener('click',createNewChat);
   sendBtn.addEventListener('click',()=>sendMessage(composerInput.value));
   composerInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage(composerInput.value);}});
@@ -584,16 +575,122 @@ function escapeHtml(t){const d=document.createElement('div');d.textContent=t;ret
 function showToast(msg,isErr=false){const t=document.createElement('div');t.className='toast'+(isErr?' error':'');t.textContent=msg;toastContainer.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(20px)';t.style.transition='all 0.3s';setTimeout(()=>t.remove(),300);},4000);}
 function checkMobile(){if(window.innerWidth<=768){mobileMenuBtn.style.display='flex';sidebar.classList.remove('collapsed');sidebar.classList.remove('mobile-open');}else{mobileMenuBtn.style.display='none';sidebar.classList.remove('mobile-open');}}
 
+// ============================================
+// Spotlight Search (Mac Spotlight-style popup)
+// ============================================
+let spotlightState={open:false,results:[],selectedIndex:0};
+
+function openSpotlight(){
+  if(spotlightState.open)return;
+  spotlightState.open=true;
+  const popup=$('spotlight-popup'),overlay=$('spotlight-overlay'),input=$('spotlight-input'),results=$('spotlight-results');
+  if(!popup||!overlay||!input||!results)return;
+  // Reset state
+  input.value='';
+  spotlightState.results=chats.slice();
+  spotlightState.selectedIndex=0;
+  renderSpotlightResults();
+  // Show popup
+  overlay.classList.add('open');
+  popup.classList.add('open');
+  document.body.style.overflow='hidden';
+  // Focus the input after the transition starts
+  setTimeout(()=>input.focus(),50);
+}
+
+function closeSpotlight(){
+  if(!spotlightState.open)return;
+  spotlightState.open=false;
+  const popup=$('spotlight-popup'),overlay=$('spotlight-overlay');
+  if(popup)popup.classList.remove('open');
+  if(overlay)overlay.classList.remove('open');
+  document.body.style.overflow='';
+}
+
+function renderSpotlightResults(){
+  const resultsEl=$('spotlight-results');
+  if(!resultsEl)return;
+  const results=spotlightState.results;
+  if(!results.length){
+    const query=$('spotlight-input')?.value||'';
+    resultsEl.innerHTML=`<div class="spotlight-empty">${query?'No chats match your search.':'No chats yet. Start a new chat to begin.'}</div>`;
+    return;
+  }
+  const icon='<svg class="spotlight-result-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>';
+  resultsEl.innerHTML=results.map((chat,i)=>{
+    const isSel=i===spotlightState.selectedIndex;
+    return `<div class="spotlight-result${isSel?' selected':''}" data-chat-id="${chat.id}" data-index="${i}">${icon}<span class="spotlight-result-title">${escapeHtml(chat.title)}</span></div>`;
+  }).join('');
+  // Wire up click handlers
+  resultsEl.querySelectorAll('.spotlight-result').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const id=el.dataset.chatId;
+      closeSpotlight();
+      openChat(id);
+    });
+  });
+}
+
+function setupSpotlight(){
+  const popup=$('spotlight-popup'),overlay=$('spotlight-overlay'),input=$('spotlight-input');
+  if(!popup||!overlay||!input)return;
+  // Close on overlay click
+  overlay.addEventListener('click',closeSpotlight);
+  // Filter on input
+  input.addEventListener('input',()=>{
+    const q=input.value.toLowerCase().trim();
+    spotlightState.results=q?chats.filter(c=>c.title.toLowerCase().includes(q)):chats.slice();
+    spotlightState.selectedIndex=0;
+    renderSpotlightResults();
+  });
+  // Keyboard navigation
+  input.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){e.preventDefault();closeSpotlight();return;}
+    if(e.key==='ArrowDown'){
+      e.preventDefault();
+      if(spotlightState.results.length){
+        spotlightState.selectedIndex=(spotlightState.selectedIndex+1)%spotlightState.results.length;
+        renderSpotlightResults();
+        scrollSpotlightToSelected();
+      }
+      return;
+    }
+    if(e.key==='ArrowUp'){
+      e.preventDefault();
+      if(spotlightState.results.length){
+        spotlightState.selectedIndex=(spotlightState.selectedIndex-1+spotlightState.results.length)%spotlightState.results.length;
+        renderSpotlightResults();
+        scrollSpotlightToSelected();
+      }
+      return;
+    }
+    if(e.key==='Enter'){
+      e.preventDefault();
+      const sel=spotlightState.results[spotlightState.selectedIndex];
+      if(sel){closeSpotlight();openChat(sel.id);}
+      return;
+    }
+  });
+}
+
+function scrollSpotlightToSelected(){
+  const resultsEl=$('spotlight-results');
+  if(!resultsEl)return;
+  const sel=resultsEl.querySelector('.spotlight-result.selected');
+  if(sel)sel.scrollIntoView({block:'nearest'});
+}
+
 // Settings Panel Functions
 function openSettings(){if(settingsPanel){settingsPanel.classList.add('open');settingsOverlay.classList.add('open');document.body.style.overflow='hidden';}}
 function closeSettings(){if(settingsPanel){settingsPanel.classList.remove('open');settingsOverlay.classList.remove('open');document.body.style.overflow='';}}
 function applyDarkMode(enabled){
   document.documentElement.setAttribute('data-theme',enabled?'dark':'light');
-  // Toggle highlight.js theme stylesheet to match
-  const light=document.getElementById('hljs-light'),dark=document.getElementById('hljs-dark');
-  if(light&&dark){
-    light.disabled=enabled;
-    dark.disabled=!enabled;
+  // Swap highlight.js theme stylesheet to match
+  const theme=document.getElementById('hljs-theme');
+  if(theme){
+    theme.href=enabled
+      ?'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css'
+      :'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css';
   }
 }
 async function toggleDarkMode(enabled){applyDarkMode(enabled);if(currentUser&&sb){try{await sb.from('profiles').update({dark_mode:enabled}).eq('id',currentUser.id);if(currentProfile)currentProfile.dark_mode=enabled;}catch(e){console.error('Failed to save dark mode preference:',e);}}}

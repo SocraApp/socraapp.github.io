@@ -123,7 +123,7 @@ img { max-width: 100%; height: auto; display: block; }
 .nav { position: fixed; top: 0; left: 0; right: 0; height: var(--nav-h); background: var(--canvas); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 var(--pad); z-index: 1000; transition: box-shadow var(--norm); }
 .nav.scrolled { box-shadow: var(--shadow-card); }
 .nav-logo { display: flex; align-items: center; gap: 8px; }
-.nav-logo img { height: 36px; width: 36px; border-radius: 8px; object-fit: cover; }
+.nav-logo img { height: 36px; width: 36px; object-fit: contain; }
 /* In dark mode, swap to the inverted logo (background baked in matches dark canvas) */
 [data-theme="dark"] .nav-logo img { content: url('/assets/inverted-small-logo.png'); }
 .nav-links { display: flex; align-items: center; gap: 32px; }
@@ -242,7 +242,7 @@ img { max-width: 100%; height: auto; display: block; }
 .auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--surface-1); padding: var(--pad); }
 .auth-container { width: 100%; max-width: 440px; }
 .auth-logo { display: flex; justify-content: center; margin-bottom: 40px; }
-.auth-logo img { width: 56px; height: 56px; border-radius: 12px; object-fit: cover; }
+.auth-logo img { width: 56px; height: 56px; object-fit: contain; }
 /* In dark mode, swap to the inverted logo (auth page doesn't use dark mode, but keep for safety) */
 [data-theme="dark"] .auth-logo img { content: url('/assets/inverted-small-logo.png'); }
 .auth-card { background: var(--canvas); border: 1.5px solid var(--border); border-radius: var(--r-lg); padding: 36px; box-shadow: var(--shadow-elevated); }
@@ -272,13 +272,12 @@ img { max-width: 100%; height: auto; display: block; }
 .sidebar-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; min-height: 60px; background: var(--surface-1); }
 .sidebar-logo-full, .sidebar-logo-small { display: flex; align-items: center; cursor: pointer; }
 /* Both the expanded and collapsed sidebar use the small (square) logo.
-   The logo image itself already has the correct background fill (#F2F0EC light
-   / #1E1D1B dark) baked in, so we use object-fit: cover to fill the rounded
-   square and let the logo's own background blend with the sidebar surface. */
-.sidebar-logo-full img { width: 32px; height: 32px; border-radius: 8px; transition: transform var(--fast); object-fit: cover; }
+   Logos are transparent PNGs, so object-fit: contain lets the mark sit
+   cleanly on the sidebar surface without cropping. */
+.sidebar-logo-full img { width: 32px; height: 32px; transition: transform var(--fast); object-fit: contain; }
 .sidebar-logo-full:hover img { transform: scale(1.05); }
 .sidebar-logo-small { display: none; }
-.sidebar-logo-small img { width: 32px; height: 32px; border-radius: 8px; transition: transform var(--fast); object-fit: cover; }
+.sidebar-logo-small img { width: 32px; height: 32px; transition: transform var(--fast); object-fit: contain; }
 .sidebar-logo-small:hover img { transform: scale(1.05); }
 .sidebar.collapsed .sidebar-logo-full { display: none; }
 .sidebar.collapsed .sidebar-logo-small { display: flex; }
@@ -291,10 +290,7 @@ img { max-width: 100%; height: auto; display: block; }
 .sidebar.collapsed .sidebar-actions { display: none; }
 .sidebar-icon-btn { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: var(--r); color: var(--ink-muted); transition: all var(--fast); }
 .sidebar-icon-btn:hover { background: var(--surface-2); color: var(--ink); }
-.sidebar-search { display: none; padding: 8px 12px; }
-.sidebar-search.active { display: block; }
-.sidebar-search input { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--r); background: var(--canvas); font-size: var(--body); }
-.sidebar-search input:focus { border-color: var(--primary); }
+/* sidebar-search removed — replaced by Spotlight popup */
 
 /* New chat button — flat, minimal like ChatGPT */
 .new-chat-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 6px 12px 4px; border-radius: var(--r); color: var(--ink); font-weight: 500; transition: all var(--fast); width: calc(100% - 24px); border: 1px solid var(--border); background: var(--canvas); }
@@ -512,21 +508,19 @@ img { max-width: 100%; height: auto; display: block; }
 .welcome-icon { display: none; } /* logo block deprecated in favor of wordmark */
 .welcome-icon img { width: 56px; height: 56px; border-radius: 12px; }
 .welcome-wordmark { display: none; } /* legacy text wordmark — replaced by .welcome-wordmark-img */
-/* Text logo (1750x512, aspect ratio ~3.42:1). The image already has the
-   correct background fill (#FAF8F5 light / #161514 dark) baked in, so it
-   blends seamlessly with the main page canvas. Width-based sizing keeps
-   the aspect ratio locked. */
+/* Text logo (424x100, aspect ratio 4.24:1). Transparent PNG, so object-fit:
+   contain lets the wordmark sit cleanly on the canvas. Width-based sizing
+   keeps the aspect ratio locked. */
 .welcome-wordmark-img {
-  width: 240px;
+  width: 260px;
   height: auto;
-  aspect-ratio: 1750 / 512;
+  aspect-ratio: 424 / 100;
   margin-bottom: 36px;
-  border-radius: 8px;
-  object-fit: cover;
+  object-fit: contain;
   user-select: none;
   -webkit-user-drag: none;
 }
-/* In dark mode, swap to the inverted text logo (background baked in matches dark canvas) */
+/* In dark mode, swap to the inverted text logo */
 [data-theme="dark"] .welcome-wordmark-img { content: url('/assets/inverted-text-logo.png'); }
 .welcome-subtitle { display: none; }
 .welcome-screen h2 { font-size: 22px; margin-bottom: 8px; color: var(--ink); font-weight: 600; display: none; } /* legacy h2 hidden — replaced by wordmark */
@@ -565,15 +559,26 @@ img { max-width: 100%; height: auto; display: block; }
 .message-bubble code { font-family: var(--font-mono); font-size: 0.9em; }
 .message.user .message-bubble code { background: rgba(255, 255, 255, 0.18); padding: 1px 5px; border-radius: 3px; }
 .message.assistant .message-bubble code { background: var(--surface-2); padding: 1px 5px; border-radius: 3px; color: var(--ink); }
-.message-bubble pre { background: var(--surface-1); padding: 14px; border-radius: var(--r-md); overflow-x: auto; margin: 10px 0; position: relative; border: 1px solid var(--border); }
-.message-bubble pre code { background: none; padding: 0; font-size: 0.9em; line-height: 1.5; color: var(--ink); font-family: var(--font-mono); }
+/* Code blocks — clean, minimal, with subtle background contrast.
+   No border (dividers are nearly invisible anyway). Language label sits
+   faintly in the top-right. highlight.js theme provides the syntax colors. */
+.message-bubble pre {
+  background: var(--surface-2);
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  overflow-x: auto;
+  margin: 12px 0;
+  position: relative;
+  border: none;
+}
+.message-bubble pre code { background: none; padding: 0; font-size: 0.875em; line-height: 1.6; color: var(--ink); font-family: var(--font-mono); }
 
-/* Language label for fenced code blocks — shown faintly in the top-right of the <pre> */
-.message-bubble pre.has-lang-label { padding-top: 28px; }
+/* Language label for fenced code blocks — faint, top-right */
+.message-bubble pre.has-lang-label { padding-top: 30px; }
 .message-bubble pre .code-lang-label {
   position: absolute;
-  top: 6px;
-  right: 10px;
+  top: 8px;
+  right: 12px;
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
@@ -582,17 +587,16 @@ img { max-width: 100%; height: auto; display: block; }
   letter-spacing: 0.04em;
   pointer-events: none;
   user-select: none;
-  opacity: 0.7;
+  opacity: 0.5;
 }
-[data-theme="dark"] .message-bubble pre .code-lang-label { opacity: 0.55; }
 
-/* highlight.js base: make sure code blocks use our font + don't double-pad.
-   Force .hljs background transparent so my <pre> background shows through. */
-.message-bubble pre code.hljs { background: transparent !important; padding: 0 !important; color: var(--ink); font-family: var(--font-mono); }
+/* highlight.js: let the theme's syntax colors show through.
+   Only override background (transparent so our <pre> bg shows) and font. */
+.message-bubble pre code.hljs { background: transparent !important; padding: 0 !important; font-family: var(--font-mono); }
 .message-bubble pre code.hljs::before, .message-bubble pre code.hljs::after { content: none; }
-/* In user messages (charcoal bubble), override hljs color to white for readability */
+/* In user messages (charcoal bubble), code text is white for readability */
 .message.user .message-bubble pre code.hljs { color: #FFFFFF; }
-.message.user .message-bubble pre .code-lang-label { color: rgba(255, 255, 255, 0.7); }
+.message.user .message-bubble pre .code-lang-label { color: rgba(255, 255, 255, 0.6); }
 .message-bubble :not(pre) > code { font-family: var(--font-mono); font-size: 0.9em; }
 .message.user .message-bubble pre { background: rgba(255, 255, 255, 0.10); border-color: rgba(255, 255, 255, 0.15); }
 .message-bubble .katex-display { margin: 12px 0; overflow-x: auto; }
@@ -786,6 +790,105 @@ img { max-width: 100%; height: auto; display: block; }
 /* ============================================
    Settings Panel (centered modal)
    ============================================ */
+/* ============================================
+   Spotlight Search Popup (Mac Spotlight-style)
+   ============================================ */
+.spotlight-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); z-index: 2299; opacity: 0; visibility: hidden; transition: opacity var(--norm), visibility var(--norm); }
+.spotlight-overlay.open { opacity: 1; visibility: visible; }
+.spotlight-popup {
+  position: fixed;
+  top: 15vh;
+  left: 50%;
+  transform: translateX(-50%) translateY(-12px);
+  width: 560px;
+  max-width: calc(100vw - 32px);
+  max-height: 60vh;
+  background: var(--canvas);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-overlay);
+  z-index: 2300;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity var(--norm), transform var(--norm), visibility var(--norm);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.spotlight-popup.open { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+.spotlight-input-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.spotlight-search-icon { color: var(--ink-muted); flex-shrink: 0; }
+.spotlight-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  color: var(--ink);
+  outline: none;
+  font-family: var(--font);
+}
+.spotlight-input::placeholder { color: var(--ink-muted); }
+.spotlight-kbd {
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 2px 7px;
+  flex-shrink: 0;
+}
+.spotlight-results {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px;
+}
+.spotlight-empty {
+  padding: 24px 18px;
+  text-align: center;
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+.spotlight-result {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: background var(--fast);
+  color: var(--ink);
+}
+.spotlight-result:hover, .spotlight-result.selected {
+  background: var(--surface-2);
+}
+.spotlight-result-icon { color: var(--ink-muted); flex-shrink: 0; }
+.spotlight-result-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+}
+.spotlight-result-meta {
+  font-size: 12px;
+  color: var(--ink-muted);
+  flex-shrink: 0;
+}
+
+/* Dark mode for spotlight */
+[data-theme="dark"] .spotlight-popup { background: var(--surface-1); box-shadow: 0 24px 80px rgba(0, 0, 0, 0.6); }
+[data-theme="dark"] .spotlight-kbd { background: var(--surface-3); border-color: var(--border); }
+
 .settings-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); backdrop-filter: blur(4px); z-index: 2100; opacity: 0; visibility: hidden; transition: opacity var(--norm), visibility var(--norm); }
 .settings-overlay.open { opacity: 1; visibility: visible; }
 
@@ -942,8 +1045,7 @@ img { max-width: 100%; height: auto; display: block; }
 
 /* Sidebar in dark mode */
 [data-theme="dark"] .sidebar { background: var(--surface-1); border-color: var(--border); }
-[data-theme="dark"] .sidebar-search input { background: var(--canvas); border-color: var(--border); color: var(--ink); }
-[data-theme="dark"] .sidebar-search input::placeholder { color: var(--ink-muted); }
+/* sidebar-search dark-mode rules removed — element no longer exists */
 [data-theme="dark"] .new-chat-btn { background: var(--canvas); border-color: var(--border); color: var(--ink); }
 [data-theme="dark"] .new-chat-btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
 [data-theme="dark"] .new-chat-btn.active { background: var(--primary-10); color: var(--primary-hover); border-color: transparent; }

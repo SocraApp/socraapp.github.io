@@ -49,7 +49,7 @@ class MarkdownEditor {
     this.editorEl = document.createElement('div');
     this.editorEl.className = 'live-editor';
     this.editorEl.contentEditable = 'true';
-    this.editorEl.spellcheck = true;
+    this.editorEl.spellcheck = false; // Disable spellcheck — code blocks and markdown syntax shouldn't be spell-checked
     this.editorEl.setAttribute('role', 'textbox');
     this.editorEl.setAttribute('aria-multiline', 'true');
 
