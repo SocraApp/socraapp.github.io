@@ -154,42 +154,43 @@ class AIClient {
 
     // Strip leaked chat-template tokens. The model (gpt-oss-120b) is a reasoning
     // model that outputs chain-of-thought analysis before the actual answer.
-    // The analysis section is delimited by <|message|> tags, or — when those
-    // tags are absent — by the pattern of the analysis ending and the actual
-    // Socratic question beginning.
     // 1. Remove everything before the last <|message|> tag (keeps only the final message)
     cleaned = cleaned.replace(/[\s\S]*<\|message\|>/g, '');
     // 2. Remove any remaining control tokens like <|end|>, <|start|>, <|channel|>
     cleaned = cleaned.replace(/<\|[^|]*\|>/g, '');
 
-    // 3. Strip analysis/chain-of-thought leakage. The reasoning model sometimes
-    //    outputs its internal analysis (planning what metrics to assign, what
-    //    title to use, etc.) before the actual user-facing message. The actual
-    //    message is the last substantive paragraph before the <!--METRICS--> block.
-    //    We find the METRICS marker and work backwards to the last paragraph break
-    //    (double newline), keeping only that final paragraph as the message.
+    // 3. Strip analysis/chain-of-thought leakage. The reasoning model outputs
+    //    its internal analysis (planning what metrics to assign, what title to
+    //    use, etc.) before the actual user-facing message. The actual message
+    //    is ALWAYS the last paragraph before the <!--METRICS--> block.
+    //    We find the METRICS marker, split the text before it into paragraphs,
+    //    and keep only the last paragraph (the actual Socratic question).
+    //    Exception: if there's only one paragraph, keep it (no analysis present).
     const metricsIdx = cleaned.indexOf('<!--METRICS');
     if (metricsIdx !== -1) {
-      // Get everything before the METRICS block
-      let beforeMetrics = cleaned.substring(0, metricsIdx);
-      // Find the last double-newline (paragraph break). Everything after it is
-      // the actual user-facing message.
-      const lastBreak = beforeMetrics.lastIndexOf('\n\n');
-      if (lastBreak !== -1 && lastBreak > 0) {
-        // Check if the text before the last break looks like analysis (contains
-        // common analysis phrases or is multiple paragraphs). If the content
-        // before the break is short (single paragraph), keep everything.
-        const analysisPart = beforeMetrics.substring(0, lastBreak).trim();
-        const messagePart = beforeMetrics.substring(lastBreak).trim();
-        // Heuristic: if the analysis part contains phrases like "metrics",
-        // "title", "need to", "determine", "add hidden", "respond with", etc.
-        // OR if it's more than 2 paragraphs, treat it as leaked analysis.
-        const analysisPhrases = /metrics|title|need to|determine|add hidden|respond with|thus|so ask|provide question|not answer/i;
-        if (analysisPhrases.test(analysisPart) || analysisPart.split(/\n\n+/).length > 2) {
-          beforeMetrics = messagePart;
+      let beforeMetrics = cleaned.substring(0, metricsIdx).trim();
+      // Split into paragraphs (double-newline separated)
+      const paragraphs = beforeMetrics.split(/\n\n+/).filter(p => p.trim().length > 0);
+      if (paragraphs.length > 1) {
+        // Multiple paragraphs — the last one is the actual message, the rest is analysis.
+        // But only strip if the first paragraph looks like analysis (contains
+        // reasoning/internal-planning phrases). This prevents stripping legitimate
+        // multi-paragraph responses.
+        const firstPara = paragraphs[0].toLowerCase();
+        const analysisIndicators = [
+          'need to', 'need need', 'determine', 'metrics', 'title', 'add hidden',
+          'respond with', 'thus', 'so ask', 'provide question', 'not answer',
+          'maybe', 'should', 'will include', 'let me', 'i should', 'i will',
+          'i think', 'i need', 'going to', 'plan to', 'first,', 'next,',
+          'now need', 'include metrics', 'block and title'
+        ];
+        const looksLikeAnalysis = analysisIndicators.some(phrase => firstPara.includes(phrase));
+        if (looksLikeAnalysis) {
+          // Keep only the last paragraph
+          beforeMetrics = paragraphs[paragraphs.length - 1];
         }
       }
-      cleaned = beforeMetrics + cleaned.substring(metricsIdx);
+      cleaned = beforeMetrics + '\n\n' + cleaned.substring(metricsIdx);
     }
 
     const metricsMatch = cleaned.match(/<!--METRICS({[\s\S]*?})-->/);

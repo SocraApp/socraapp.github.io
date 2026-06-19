@@ -391,17 +391,17 @@ function renderMessage(role,content){
   // Strip analysis/chain-of-thought leakage: keep only the last paragraph before METRICS
   const metricsIdx=cleaned.indexOf('<!--METRICS');
   if(metricsIdx!==-1){
-    let beforeMetrics=cleaned.substring(0,metricsIdx);
-    const lastBreak=beforeMetrics.lastIndexOf('\n\n');
-    if(lastBreak!==-1&&lastBreak>0){
-      const analysisPart=beforeMetrics.substring(0,lastBreak).trim();
-      const messagePart=beforeMetrics.substring(lastBreak).trim();
-      const analysisPhrases=/metrics|title|need to|determine|add hidden|respond with|thus|so ask|provide question|not answer/i;
-      if(analysisPhrases.test(analysisPart)||analysisPart.split(/\n\n+/).length>2){
-        beforeMetrics=messagePart;
+    let beforeMetrics=cleaned.substring(0,metricsIdx).trim();
+    const paragraphs=beforeMetrics.split(/\n\n+/).filter(p=>p.trim().length>0);
+    if(paragraphs.length>1){
+      const firstPara=paragraphs[0].toLowerCase();
+      const analysisIndicators=['need to','need need','determine','metrics','title','add hidden','respond with','thus','so ask','provide question','not answer','maybe','should','will include','let me','i should','i will','i think','i need','going to','plan to','first,','next,','now need','include metrics','block and title'];
+      const looksLikeAnalysis=analysisIndicators.some(phrase=>firstPara.includes(phrase));
+      if(looksLikeAnalysis){
+        beforeMetrics=paragraphs[paragraphs.length-1];
       }
     }
-    cleaned=beforeMetrics+cleaned.substring(metricsIdx);
+    cleaned=beforeMetrics+'\n\n'+cleaned.substring(metricsIdx);
   }
   const rawMarkdown=cleaned
     .replace(/<!--METRICS{[\s\S]*?}-->/g,'')  // remove metrics blocks

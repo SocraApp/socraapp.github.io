@@ -83,6 +83,9 @@ serve(async (req) => {
     // else model = 'gpt-oss-120b'
 
     // Call OpenRouter API
+    // Note: gpt-oss-120b is a reasoning model. We pass reasoning: { exclude: true }
+    // so the chain-of-thought analysis goes into a separate `reasoning` field
+    // instead of leaking into the user-visible `content` field.
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -96,6 +99,7 @@ serve(async (req) => {
         messages: messages,
         max_tokens: 2048,
         temperature: 0.7,
+        reasoning: { exclude: true },
       })
     })
 

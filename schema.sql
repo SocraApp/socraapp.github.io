@@ -114,9 +114,18 @@ CREATE INDEX IF NOT EXISTS idx_workspace_documents_chat_id ON public.workspace_d
 CREATE INDEX IF NOT EXISTS idx_cognitive_metrics_user_date ON public.cognitive_metrics(user_id, date DESC);
 CREATE INDEX IF NOT EXISTS idx_cognitive_metrics_chat_id ON public.cognitive_metrics(chat_id);
 
--- Migration: add theme + accent_color columns to existing profiles tables.
--- Run these if your database already has the profiles table without these columns.
--- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS theme TEXT NOT NULL DEFAULT 'system' CHECK (theme IN ('system', 'light', 'dark'));
--- ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS accent_color TEXT;
--- Migrate old dark_mode boolean to the new theme column:
--- UPDATE public.profiles SET theme = 'dark' WHERE dark_mode = true AND theme = 'system';
+-- ============================================
+-- MIGRATION (run these if your database already exists)
+-- ============================================
+-- Run these statements in the Supabase SQL Editor to add the new columns
+-- to your existing profiles table.
+
+-- 1. Add the theme column (system/light/dark, default 'system')
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS theme TEXT NOT NULL DEFAULT 'system' CHECK (theme IN ('system', 'light', 'dark'));
+
+-- 2. Add the accent_color column (nullable — null means use the default)
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS accent_color TEXT;
+
+-- 3. (Optional) Migrate old dark_mode boolean values to the new theme column
+--    Only run this if you have existing users with dark_mode = true
+UPDATE public.profiles SET theme = 'dark' WHERE dark_mode = true AND theme = 'system';
