@@ -120,6 +120,8 @@ img { max-width: 100%; height: auto; display: block; }
 .nav.scrolled { box-shadow: var(--shadow-card); }
 .nav-logo { display: flex; align-items: center; gap: 8px; }
 .nav-logo img { height: 36px; width: 36px; border-radius: 8px; object-fit: contain; }
+/* In dark mode, swap to the inverted logo on pages that use the small mark in the nav */
+[data-theme="dark"] .nav-logo img { content: url('/assets/inverted-small-logo.png'); }
 .nav-links { display: flex; align-items: center; gap: 32px; }
 .nav-links a.nav-link { font-size: var(--body); font-weight: 500; color: var(--ink-muted); transition: color var(--fast); position: relative; padding: 4px 0; }
 .nav-links a.nav-link::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 0; height: 2px; background: var(--primary); border-radius: 1px; transition: width var(--norm); }
@@ -261,7 +263,8 @@ img { max-width: 100%; height: auto; display: block; }
 /* ── Sidebar (ChatGPT-style, decluttered) ── */
 .sidebar { width: var(--sidebar-w); min-width: var(--sidebar-w); height: 100vh; background: var(--surface-1); border-right: 1px solid var(--border); display: flex; flex-direction: column; transition: width var(--norm), min-width var(--norm); overflow: hidden; }
 .sidebar.collapsed { width: var(--sidebar-collapsed); min-width: var(--sidebar-collapsed); }
-.sidebar-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; min-height: 60px; }
+.sidebar-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; min-height: 60px; background: #FFFFFF; }
+[data-theme="dark"] .sidebar-header { background: #000000; }
 .sidebar-logo-full, .sidebar-logo-small { display: flex; align-items: center; cursor: pointer; }
 /* Both the expanded and collapsed sidebar use the small (square) logo.
    The expanded version renders at 32px (matching the collapsed size for consistency),
@@ -273,6 +276,11 @@ img { max-width: 100%; height: auto; display: block; }
 .sidebar-logo-small:hover img { transform: scale(1.05); }
 .sidebar.collapsed .sidebar-logo-full { display: none; }
 .sidebar.collapsed .sidebar-logo-small { display: flex; }
+/* In dark mode, swap to the inverted logo so the mark stays visible against
+   the pure-black sidebar-header. content: url() replaces the img src without
+   touching the markup, keeping the JS logo-click handlers intact. */
+[data-theme="dark"] .sidebar-logo-full img,
+[data-theme="dark"] .sidebar-logo-small img { content: url('/assets/inverted-small-logo.png'); }
 .sidebar-actions { display: flex; align-items: center; gap: 2px; }
 .sidebar.collapsed .sidebar-actions { display: none; }
 .sidebar-icon-btn { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: var(--r); color: var(--ink-muted); transition: all var(--fast); }
@@ -298,13 +306,16 @@ img { max-width: 100%; height: auto; display: block; }
 .chat-item { display: flex; align-items: center; padding: 8px 10px; border-radius: var(--r); cursor: pointer; transition: background var(--fast); gap: 8px; margin-bottom: 1px; position: relative; color: var(--ink); }
 .chat-item:hover { background: var(--surface-2); }
 .chat-item.active { background: var(--surface-2); color: var(--ink); font-weight: 500; }
-/* Title truncation: when not hovered, ellipsis runs to the end of the row.
-   When hovered, reserve space on the right for the three-dot menu (24px wide
-   + 4px gap) so the ellipsis never touches the menu icon. */
+/* Title truncation: always leave a gap with the sidebar edge so the ellipsis
+   never visually touches the right border of the sidebar.
+   - Not hovered: 8px gap (matches the .chat-history horizontal padding so
+     the title's visible end aligns with the sidebar's inner edge).
+   - Hovered/active: 28px gap (24px three-dot menu + 4px breathing room)
+     so the ellipsis never touches the menu icon. */
 .chat-item-title {
   flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   font-size: 14px;
-  padding-right: 0;
+  padding-right: 8px;
   transition: padding-right var(--fast);
 }
 .chat-item:hover .chat-item-title,
