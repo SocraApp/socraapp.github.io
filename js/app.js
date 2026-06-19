@@ -23,6 +23,51 @@ if(typeof marked!=='undefined'){
   marked.setOptions({breaks:true,gfm:true});
 }
 
+// Post-process rendered HTML to enable code-block syntax highlighting + language label.
+// We do this on the rendered DOM (rather than via marked's highlight option) so that
+// we can also inject the language label and reuse the same logic for streamed messages.
+function enhanceCodeBlocks(container){
+  if(!container)return;
+  // marked outputs <pre><code class="language-python">...</code></pre>
+  container.querySelectorAll('pre code').forEach(code=>{
+    if(code.dataset.hljsEnhanced)return;
+    code.dataset.hljsEnhanced='1';
+    // Detect language from the class attribute (marked adds language-XXX)
+    let lang='';
+    code.classList.forEach(c=>{
+      const m=c.match(/^language-(.+)$/);
+      if(m)lang=m[1];
+    });
+    // If no class hint, ask hljs to auto-detect
+    try{
+      if(window.hljs){
+        if(lang&&hljs.getLanguage(lang)){
+          const r=hljs.highlight(code.textContent,{language:lang,ignoreIllegals:true});
+          code.innerHTML=r.value;
+          code.classList.add('hljs');
+          if(r.language)lang=r.language;
+        }else{
+          const r=hljs.highlightAuto(code.textContent);
+          code.innerHTML=r.value;
+          code.classList.add('hljs');
+          if(r.language)lang=r.language;
+        }
+      }
+    }catch(e){/* leave code as-is on error */}
+    // Add a faint language label to the right of the code block
+    if(lang){
+      const pre=code.parentElement;
+      if(pre&&!pre.querySelector('.code-lang-label')){
+        const label=document.createElement('span');
+        label.className='code-lang-label';
+        label.textContent=lang;
+        pre.appendChild(label);
+        pre.classList.add('has-lang-label');
+      }
+    }
+  });
+}
+
 async function init(){
   if(!sb){window.location.href='auth.html';return;}
   const{data:{session}}=await sb.auth.getSession();
@@ -42,7 +87,7 @@ async function init(){
   // Ensure textareas have correct initial height (prevents the empty-state scrollbar glitch)
   autoResizeComposer();
   checkMobile();
-  window.addEventListener('resize',checkMobile);
+  window.addEventListener('resize',()=>{checkMobile();autoResizeComposer();});
   // Close dropdown when clicking outside
   document.addEventListener('click',e=>{
     if(openDropdown&&!openDropdown.contains(e.target)&&!e.target.closest('.chat-item-menu-btn')){
@@ -355,6 +400,8 @@ function renderMessage(role,content){
     bubble.querySelectorAll('h1,h2,h3,h4,h5,h6,p').forEach(el=>{
       if(intvLabels.test(el.textContent.trim()))el.remove();
     });
+    // Apply syntax highlighting + language label to code blocks
+    enhanceCodeBlocks(bubble);
   }
   const copyBtn=msg.querySelector('.msg-copy-btn');
   if(copyBtn){
@@ -394,8 +441,10 @@ async function saveWorkspaceDocument(content){
   await sb.from('workspace_documents').update({content,updated_at:new Date().toISOString()}).eq('id',workspaceDoc.id);
 }
 
-function openWorkspacePanel(){workspacePanel.classList.remove('hidden');reopenWorkspaceBtn.classList.add('hidden');}
-function closeWorkspacePanel(){workspacePanel.classList.add('hidden');if(workspaceDoc)reopenWorkspaceBtn.classList.remove('hidden');}
+function openWorkspacePanel(){workspacePanel.classList.remove('hidden');reopenWorkspaceBtn.classList.add('hidden');// Reflow composer height since the chat panel just got narrower
+  requestAnimationFrame(autoResizeComposer);}
+function closeWorkspacePanel(){workspacePanel.classList.add('hidden');if(workspaceDoc)reopenWorkspaceBtn.classList.remove('hidden');// Reflow composer height since the chat panel just got wider
+  requestAnimationFrame(autoResizeComposer);}
 
 function setupFormatBar(){
   document.querySelectorAll('.format-btn').forEach(btn=>btn.addEventListener('click',()=>{const f=btn.dataset.format;if(f)editor.insertFormatting(f);}));
@@ -512,8 +561,11 @@ function setWelcomeMode(active){
 function autoResizeComposer(){
   const resize=el=>{
     if(!el)return;
+    // Reset height so scrollHeight reflects the natural content height
     el.style.height='auto';
-    const sh=el.scrollHeight,max=120;
+    // Use scrollHeight which includes padding; clamp to [36, 120].
+    // min-height 36 + padding 12 = 48px is one full line of body text (16px * 1.5 + 12 padding).
+    const sh=Math.max(el.scrollHeight,36),max=120;
     if(sh>max){
       el.style.height=max+'px';
       el.style.overflowY='auto';
@@ -532,7 +584,15 @@ function checkMobile(){if(window.innerWidth<=768){mobileMenuBtn.style.display='f
 // Settings Panel Functions
 function openSettings(){if(settingsPanel){settingsPanel.classList.add('open');settingsOverlay.classList.add('open');document.body.style.overflow='hidden';}}
 function closeSettings(){if(settingsPanel){settingsPanel.classList.remove('open');settingsOverlay.classList.remove('open');document.body.style.overflow='';}}
-function applyDarkMode(enabled){document.documentElement.setAttribute('data-theme',enabled?'dark':'light');}
+function applyDarkMode(enabled){
+  document.documentElement.setAttribute('data-theme',enabled?'dark':'light');
+  // Toggle highlight.js theme stylesheet to match
+  const light=document.getElementById('hljs-light'),dark=document.getElementById('hljs-dark');
+  if(light&&dark){
+    light.disabled=enabled;
+    dark.disabled=!enabled;
+  }
+}
 async function toggleDarkMode(enabled){applyDarkMode(enabled);if(currentUser&&sb){try{await sb.from('profiles').update({dark_mode:enabled}).eq('id',currentUser.id);if(currentProfile)currentProfile.dark_mode=enabled;}catch(e){console.error('Failed to save dark mode preference:',e);}}}
 function setupSettingsEvents(){
   if(settingsBtn)settingsBtn.addEventListener('click',e=>{e.stopPropagation();openSettings();});
