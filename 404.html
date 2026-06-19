@@ -183,11 +183,13 @@
   <div class="not-found-quote">"The only true wisdom is in knowing you know nothing." — Socrates</div>
 
   <script>
-    // --- SPA redirect: only /chat/UUID paths ---
+    // --- SPA redirect: /chat/UUID, /documents, and /documents/UUID paths ---
     (function(){
       var path = window.location.pathname;
       var chatMatch = path.match(/^\/chat\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
-      if (chatMatch) {
+      var docMatch = path.match(/^\/documents\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+      var docsListMatch = path.match(/^\/documents\/?$/i);
+      if (chatMatch || docMatch || docsListMatch) {
         sessionStorage.setItem('socra_redirect', path);
         window.location.replace('/app.html');
         return; // Stop rendering the 404 page

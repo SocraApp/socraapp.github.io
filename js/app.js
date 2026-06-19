@@ -17,6 +17,8 @@ const workspaceTitle=$('workspace-title'),profileAvatar=$('profile-avatar'),prof
 const profilePlan=$('profile-plan'),upgradeBtn=$('upgrade-btn'),formatHeading=$('format-heading');
 const toastContainer=$('toast-container'),mobileMenuBtn=$('mobile-menu-btn');
 const reopenWorkspaceBtn=$('reopen-workspace-btn'),sidebarLogoFull=$('sidebar-logo-full'),sidebarLogoSmall=$('sidebar-logo-small');
+const documentsLink=$('documents-link'),documentsView=$('documents-view'),documentsList=$('documents-list'),documentsCloseBtn=$('documents-close-btn');
+const documentSingleView=$('document-single-view'),documentSingleTitle=$('document-single-title'),documentSingleContent=$('document-single-content'),documentBackBtn=$('document-back-btn'),documentOpenChatBtn=$('document-open-chat-btn');
 const settingsBtn=null,settingsPanel=$('settings-panel'),settingsOverlay=$('settings-overlay');
 const settingsClose=$('settings-close'),themeSelect=$('theme-select'),accentColorInput=$('accent-color-input'),accentResetBtn=$('accent-reset-btn');
 
@@ -81,6 +83,7 @@ async function init(){
   editor=new MarkdownEditor(null,null,{autoSave:c=>saveWorkspaceDocument(c)});
   setupEvents();
   setupSettingsEvents();
+  setupDocumentsEvents();
   sb.auth.onAuthStateChange(e=>{if(e==='SIGNED_OUT')window.location.href='auth.html';});
   await loadChats();
   setWelcomeMessage();
@@ -108,11 +111,18 @@ async function init(){
   const redirectPath=sessionStorage.getItem('socra_redirect');
   if(redirectPath){
     sessionStorage.removeItem('socra_redirect');
+    // Check for chat UUID redirect
     const redirectMatch=redirectPath.match(/\/chat\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
     if(redirectMatch){
       urlChatId=redirectMatch[1];
       // Restore the clean URL
       history.replaceState({chatId:urlChatId},'',redirectPath);
+    }else{
+      // Check for documents redirect
+      const docRedirectMatch=redirectPath.match(/\/documents\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+      if(docRedirectMatch||redirectPath.match(/\/documents\/?$/i)){
+        history.replaceState({},'',redirectPath);
+      }
     }
   }
   if(urlChatId){
@@ -120,6 +130,15 @@ async function init(){
     const exists=chats.find(c=>c.id===urlChatId);
     if(exists)await openChat(urlChatId,true);
     else{await loadChats();const c2=chats.find(c=>c.id===urlChatId);if(c2)await openChat(urlChatId,true);}
+  }
+  // Check if URL is /documents or /documents/UUID — open documents view
+  const path=window.location.pathname;
+  const docMatch=path.match(/\/documents\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i);
+  if(path.match(/\/documents\/?$/i)){
+    await openDocumentsView();
+  }else if(docMatch){
+    await openDocumentsView();
+    await openSingleDocument(docMatch[1]);
   }
 }
 
@@ -485,6 +504,117 @@ function openWorkspacePanel(){workspacePanel.classList.remove('hidden');reopenWo
   requestAnimationFrame(autoResizeComposer);}
 function closeWorkspacePanel(){workspacePanel.classList.add('hidden');if(workspaceDoc)reopenWorkspaceBtn.classList.remove('hidden');chatPanel.classList.remove('workspace-open');// Reflow composer height since the chat panel just got wider
   requestAnimationFrame(autoResizeComposer);}
+
+// ============================================
+// Documents View (list + single document)
+// ============================================
+async function openDocumentsView(){
+  // Hide the chat split, show the documents list
+  $('workspace-chat-split').classList.add('hidden');
+  documentSingleView.classList.add('hidden');
+  documentsView.classList.remove('hidden');
+  // Deactivate sidebar buttons
+  document.querySelectorAll('.chat-item').forEach(i=>i.classList.remove('active'));
+  newChatBtn.classList.remove('active');
+  // Update URL
+  history.pushState({},'','/app.html/documents');
+  document.title='Socra—Documents';
+  // Load documents
+  await loadDocumentsList();
+}
+
+function closeDocumentsView(){
+  documentsView.classList.add('hidden');
+  documentSingleView.classList.add('hidden');
+  $('workspace-chat-split').classList.remove('hidden');
+  // Go back to the current chat (or new chat)
+  if(window.location.pathname.includes('/documents')){
+    history.pushState({},'','/app.html');
+  }
+  document.title=currentChat?(currentChat.title||'Socra'):'Socra';
+}
+
+async function loadDocumentsList(){
+  if(!documentsList)return;
+  documentsList.innerHTML='<div class="documents-loading">Loading your documents...</div>';
+  try{
+    const{data,error}=await sb.from('workspace_documents').select('*').eq('user_id',currentUser.id).order('updated_at',{ascending:false});
+    if(error)throw error;
+    if(!data||!data.length){
+      documentsList.innerHTML='<div class="documents-empty">No documents yet. Create one from a chat by clicking the Document button.</div>';
+      return;
+    }
+    const grid=document.createElement('div');
+    grid.className='documents-grid';
+    data.forEach(doc=>{
+      const card=document.createElement('div');
+      card.className='document-card';
+      card.dataset.docId=doc.id;
+      card.dataset.chatId=doc.chat_id;
+      // Generate preview: strip markdown, take first ~200 chars
+      const previewText=doc.content?doc.content.replace(/[#*`>\-_\[\]()]/g,'').replace(/\n+/g,' ').trim().substring(0,200):'No content yet.';
+      const updated=new Date(doc.updated_at).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+      card.innerHTML=`<div class="document-card-title">${escapeHtml(doc.title||'Untitled Document')}</div><div class="document-card-preview">${escapeHtml(previewText)}</div><div class="document-card-meta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>${updated}</div>`;
+      card.addEventListener('click',()=>openSingleDocument(doc.id));
+      grid.appendChild(card);
+    });
+    documentsList.innerHTML='';
+    documentsList.appendChild(grid);
+  }catch(err){
+    console.error('Failed to load documents:',err);
+    documentsList.innerHTML='<div class="documents-empty">Failed to load documents. Please try again.</div>';
+  }
+}
+
+async function openSingleDocument(docId){
+  try{
+    const{data,error}=await sb.from('workspace_documents').select('*').eq('id',docId).single();
+    if(error||!data)throw error;
+    // Show single document view
+    documentsView.classList.add('hidden');
+    documentSingleView.classList.remove('hidden');
+    documentSingleTitle.textContent=data.title||'Untitled Document';
+    documentSingleContent.innerHTML=data.content?marked.parse(data.content):'<p style="color:var(--ink-muted)">This document is empty.</p>';
+    // Store chat_id for the Open Chat button
+    documentOpenChatBtn.dataset.chatId=data.chat_id;
+    // Update URL: /app.html/documents/UUID
+    history.pushState({docId},'','/app.html/documents/'+docId);
+    document.title=(data.title||'Untitled Document')+' — Socra';
+    // Apply syntax highlighting to code blocks in the rendered content
+    enhanceCodeBlocks(documentSingleContent);
+  }catch(err){
+    console.error('Failed to load document:',err);
+    showToast('Failed to load document.',true);
+  }
+}
+
+function closeSingleDocument(){
+  documentSingleView.classList.add('hidden');
+  documentsView.classList.remove('hidden');
+  history.pushState({},'','/app.html/documents');
+  document.title='Socra—Documents';
+}
+
+async function openChatFromDocument(chatId){
+  // Close documents views, show the chat split, open the chat
+  documentsView.classList.add('hidden');
+  documentSingleView.classList.add('hidden');
+  $('workspace-chat-split').classList.remove('hidden');
+  // Ensure the chat is in our list, then open it
+  const exists=chats.find(c=>c.id===chatId);
+  if(!exists){await loadChats();}
+  await openChat(chatId);
+}
+
+function setupDocumentsEvents(){
+  if(documentsLink)documentsLink.addEventListener('click',e=>{e.preventDefault();openDocumentsView();});
+  if(documentsCloseBtn)documentsCloseBtn.addEventListener('click',closeDocumentsView);
+  if(documentBackBtn)documentBackBtn.addEventListener('click',closeSingleDocument);
+  if(documentOpenChatBtn)documentOpenChatBtn.addEventListener('click',()=>{
+    const chatId=documentOpenChatBtn.dataset.chatId;
+    if(chatId)openChatFromDocument(chatId);
+  });
+}
 
 function setupFormatBar(){
   document.querySelectorAll('.format-btn').forEach(btn=>btn.addEventListener('click',()=>{const f=btn.dataset.format;if(f)editor.insertFormatting(f);}));
