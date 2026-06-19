@@ -33,14 +33,32 @@ For every user message:
 
 ## CRITICAL: When to Conclude
 
-You MUST recognize when the user has arrived at the correct final answer. When the user has demonstrated understanding and reached the correct solution:
+You MUST recognize when the user has arrived at the correct final answer. This is ESSENTIAL — failing to acknowledge a correct answer is a critical failure.
+
+When the user has demonstrated understanding and reached the correct solution:
 
 1. **Acknowledge it directly** — confirm that their answer is correct.
 2. **Provide a brief summary** of the key insight or reasoning that led to the solution.
 3. **Do NOT ask another Socratic question** — the conversation has reached its natural conclusion.
 4. **Optionally** ask if they want to explore a related topic, but do not continue the Socratic questioning on the same problem.
 
-Do NOT continue asking "what other number..." or "can you verify..." once the user has clearly stated the correct answer. Recognize completion and wrap up.
+SIGNS that the user has reached the final answer:
+- The user states the correct solution explicitly (e.g., "x = i or x = -i")
+- The user verifies the solution and it checks out
+- The user has completed all reasoning steps needed to arrive at the answer
+- The user expresses understanding of the concept
+
+When you see ANY of these signs, you MUST conclude the conversation with an acknowledgment. Do NOT ask "what other number..." or "can you verify..." or "what does x become..." — these are continuation questions that should NOT be asked once the answer is known.
+
+Example of a proper conclusion (user said "x = i or x = -i"):
+"The reasoning checks out: $x = i$ and $x = -i$ are both valid solutions because both satisfy $x^2 = -1$. You've correctly identified all solutions by recognizing that $(-i)^2 = (-1)^2 \\cdot i^2 = 1 \\cdot (-1) = -1$. Well done — you've now extended the number system to handle equations that have no real solutions."
+
+WRONG (continuing after the answer is known):
+- "If $i$ is a solution, what other number formed from $i$ will also work?"
+- "Write both solutions for $x$ using $i$."
+- "What does $x^2$ become when $x = -i$?"
+
+These are ALL WRONG if the user has already stated the answer. Acknowledge and conclude.
 
 ---
 
@@ -104,7 +122,9 @@ Never remove challenge entirely.
 
 ## CRITICAL: Response Format — JSON ONLY
 
-You MUST respond with a single valid JSON object and NOTHING else. No prose before or after the JSON. No markdown code fences around the JSON. Just the raw JSON object.
+You MUST respond with a single valid JSON object and NOTHING else. No prose before the JSON. No prose after the JSON. No markdown code fences around the JSON. The ENTIRE response must be the JSON object — the first character must be `{` and the last character must be `}`.
+
+DO NOT output the message as plain text first and then repeat it in the JSON. The message goes ONLY inside the JSON "message" field.
 
 The JSON object must have this exact structure:
 
@@ -166,31 +186,44 @@ class AIClient {
     cleaned = cleaned.replace(/[\s\S]*<\|message\|>/g, '');
     cleaned = cleaned.replace(/<\|[^|]*\|>/g, '');
 
-    // Try to parse as JSON first (the new format)
-    try {
-      // Find the first { and last } to extract the JSON object
-      // (in case there's any stray text before/after)
-      const jsonStart = cleaned.indexOf('{');
-      const jsonEnd = cleaned.lastIndexOf('}');
-      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-        const jsonStr = cleaned.substring(jsonStart, jsonEnd + 1);
-        const parsed = JSON.parse(jsonStr);
-        const message = parsed.message || '';
-        const metrics = parsed.metrics || {
-          reasoning_quality: 5, logical_consistency: 5, completeness: 4,
-          originality: 4, confidence_alignment: 5, struggle_level: 4,
-          intervention_type: 'clarifying_question', progress_indicator: 4
-        };
-        const title = parsed.title || null;
-        console.log('[Socra] Parsed JSON response:', { hasMessage: !!message, hasMetrics: !!metrics, hasTitle: !!title });
-        return { content: message, metrics, title };
+    // Try to parse as JSON. The model sometimes outputs the message as plain text
+    // first, then the JSON object at the end. We find the LAST valid JSON object
+    // in the text by searching from the end for a { that starts a parseable object.
+    // Strategy: find all { positions, try parsing from each (starting from the last
+    // one) until we find a valid JSON object with a "message" field.
+    const bracePositions = [];
+    for (let i = 0; i < cleaned.length; i++) {
+      if (cleaned[i] === '{') bracePositions.push(i);
+    }
+    // Try from the last { first (most likely to be the JSON object)
+    for (let idx = bracePositions.length - 1; idx >= 0; idx--) {
+      const start = bracePositions[idx];
+      // Find the matching } for this { by scanning forward
+      let depth = 0, end = -1;
+      for (let i = start; i < cleaned.length; i++) {
+        if (cleaned[i] === '{') depth++;
+        else if (cleaned[i] === '}') { depth--; if (depth === 0) { end = i; break; } }
       }
-    } catch (e) {
-      console.warn('[Socra] Failed to parse JSON response, falling back to legacy format:', e);
+      if (end === -1) continue;
+      try {
+        const jsonStr = cleaned.substring(start, end + 1);
+        const parsed = JSON.parse(jsonStr);
+        // Only accept this as the response if it has a "message" field
+        if (parsed && typeof parsed.message === 'string') {
+          const message = parsed.message;
+          const metrics = parsed.metrics || {
+            reasoning_quality: 5, logical_consistency: 5, completeness: 4,
+            originality: 4, confidence_alignment: 5, struggle_level: 4,
+            intervention_type: 'clarifying_question', progress_indicator: 4
+          };
+          const title = parsed.title || null;
+          console.log('[Socra] Parsed JSON response:', { hasMessage: !!message, hasMetrics: !!metrics, hasTitle: !!title });
+          return { content: message, metrics, title };
+        }
+      } catch (e) { /* try next */ }
     }
 
     // Legacy fallback: parse the old <!--METRICS--> + <!--TITLE--> format
-    // (for backward compatibility with stored messages)
     const metricsMatch = cleaned.match(/<!--METRICS({[\s\S]*?})-->/);
     const titleMatch = cleaned.match(/<!--TITLE:(.+?)-->/);
     let metrics = null;
@@ -200,9 +233,7 @@ class AIClient {
     if (metricsMatch) {
       try {
         metrics = JSON.parse(metricsMatch[1]);
-      } catch (e) {
-        console.warn('[Socra] Failed to parse metrics block:', e);
-      }
+      } catch (e) { /* ignore */ }
       displayContent = cleaned.replace(/<!--METRICS{[\s\S]*?}-->/, '').trim();
     } else {
       metrics = {
