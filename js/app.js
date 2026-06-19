@@ -354,6 +354,7 @@ async function createNewChat(){
   exitDocOnlyMode();
   // Hide the "Reopen Document" button
   if(reopenWorkspaceBtn)reopenWorkspaceBtn.classList.add('hidden');
+  if(documentsLink)documentsLink.classList.remove('active');
   currentChat=null;workspaceDoc=null;
   chatMessages.innerHTML='';chatMessages.appendChild(welcomeScreen);welcomeScreen.style.display='flex';
   closeWorkspacePanel();
@@ -373,6 +374,7 @@ async function openChat(chatId,skipPush){
   }
   // Exit doc-only mode if active
   exitDocOnlyMode();
+  if(documentsLink)documentsLink.classList.remove('active');
   const chat=chats.find(c=>c.id===chatId);if(!chat)return;
   currentChat=chat;newChatBtn.classList.remove('active');
   document.querySelectorAll('.chat-item').forEach(i=>i.classList.toggle('active',i.dataset.chatId===chatId));
@@ -546,9 +548,10 @@ async function openDocumentsView(){
   if(reopenWorkspaceBtn)reopenWorkspaceBtn.classList.add('hidden');
   // Exit doc-only mode if active
   exitDocOnlyMode();
-  // Deactivate sidebar buttons
+  // Deactivate sidebar buttons, activate the Documents button
   document.querySelectorAll('.chat-item').forEach(i=>i.classList.remove('active'));
   newChatBtn.classList.remove('active');
+  if(documentsLink)documentsLink.classList.add('active');
   // Update URL
   history.pushState({},'','/app.html/documents');
   document.title='Socra—Documents';
@@ -558,6 +561,7 @@ async function openDocumentsView(){
 
 function closeDocumentsView(){
   closeDocumentsViews();
+  if(documentsLink)documentsLink.classList.remove('active');
   // Go back to the current chat (or new chat)
   if(window.location.pathname.includes('/documents')){
     history.pushState({},'','/app.html');

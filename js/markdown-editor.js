@@ -97,10 +97,42 @@ class MarkdownEditor {
     this.editorEl.addEventListener('blur', () => this.hideAllSyntax());
 
     this.editorEl.addEventListener('click', (e) => {
+      // Only send question when clicking the ::before circle (leftmost ~24px)
+      // Otherwise, let the cursor be placed normally for editing
       const qb = e.target.closest('.question-block');
       if (qb) {
-        const text = qb.textContent.trim();
-        if (text && window.sendMessage) window.sendMessage(text);
+        const rect = qb.getBoundingClientRect();
+        const clickX = e.clientX - rect.left;
+        // The ::before circle is ~18px + 6px margin = ~24px from the left
+        if (clickX <= 24) {
+          const text = qb.textContent.trim();
+          if (text && window.sendMessage) window.sendMessage(text);
+        }
+      }
+      // If clicking on a highlighted code block, switch to editable mode
+      // by setting the cursor inside the code block and re-rendering
+      const highlighted = e.target.closest('.md-code-highlighted');
+      if (highlighted) {
+        // Find the fence-open line before this highlighted block
+        const siblings = Array.from(this.editorEl.children);
+        const hlIdx = siblings.indexOf(highlighted);
+        if (hlIdx > 0) {
+          // The fence-open line is the sibling before the highlighted block
+          const fenceOpenLine = siblings[hlIdx - 1];
+          const openLineIdx = parseInt(fenceOpenLine.dataset?.line || '0');
+          // Set cursor to the first code line (line after fence-open)
+          const lines = this.rawMarkdown.split('\n');
+          let lineStart = 0;
+          for (let i = 0; i <= openLineIdx && i < lines.length; i++) {
+            lineStart += lines[i].length + 1;
+          }
+          this.cursorPos = lineStart;
+          this.selectionStart = lineStart;
+          this.selectionEnd = lineStart;
+          this.render();
+          // Place cursor at the start of the first code line
+          requestAnimationFrame(() => this.placeCursorFromModel());
+        }
       }
     });
   }

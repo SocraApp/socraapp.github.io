@@ -211,6 +211,8 @@ img { max-width: 100%; height: auto; display: block; }
 .pricing-card.current-plan::after { content: 'Current Plan'; position: absolute; top: -13px; left: 24px; background: var(--ink); color: #FFFFFF; padding: 3px 14px; border-radius: var(--r-full); font-size: var(--label); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
 .pricing-card.featured { border-color: var(--primary); }
 .pricing-card.featured::before { content: 'Recommended'; position: absolute; top: -13px; left: 24px; background: var(--primary); color: #FFFFFF; padding: 3px 14px; border-radius: var(--r-full); font-size: var(--label); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
+.pricing-card.best { border-color: #C9A84C; }
+.pricing-card.best::before { content: 'Best'; position: absolute; top: -13px; left: 24px; background: #C9A84C; color: #FFFFFF; padding: 3px 14px; border-radius: var(--r-full); font-size: var(--label); font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; }
 .pricing-name { font-size: 22px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
 .pricing-label { font-style: italic; font-size: var(--label); color: var(--ink-muted); margin-bottom: 22px; text-transform: none; letter-spacing: 0; }
 .pricing-price { margin-bottom: 24px; }
@@ -298,7 +300,7 @@ img { max-width: 100%; height: auto; display: block; }
    Default background matches the sidebar surface (var(--surface-1)) so the
    button blends in. Active + hover states keep their existing colors. */
 .new-chat-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 6px 12px 4px; border-radius: var(--r); color: var(--ink); font-weight: 500; transition: all var(--fast); width: calc(100% - 24px); border: 1px solid var(--border); background: var(--surface-1); }
-.new-chat-btn:hover { background: var(--surface-2); border-color: var(--border-strong); }
+.new-chat-btn:hover { background: var(--primary-06); border-color: var(--primary-10); color: var(--primary-hover); }
 .new-chat-btn.active { background: var(--primary-10); color: var(--primary-hover); border-color: transparent; }
 .sidebar.collapsed .new-chat-btn { justify-content: center; padding: 10px; margin: 6px 8px; width: calc(100% - 16px); }
 .sidebar.collapsed .new-chat-btn span { display: none; }
@@ -307,6 +309,7 @@ img { max-width: 100%; height: auto; display: block; }
    but never has the .active state, and text-decoration: none on hover. */
 .sidebar-link-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 0 12px 4px; border-radius: var(--r); color: var(--ink); font-weight: 500; transition: all var(--fast); width: calc(100% - 24px); border: 1px solid var(--border); background: var(--surface-1); text-decoration: none; }
 .sidebar-link-btn:hover { background: var(--primary-06); border-color: var(--primary-10); color: var(--primary-hover); text-decoration: none; }
+.sidebar-link-btn.active { background: var(--primary-10); color: var(--primary-hover); border-color: transparent; text-decoration: none; }
 .sidebar.collapsed .sidebar-link-btn { justify-content: center; padding: 10px; margin: 0 8px 4px; width: calc(100% - 16px); }
 .sidebar.collapsed .sidebar-link-btn span { display: none; }
 
@@ -552,9 +555,9 @@ img { max-width: 100%; height: auto; display: block; }
 .live-editor hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 
 /* Question blocks — charcoal accent */
-.live-editor .question-block { background: var(--primary-06); border-left: 3px solid var(--primary); padding: 10px 16px; border-radius: 0 var(--r) var(--r) 0; cursor: pointer; margin: 8px 0; transition: background var(--fast); display: inline-flex; align-items: center; gap: 10px; color: var(--ink); }
+.live-editor .question-block { background: var(--primary-06); border-left: 3px solid var(--primary); padding: 6px 12px; border-radius: 0 var(--r) var(--r) 0; margin: 4px 0; display: inline; color: var(--ink); }
 .live-editor .question-block:hover { background: var(--primary-10); }
-.live-editor .question-block::before { content: '?'; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: var(--primary); color: #FFFFFF; border-radius: var(--r-full); font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.live-editor .question-block::before { content: '?'; display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: var(--primary); color: #FFFFFF; border-radius: var(--r-full); font-size: 12px; font-weight: 700; margin-right: 6px; vertical-align: middle; }
 
 /* KaTeX */
 .md-katex { display: inline; }
@@ -1176,6 +1179,7 @@ img { max-width: 100%; height: auto; display: block; }
 [data-theme="dark"] .pricing-features li { color: var(--ink-muted); }
 [data-theme="dark"] .pricing-features .check-icon { color: var(--primary); }
 [data-theme="dark"] .pricing-card.featured { border-color: #2D8A56; background: var(--surface-2); }
+[data-theme="dark"] .pricing-card.best { border-color: #C9A84C; background: var(--surface-2); }
 [data-theme="dark"] .pricing-card.current-plan { border-color: var(--ink); }
 /* Dark-mode per-plan accent colors (same fixed colors as light mode) */
 [data-theme="dark"] #plan-doxa { border-color: #38BDF8; }
@@ -1204,9 +1208,10 @@ img { max-width: 100%; height: auto; display: block; }
 /* sidebar-search dark-mode rules removed — element no longer exists */
 /* Dark mode: New Chat + sidebar-link buttons keep the #1E1D1B default background.
    Only override hover/active states. */
-[data-theme="dark"] .new-chat-btn:hover { background: var(--surface-2); border-color: var(--border-strong); color: var(--ink); }
+[data-theme="dark"] .new-chat-btn:hover { background: var(--primary-06); border-color: var(--primary-10); color: var(--primary-hover); }
 [data-theme="dark"] .new-chat-btn.active { background: var(--primary-10); color: var(--primary-hover); border-color: transparent; }
 [data-theme="dark"] .sidebar-link-btn:hover { background: var(--primary-06); border-color: var(--primary-10); color: var(--primary-hover); }
+[data-theme="dark"] .sidebar-link-btn.active { background: var(--primary-10); color: var(--primary-hover); border-color: transparent; }
 [data-theme="dark"] .chat-item { color: var(--ink-muted); }
 [data-theme="dark"] .chat-item:hover { background: var(--surface-2); color: var(--ink); }
 [data-theme="dark"] .chat-item.active { background: var(--surface-2); color: var(--ink); }
