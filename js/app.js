@@ -20,7 +20,7 @@ const reopenWorkspaceBtn=$('reopen-workspace-btn'),sidebarLogoFull=$('sidebar-lo
 const documentsLink=$('documents-link'),documentsView=$('documents-view'),documentsList=$('documents-list'),documentsCloseBtn=$('documents-close-btn');
 const documentSingleView=$('document-single-view'),documentSingleTitle=$('document-single-title'),documentSingleContent=$('document-single-content'),documentBackBtn=$('document-back-btn'),documentOpenChatBtn=$('document-open-chat-btn');
 const settingsBtn=null,settingsPanel=$('settings-panel'),settingsOverlay=$('settings-overlay');
-const settingsClose=$('settings-close'),themeSelect=$('theme-select'),accentColorInput=$('accent-color-input'),accentResetBtn=$('accent-reset-btn');
+const settingsClose=$('settings-close'),accentColorInput=$('accent-color-input'),accentResetBtn=$('accent-reset-btn');
 
 // Configure marked to treat single newlines as <br>
 if(typeof marked!=='undefined'){
@@ -84,6 +84,7 @@ async function init(){
   setupEvents();
   setupSettingsEvents();
   setupDocumentsEvents();
+  setupPlanSelector();
   sb.auth.onAuthStateChange(e=>{if(e==='SIGNED_OUT')window.location.href='auth.html';});
   await loadChats();
   setWelcomeMessage();
@@ -174,6 +175,11 @@ async function loadProfile(){
   profileName.textContent=n;
   profilePlan.textContent=currentProfile.plan.charAt(0).toUpperCase()+currentProfile.plan.slice(1);
   upgradeBtn.classList.toggle('hidden',currentProfile.plan==='nous');
+  // Update plan selector label
+  const planLabel=$('plan-selector-label');
+  if(planLabel){const planName=currentProfile.plan.charAt(0).toUpperCase()+currentProfile.plan.slice(1);planLabel.textContent='Socra—'+planName;}
+  // Update plan selector active option
+  document.querySelectorAll('.plan-option').forEach(o=>o.classList.toggle('active',o.dataset.plan===currentProfile.plan));
   // Sync theme + accent from server profile to localStorage + apply.
   // SocraTheme.initProfile handles localStorage caching (anti-flicker) + re-application.
   if(window.SocraTheme)SocraTheme.initProfile(currentProfile);
@@ -181,7 +187,8 @@ async function loadProfile(){
   // This ensures the Settings pickers show the user's actual current preference,
   // even if the server value was null/missing.
   const theme=window.SocraTheme?SocraTheme.getTheme():(currentProfile.theme||'system');
-  if(themeSelect)themeSelect.value=theme;
+  const themeRadio=document.querySelector(`input[name="theme-radio"][value="${theme}"]`);
+  if(themeRadio)themeRadio.checked=true;
   const accent=window.SocraTheme?SocraTheme.getAccentColor():(currentProfile.accent_color||'');
   if(accentColorInput){
     if(accent){
@@ -664,6 +671,34 @@ async function openChatFromDocument(chatId){
   await openChat(chatId);
 }
 
+function setupPlanSelector(){
+  const btn=$('plan-selector-btn'),dropdown=$('plan-selector-dropdown');
+  if(!btn||!dropdown)return;
+  btn.addEventListener('click',e=>{
+    e.stopPropagation();
+    const isOpen=dropdown.classList.toggle('open');
+    btn.setAttribute('aria-expanded',isOpen);
+  });
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('.plan-selector')){dropdown.classList.remove('open');btn.setAttribute('aria-expanded','false');}
+  });
+  // Upgrade buttons inside the dropdown
+  dropdown.querySelectorAll('.plan-option-upgrade-btn').forEach(upgradeBtn=>{
+    upgradeBtn.addEventListener('click',e=>{
+      e.stopPropagation();
+      window.location.href='/pricing.html';
+    });
+  });
+  // Locked plan options also navigate to pricing
+  dropdown.querySelectorAll('.plan-option.locked').forEach(opt=>{
+    opt.addEventListener('click',e=>{
+      if(!e.target.closest('.plan-option-upgrade-btn')){
+        window.location.href='/pricing.html';
+      }
+    });
+  });
+}
+
 function setupDocumentsEvents(){
   if(documentsLink)documentsLink.addEventListener('click',e=>{e.preventDefault();openDocumentsView();});
   if(documentsCloseBtn)documentsCloseBtn.addEventListener('click',closeDocumentsView);
@@ -726,22 +761,18 @@ function setupEvents(){
   upgradeBtn.addEventListener('click',()=>window.location.href='/pricing.html');
   if(mobileMenuBtn)mobileMenuBtn.addEventListener('click',()=>sidebar.classList.toggle('mobile-open'));
   // Model selectors — main composer + welcome composer. Both share state via setSelectedModel().
+  // Models: OpenRouter (active), OpenAI API (coming soon), Socra (coming soon)
   const selectors=[
     {btn:$('model-selector-btn'),dropdown:$('model-selector-dropdown'),label:$('model-selector-label')},
     {btn:$('welcome-model-selector-btn'),dropdown:$('welcome-model-selector-dropdown'),label:$('welcome-model-selector-label')}
   ].filter(s=>s.btn&&s.dropdown);
-  // Track the currently selected model + dot class so both selectors stay in sync.
-  let currentModel='doxa';
-  let currentDotClass='low';
-  function setSelectedModel(model,dotClass,label){
-    currentModel=model;currentDotClass=dotClass;
-    selectors.forEach(({btn,dropdown,label:labelEl})=>{
+  let currentModel='openrouter';
+  function setSelectedModel(model,label){
+    currentModel=model;
+    selectors.forEach(({dropdown,label:labelEl})=>{
       if(labelEl)labelEl.textContent=label;
-      const dot=btn.querySelector('.model-selector-dot');
-      if(dot){dot.className='model-selector-dot '+dotClass;}
       dropdown.querySelectorAll('.model-option').forEach(o=>{
-        const isActive=o.dataset.model===model;
-        o.classList.toggle('active',isActive);
+        o.classList.toggle('active',o.dataset.model===model);
       });
       dropdown.classList.remove('open');
     });
@@ -749,29 +780,25 @@ function setupEvents(){
   selectors.forEach(({btn,dropdown})=>{
     btn.addEventListener('click',e=>{
       e.stopPropagation();
-      // Close any other open dropdowns first
       selectors.forEach(s=>{if(s.dropdown!==dropdown)s.dropdown.classList.remove('open');});
       dropdown.classList.toggle('open');
     });
     dropdown.querySelectorAll('.model-option').forEach(opt=>{
       opt.addEventListener('click',()=>{
-        const model=opt.dataset.model;
         if(opt.classList.contains('locked')){
           dropdown.classList.remove('open');
-          window.location.href='pricing.html';
+          showToast('Coming soon!',false);
           return;
         }
-        const dotClass=[...opt.querySelector('.model-option-dot').classList].find(c=>['low','med','high'].includes(c))||'low';
         const label=opt.querySelector('strong').textContent;
-        setSelectedModel(model,dotClass,label);
+        setSelectedModel(opt.dataset.model,label);
       });
     });
   });
   document.addEventListener('click',e=>{
     if(!e.target.closest('.model-selector'))selectors.forEach(s=>s.dropdown.classList.remove('open'));
   });
-  // Initialize both selectors with the default model
-  setSelectedModel(currentModel,currentDotClass,'Doxa');
+  setSelectedModel(currentModel,'OpenRouter');
 }
 
 function setWelcomeMessage(){
@@ -932,7 +959,9 @@ function openSettings(){
 }
 function syncSettingsUI(){
   if(window.SocraTheme){
-    if(themeSelect)themeSelect.value=SocraTheme.getTheme();
+    const theme=SocraTheme.getTheme();
+    const themeRadio=document.querySelector(`input[name="theme-radio"][value="${theme}"]`);
+    if(themeRadio)themeRadio.checked=true;
     const accent=SocraTheme.getAccentColor();
     if(accentColorInput){
       if(accent){
@@ -979,8 +1008,10 @@ function setupSettingsEvents(){
   if(settingsBtn)settingsBtn.addEventListener('click',e=>{e.stopPropagation();openSettings();});
   if(settingsClose)settingsClose.addEventListener('click',closeSettings);
   if(settingsOverlay)settingsOverlay.addEventListener('click',closeSettings);
-  // Theme dropdown
-  if(themeSelect)themeSelect.addEventListener('change',e=>setTheme(e.target.value));
+  // Theme radio cards
+  document.querySelectorAll('input[name="theme-radio"]').forEach(radio=>{
+    radio.addEventListener('change',e=>{if(e.target.checked)setTheme(e.target.value);});
+  });
   // Accent color picker
   if(accentColorInput)accentColorInput.addEventListener('input',e=>setAccentColor(e.target.value));
   if(accentResetBtn)accentResetBtn.addEventListener('click',()=>{

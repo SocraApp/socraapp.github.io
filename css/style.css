@@ -426,6 +426,31 @@ img { max-width: 100%; height: auto; display: block; }
 .metrics-btn { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border: 1px solid var(--border); border-radius: var(--r-full); font-size: var(--label); font-weight: 500; color: var(--ink-muted); transition: all var(--fast); letter-spacing: 0.02em; }
 .metrics-btn:hover { border-color: var(--primary); color: var(--primary-hover); text-decoration: none; }
 
+/* Plan selector dropdown (Socra—Doxa in the top bar) */
+.plan-selector { position: relative; }
+.plan-selector-btn { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border: none; border-radius: var(--r); background: transparent; color: var(--ink); font-size: 15px; font-weight: 600; cursor: pointer; transition: background var(--fast); }
+.plan-selector-btn:hover { background: var(--surface-2); }
+.plan-selector-btn svg { color: var(--ink-muted); transition: transform var(--fast); }
+.plan-selector-btn[aria-expanded="true"] svg { transform: rotate(180deg); }
+.plan-selector-dropdown { position: absolute; top: calc(100% + 4px); left: 0; min-width: 340px; background: var(--canvas); border: 1px solid var(--border); border-radius: var(--r-lg); box-shadow: var(--shadow-elevated); padding: 8px; display: none; z-index: 200; }
+.plan-selector-dropdown.open { display: block; }
+.plan-option { padding: 14px; border-radius: var(--r-md); margin-bottom: 4px; position: relative; }
+.plan-option:last-child { margin-bottom: 0; }
+.plan-option:hover { background: var(--surface-2); }
+.plan-option.active { background: var(--primary-06); }
+.plan-option-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.plan-option-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.plan-option-dot.low { background: #38BDF8; }
+.plan-option-dot.med { background: #2D8A56; }
+.plan-option-dot.high { background: #C9A84C; }
+.plan-option-name { font-size: 15px; font-weight: 600; color: var(--ink); flex: 1; }
+.plan-option-tag { font-size: 11px; font-weight: 600; color: var(--primary-hover); background: var(--primary-10); padding: 2px 8px; border-radius: var(--r-full); text-transform: uppercase; letter-spacing: 0.04em; }
+.plan-option-lock { color: #C9A84C; flex-shrink: 0; }
+.plan-option-desc { font-size: 13px; color: var(--ink-muted); line-height: 1.5; margin-bottom: 0; }
+.plan-option.locked .plan-option-desc { margin-bottom: 10px; }
+.plan-option-upgrade-btn { display: inline-flex; align-items: center; padding: 6px 16px; font-size: 13px; font-weight: 600; color: #FFFFFF; background: var(--primary); border: none; border-radius: var(--r-full); cursor: pointer; transition: background var(--fast); }
+.plan-option-upgrade-btn:hover { background: var(--primary-hover); }
+
 /* ============================================
    Workspace + chat split
    ============================================ */
@@ -716,7 +741,10 @@ img { max-width: 100%; height: auto; display: block; }
    ============================================ */
 /* When welcome screen is shown, hide the full-width bottom composer (the welcome composer is used instead) */
 .chat-panel.welcome-active .composer-area { display: none; }
-.composer-area { padding: 14px 20px 18px; border-top: 1px solid var(--border); background: var(--canvas); }
+/* Hide composer-area by default to prevent flicker on page load.
+   JS shows it via setWelcomeMode(false) when entering chat mode. */
+.composer-area { padding: 14px 20px 18px; border-top: 1px solid var(--border); background: var(--canvas); display: none; }
+.chat-panel:not(.welcome-active) .composer-area { display: block; }
 .composer-top-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .composer-top-row .spacer { flex: 1; }
 
@@ -1007,6 +1035,17 @@ img { max-width: 100%; height: auto; display: block; }
 /* Theme dropdown + accent picker */
 .settings-select { padding: 6px 10px; border: 1px solid var(--border-strong); border-radius: var(--r); background: var(--canvas); font-size: 14px; color: var(--ink); font-family: var(--font); cursor: pointer; flex-shrink: 0; }
 .settings-select:focus { border-color: var(--primary); outline: none; }
+
+/* Theme cards — 3 image radio cards (System, Light, Dark) */
+.theme-cards { display: flex; gap: 12px; margin-bottom: 8px; }
+.theme-card { display: flex; flex-direction: column; align-items: center; gap: 6px; cursor: pointer; flex: 1; }
+.theme-card input[type="radio"] { position: absolute; opacity: 0; pointer-events: none; }
+.theme-card-image { width: 100%; aspect-ratio: 16 / 10; border-radius: var(--r-md); border: 2px solid var(--border); transition: border-color var(--fast); background-size: cover; background-position: center; }
+.theme-card:hover .theme-card-image { border-color: var(--border-strong); }
+.theme-card input[type="radio"]:checked + .theme-card-image { border-color: var(--primary); }
+.theme-card-label { font-size: 13px; font-weight: 500; color: var(--ink-muted); transition: color var(--fast); }
+.theme-card input[type="radio"]:checked ~ .theme-card-label { color: var(--ink); }
+[data-theme="dark"] .theme-card-image { border-color: var(--border); }
 .accent-picker { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .accent-color-input { width: 36px; height: 36px; border: 1px solid var(--border-strong); border-radius: var(--r); cursor: pointer; padding: 2px; background: var(--canvas); }
 .accent-color-input::-webkit-color-swatch-wrapper { padding: 0; }
