@@ -74,8 +74,12 @@
             <div class="welcome-screen" id="welcome-screen">
               <div class="welcome-icon"><img src="/assets/small-logo.png" alt="Socra"></div>
               <div class="welcome-wordmark" id="welcome-heading">Socra</div>
-              <div class="welcome-subtitle" id="welcome-text">I am your Socratic reasoning partner. I will not give you answers — I will help you find them yourself.</div>
+              <div class="welcome-subtitle" id="welcome-text" hidden></div>
               <div class="welcome-composer">
+                <div class="welcome-composer-wrapper">
+                  <textarea class="welcome-composer-input" id="welcome-composer-input" placeholder="Share your thoughts... Socra will guide your reasoning." rows="1"></textarea>
+                  <button class="welcome-composer-btn" id="welcome-send-btn" disabled title="Send"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></button>
+                </div>
                 <div class="welcome-model-row">
                   <div class="model-selector" id="welcome-model-selector">
                     <button class="model-selector-btn" id="welcome-model-selector-btn">
@@ -89,10 +93,6 @@
                       <button class="model-option locked" data-model="nous"><span class="model-option-dot high"></span><span class="model-option-info"><strong>Nous</strong> <span class="model-tier">High</span></span><span class="model-lock-icon" title="Upgrade"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span></button>
                     </div>
                   </div>
-                </div>
-                <div class="welcome-composer-wrapper">
-                  <textarea class="welcome-composer-input" id="welcome-composer-input" placeholder="Share your thoughts... Socra will guide your reasoning." rows="1"></textarea>
-                  <button class="welcome-composer-btn" id="welcome-send-btn" disabled title="Send"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></button>
                 </div>
               </div>
             </div>

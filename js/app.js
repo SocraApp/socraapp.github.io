@@ -573,9 +573,9 @@ function autoResizeComposer(){
     if(!el)return;
     // Reset height so scrollHeight reflects the natural content height
     el.style.height='auto';
-    // Use scrollHeight which includes padding; clamp to [36, 120].
-    // min-height 36 + padding 12 = 48px is one full line of body text (16px * 1.5 + 12 padding).
-    const sh=Math.max(el.scrollHeight,36),max=120;
+    // Clamp to [24, 120]. 24px content + 8px padding = 32px, matching the
+    // send button height so they sit inline on a single empty line.
+    const sh=Math.max(el.scrollHeight,24),max=120;
     if(sh>max){
       el.style.height=max+'px';
       el.style.overflowY='auto';
