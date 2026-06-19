@@ -766,20 +766,21 @@ img { max-width: 100%; height: auto; display: block; }
 .composer-btn.send-btn { background: var(--primary); color: #FFFFFF; }
 .composer-btn.send-btn:hover { background: var(--primary-hover); transform: scale(1.05); }
 .composer-btn.send-btn:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
-/* In the default row layout, hide the action-row wrapper and Document button —
-   only the textarea + send button are shown inline. */
+/* The action-row (containing the workspace-open send button) is hidden by default.
+   The Document button + standalone send button are direct children, always visible. */
 .composer-wrapper .composer-action-row { display: none; }
-.composer-wrapper .composer-action-row .composer-btn.send-btn { display: none; }
 
 /* Workspace-open layout: column with textarea on top, action row below.
-   The action row contains the Document button (left) + Send button (right).
-   Hide the standalone send button, show the action row. */
+   The Document button stays inline at the bottom-right of the textarea row.
+   The action row (with the send button) appears below. */
 .chat-panel.workspace-open .composer-wrapper { display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 12px 8px 16px; }
 .chat-panel.workspace-open .composer-input { width: 100%; display: block; flex: none; min-height: 32px; }
+/* In workspace-open mode, hide the standalone send button (the action-row send button is used instead) */
 .chat-panel.workspace-open .composer-wrapper .composer-btn.send-btn.standalone { display: none; }
+/* The Document button aligns to the right in the column layout */
+.chat-panel.workspace-open .composer-wrapper > .composer-btn.attach-btn { align-self: flex-end; }
 .chat-panel.workspace-open .composer-wrapper .composer-action-row { display: flex; align-items: center; gap: 8px; }
 .chat-panel.workspace-open .composer-wrapper .composer-action-row .spacer { flex: 1; }
-.chat-panel.workspace-open .composer-wrapper .composer-action-row .composer-btn.send-btn { display: flex; }
 .composer-action-row .spacer { flex: 1; }
 .composer-btn.attach-btn { color: var(--primary-hover); background: var(--primary-06); border: 1px solid var(--primary-10); font-weight: 600; font-size: 12px; width: auto; padding: 0 12px; gap: 5px; }
 .composer-btn.attach-btn span { display: inline; }
