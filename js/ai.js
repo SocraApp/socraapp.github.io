@@ -146,11 +146,25 @@ class AIClient {
   }
 
   parseResponse(rawContent) {
-    const metricsMatch = rawContent.match(/<!--METRICS({[\s\S]*?})-->/);
-    const titleMatch = rawContent.match(/<!--TITLE:(.+?)-->/);
+    let cleaned = rawContent;
+
+    // Strip leaked chat-template tokens. Some models emit raw control tokens
+    // like <|end|><|start|>assistant<|channel|>analysis...<|message|> when the
+    // server-side chat template isn't applied correctly. We remove everything
+    // up to and including the last <|message|> tag (the analysis/CoT section),
+    // then strip any remaining control tokens.
+    // 1. Remove everything before the last <|message|> tag (keeps only the final message)
+    cleaned = cleaned.replace(/[\s\S]*<\|message\|>/g, '');
+    // 2. Remove any remaining control tokens
+    cleaned = cleaned.replace(/<\|[^|]*\|>/g, '');
+    // 3. Also strip common variants without angle brackets
+    cleaned = cleaned.replace(/<\|end\|>|<\|start\|>|<\|channel\|>|<\|message\|>/g, '');
+
+    const metricsMatch = cleaned.match(/<!--METRICS({[\s\S]*?})-->/);
+    const titleMatch = cleaned.match(/<!--TITLE:(.+?)-->/);
     let metrics = null;
     let title = null;
-    let displayContent = rawContent;
+    let displayContent = cleaned;
 
     if (metricsMatch) {
       try {
@@ -159,7 +173,7 @@ class AIClient {
       } catch (e) {
         console.warn('[Socra] Failed to parse metrics block:', e);
       }
-      displayContent = rawContent.replace(/<!--METRICS{[\s\S]*?}-->/, '').trim();
+      displayContent = cleaned.replace(/<!--METRICS{[\s\S]*?}-->/, '').trim();
     } else {
       console.warn('[Socra] No metrics block found in AI response — generating fallback metrics');
       metrics = {

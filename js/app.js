@@ -383,7 +383,13 @@ window.sendMessage=sendMessage;
 function renderMessage(role,content){
   const msg=document.createElement('div');msg.className=`message ${role}`;
   const roleLabel=role==='user'?'You':'Socra';
-  const rawMarkdown=content.replace(/<!--METRICS{[\s\S]*?}-->/g,'').replace(/<!--TITLE:.+?-->/g,'').trim();
+  // Strip leaked chat-template tokens + metrics/title blocks from stored messages
+  const rawMarkdown=content
+    .replace(/[\s\S]*<\|message\|>/g,'')      // remove everything before the last <|message|> tag
+    .replace(/<\|[^|]*\|>/g,'')                // remove any remaining control tokens
+    .replace(/<!--METRICS{[\s\S]*?}-->/g,'')  // remove metrics blocks
+    .replace(/<!--TITLE:.+?-->/g,'')          // remove title blocks
+    .trim();
   let rendered;
   try{
     let processed=rawMarkdown;

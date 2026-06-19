@@ -116,13 +116,24 @@
     applyTheme: applyTheme,
     applyAccentColor: applyAccentColor,
     isEffectivelyDark: isEffectivelyDark,
-    /** Sync server profile preferences to localStorage + re-apply. Called after loadProfile(). */
+    /** Sync server profile preferences to localStorage + re-apply.
+     *  Called after loadProfile(). Only overwrites localStorage if the server
+     *  actually has a value — this prevents wiping a locally-set preference
+     *  when the server column is null/missing. */
     initProfile: function (profile) {
-      var theme = (profile && profile.theme) || 'system';
-      var accent = (profile && profile.accent_color) || '';
+      // Theme: server value takes precedence if present, otherwise keep localStorage
+      var serverTheme = profile && profile.theme;
+      var theme = serverTheme || localStorage.getItem('socra_theme') || 'system';
       localStorage.setItem('socra_theme', theme);
-      localStorage.setItem('socra_accent', accent);
       applyTheme(theme);
+      // Accent: only overwrite localStorage if the server has a non-empty value.
+      // If the server value is null/undefined/empty, keep the existing localStorage
+      // value (the user may have just set it via Settings and it hasn't synced yet).
+      var serverAccent = profile && profile.accent_color;
+      if (serverAccent) {
+        localStorage.setItem('socra_accent', serverAccent);
+      }
+      var accent = localStorage.getItem('socra_accent') || '';
       applyAccentColor(accent);
     },
     /** Get the current theme preference from localStorage. */
