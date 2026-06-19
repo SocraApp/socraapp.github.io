@@ -1,15 +1,17 @@
 /* ============================================
-   Socra Design System — v3 (Perplexity-inspired)
-   Teal-cyan accent + near-black surfaces + Segoe UI
+   Socra Design System — v3
+   Monochrome charcoal accent + warm off-white surfaces + Segoe UI
    ============================================ */
 
 :root {
-  /* Brand accent — teal */
-  --primary: #20B2AA;
-  --primary-hover: #1A9B93;
-  --primary-10: rgba(32, 178, 170, 0.10);
-  --primary-06: rgba(32, 178, 170, 0.06);
-  --primary-soft: #F0FDFC;
+  /* Brand accent — monochrome charcoal (#252422). No teal.
+     In light mode the accent is dark; in dark mode it flips to an off-white
+     (defined in the [data-theme="dark"] block below). */
+  --primary: #252422;
+  --primary-hover: #3A3935;
+  --primary-10: rgba(37, 36, 34, 0.10);
+  --primary-06: rgba(37, 36, 34, 0.06);
+  --primary-soft: #F2F0EC;
 
   /* Ink (text) */
   --ink: #1A1A1A;
@@ -21,9 +23,9 @@
   --surface-1: #F2F0EC;
   --surface-2: #ECEAE5;
   --surface-3: #E3E0D9;
-  /* Borders nearly invisible — just barely perceptible against the surfaces */
-  --border: rgba(0, 0, 0, 0.06);
-  --border-strong: rgba(0, 0, 0, 0.12);
+  /* Borders almost non-existent — barely perceptible against the surfaces */
+  --border: rgba(0, 0, 0, 0.025);
+  --border-strong: rgba(0, 0, 0, 0.06);
 
   /* Status */
   --success: #2D8A56;
@@ -38,7 +40,7 @@
   --navy-06: rgba(26, 26, 26, 0.05);
   --gold: var(--primary);
   --gold-light: var(--primary-hover);
-  --gold-dark: #17867F;
+  --gold-dark: #3A3935;
   --gold-10: var(--primary-10);
   --gold-06: var(--primary-06);
   --white: var(--canvas);
@@ -221,7 +223,7 @@ img { max-width: 100%; height: auto; display: block; }
 .pricing-card .btn { width: 100%; }
 
 /* Per-plan accent colors — match the model selector dot colors:
-   Doxa = teal (--primary), Elenchus = green (--success), Nous = gold (#C9A84C).
+   Doxa = charcoal (--primary), Elenchus = green (--success), Nous = gold (#C9A84C).
    This visually ties each pricing card to its corresponding model tier. */
 #plan-doxa { border-color: var(--primary); }
 #plan-elenchus { border-color: var(--success); }
@@ -300,6 +302,13 @@ img { max-width: 100%; height: auto; display: block; }
 .new-chat-btn.active { background: var(--primary-10); color: var(--primary-hover); border-color: transparent; }
 .sidebar.collapsed .new-chat-btn { justify-content: center; padding: 10px; margin: 6px 8px; width: calc(100% - 16px); }
 .sidebar.collapsed .new-chat-btn span { display: none; }
+
+/* Sidebar link button (e.g. Cognitive Portfolio) — same shell as .new-chat-btn
+   but never has the .active state, and text-decoration: none on hover. */
+.sidebar-link-btn { display: flex; align-items: center; gap: 10px; padding: 10px 12px; margin: 0 12px 4px; border-radius: var(--r); color: var(--ink); font-weight: 500; transition: all var(--fast); width: calc(100% - 24px); border: 1px solid var(--border); background: var(--canvas); text-decoration: none; }
+.sidebar-link-btn:hover { background: var(--surface-2); border-color: var(--border-strong); color: var(--ink); text-decoration: none; }
+.sidebar.collapsed .sidebar-link-btn { justify-content: center; padding: 10px; margin: 0 8px 4px; width: calc(100% - 16px); }
+.sidebar.collapsed .sidebar-link-btn span { display: none; }
 
 .sidebar-divider { height: 1px; background: var(--border); margin: 8px 12px; }
 
@@ -444,7 +453,7 @@ img { max-width: 100%; height: auto; display: block; }
 .md-line { min-height: 1.8em; position: relative; }
 .md-line.md-empty { min-height: 1.8em; }
 
-/* Headings — teal-accented, clear hierarchy */
+/* Headings — monochrome-accented, clear hierarchy */
 .md-h1 { font-size: 32px; font-weight: 700; color: var(--ink); line-height: 1.3; letter-spacing: -0.01em; margin: 0.6em 0 0.3em; }
 .md-h2 { font-size: 24px; font-weight: 600; color: var(--ink); line-height: 1.35; letter-spacing: -0.005em; margin: 0.6em 0 0.3em; }
 .md-h3 { font-size: 20px; font-weight: 600; color: var(--ink); line-height: 1.4; margin: 0.5em 0 0.25em; }
@@ -459,14 +468,14 @@ img { max-width: 100%; height: auto; display: block; }
 .live-editor code, .md-element code { font-family: var(--font-mono); background: var(--surface-2); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: var(--ink); }
 .live-editor a, .md-link { color: var(--primary-hover); text-decoration: underline; text-underline-offset: 2px; }
 
-/* Block elements — teal accent on blockquote like DESIGN.md */
+/* Block elements — charcoal accent on blockquote */
 .md-blockquote { border-left: 3px solid var(--primary); padding: 6px 16px; color: var(--ink-muted); background: var(--primary-06); border-radius: 0 var(--r) var(--r) 0; margin: 0; }
 .md-list-item, .md-ol-item { display: list-item; margin-left: 20px; padding: 2px 0; }
 .md-ol-item { list-style-type: decimal; }
 .md-list-item { list-style-type: disc; }
 .live-editor hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 
-/* Question blocks — teal accent */
+/* Question blocks — charcoal accent */
 .live-editor .question-block { background: var(--primary-06); border-left: 3px solid var(--primary); padding: 10px 16px; border-radius: 0 var(--r) var(--r) 0; cursor: pointer; margin: 8px 0; transition: background var(--fast); display: inline-flex; align-items: center; gap: 10px; color: var(--ink); }
 .live-editor .question-block:hover { background: var(--primary-10); }
 .live-editor .question-block::before { content: '?'; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: var(--primary); color: #FFFFFF; border-radius: var(--r-full); font-size: 13px; font-weight: 700; flex-shrink: 0; }
@@ -581,7 +590,7 @@ img { max-width: 100%; height: auto; display: block; }
    Force .hljs background transparent so my <pre> background shows through. */
 .message-bubble pre code.hljs { background: transparent !important; padding: 0 !important; color: var(--ink); font-family: var(--font-mono); }
 .message-bubble pre code.hljs::before, .message-bubble pre code.hljs::after { content: none; }
-/* In user messages (teal bubble), override hljs color to white for readability */
+/* In user messages (charcoal bubble), override hljs color to white for readability */
 .message.user .message-bubble pre code.hljs { color: #FFFFFF; }
 .message.user .message-bubble pre .code-lang-label { color: rgba(255, 255, 255, 0.7); }
 .message-bubble :not(pre) > code { font-family: var(--font-mono); font-size: 0.9em; }
@@ -820,9 +829,9 @@ img { max-width: 100%; height: auto; display: block; }
   --surface-1: #1E1D1B;
   --surface-2: #282725;
   --surface-3: #333230;
-  /* Borders nearly invisible — just barely perceptible against the dark surfaces */
-  --border: rgba(255, 255, 255, 0.06);
-  --border-strong: rgba(255, 255, 255, 0.12);
+  /* Borders almost non-existent — barely perceptible against the dark surfaces */
+  --border: rgba(255, 255, 255, 0.035);
+  --border-strong: rgba(255, 255, 255, 0.07);
   --ink: #F9FAFB;
   --ink-muted: #9CA3AF;
   --text-muted: #9CA3AF;
@@ -838,11 +847,13 @@ img { max-width: 100%; height: auto; display: block; }
   --gold-10: var(--primary-10);
   --gold-06: var(--primary-06);
 
-  --primary: #2DD4BF;          /* slightly brighter teal for dark mode contrast */
-  --primary-hover: #5EEAD4;
-  --primary-10: rgba(45, 212, 191, 0.14);
-  --primary-06: rgba(45, 212, 191, 0.08);
-  --primary-soft: #0F2A28;
+  /* Brand accent in dark mode — off-white tone (#E8E6E1) so the monochrome
+     accent stays visible against the near-black surfaces. */
+  --primary: #E8E6E1;
+  --primary-hover: #FFFFFF;
+  --primary-10: rgba(232, 230, 225, 0.10);
+  --primary-06: rgba(232, 230, 225, 0.06);
+  --primary-soft: #1E1D1B;
 
   --success: #3FB68B;
   --error: #F85149;
@@ -950,6 +961,9 @@ img { max-width: 100%; height: auto; display: block; }
 [data-theme="dark"] .profile-plan { color: var(--ink-muted); }
 [data-theme="dark"] .logout-btn { color: var(--ink-muted); background: transparent; border-color: var(--border); }
 [data-theme="dark"] .logout-btn:hover { background: var(--error); color: #FFFFFF; border-color: var(--error); }
+/* Dark-mode sidebar-upgrade-btn: hover text is dark on the off-white accent */
+[data-theme="dark"] .sidebar-upgrade-btn { color: var(--primary-hover); background: var(--primary-06); border-color: var(--primary-10); }
+[data-theme="dark"] .sidebar-upgrade-btn:hover { background: var(--primary); color: #1C1C1C; border-color: var(--primary); }
 [data-theme="dark"] .sidebar-icon-btn:hover { background: var(--surface-2); color: var(--ink); }
 [data-theme="dark"] .settings-btn:hover { background: var(--surface-2); color: var(--ink); }
 
@@ -999,6 +1013,10 @@ img { max-width: 100%; height: auto; display: block; }
 [data-theme="dark"] .message.user .message-bubble { background: var(--primary); color: #1C1C1C; }
 [data-theme="dark"] .message.assistant .message-bubble { background: var(--surface-1); border-color: var(--border); color: var(--ink); }
 [data-theme="dark"] .message.user .message-bubble code { background: rgba(28, 28, 28, 0.18); color: #1C1C1C; }
+/* In dark mode, user message bubble is off-white, so code blocks need dark text */
+[data-theme="dark"] .message.user .message-bubble pre code.hljs { color: #1C1C1C; }
+[data-theme="dark"] .message.user .message-bubble pre .code-lang-label { color: rgba(28, 28, 28, 0.6); }
+[data-theme="dark"] .message.user .message-bubble pre { background: rgba(28, 28, 28, 0.08); border-color: rgba(28, 28, 28, 0.12); }
 [data-theme="dark"] .message.assistant .message-bubble code { background: var(--surface-2); color: var(--ink); }
 [data-theme="dark"] .message-bubble pre { background: var(--surface-1); border-color: var(--border); }
 [data-theme="dark"] .message-bubble pre code { color: var(--ink); }
