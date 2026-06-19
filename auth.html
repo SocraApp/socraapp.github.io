@@ -10,6 +10,7 @@
   <link rel="icon" type="image/png" sizes="64x64" href="/assets/favicon-64.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
   <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/theme.js"></script>
 </head>
 <body>
   <div class="auth-page">
@@ -132,7 +133,12 @@
         // Supabase returns a fake user for duplicate emails (no session created).
         // If session is null but user exists, the email is already registered.
         if (data.user && data.session) {
-          // Successfully signed up AND auto-confirmed — go to app
+          // Successfully signed up AND auto-confirmed — sync profile to localStorage
+          // for anti-flicker, then go to app
+          try {
+            const { data: profile } = await sb.from('profiles').select('theme,accent_color').eq('id', data.session.user.id).single();
+            if (profile && window.SocraTheme) SocraTheme.initProfile(profile);
+          } catch (e) { /* profile might not exist yet — defaults will apply */ }
           window.location.href = '/app.html';
         } else if (data.user && !data.session) {
           // Email already registered — show error and switch to login
@@ -163,6 +169,14 @@
           err.classList.remove('hidden');
           return;
         }
+        // Sync profile to localStorage for anti-flicker, then go to app
+        try {
+          const { data: { session } } = await sb.auth.getSession();
+          if (session) {
+            const { data: profile } = await sb.from('profiles').select('theme,accent_color').eq('id', session.user.id).single();
+            if (profile && window.SocraTheme) SocraTheme.initProfile(profile);
+          }
+        } catch (e) { /* profile might not exist yet — defaults will apply */ }
         window.location.href = '/app.html';
       });
     })();

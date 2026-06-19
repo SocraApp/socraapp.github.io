@@ -11,58 +11,7 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <link rel="stylesheet" href="/css/style.css">
-  <script>
-    // Anti-flicker: apply theme + accent color ASAP, before Supabase loads.
-    // We cache preferences in localStorage so they're available instantly on
-    // every page load, then sync to the server when the user signs in.
-    (function(){
-      try {
-        var theme = localStorage.getItem('socra_theme') || 'system';
-        var accent = localStorage.getItem('socra_accent') || '';
-        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        var isDark = theme === 'dark' || (theme === 'system' && prefersDark);
-        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-        // Swap hljs theme to match
-        var hljsLink = document.getElementById('hljs-theme');
-        if (hljsLink) hljsLink.href = isDark
-          ? 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css'
-          : 'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css';
-        // Apply custom accent color if set
-        if (accent) applyAccentColor(accent, isDark);
-      } catch(e) {}
-
-      // Helper: apply accent color + auto-adapt for dark mode
-      function applyAccentColor(hex, isDark) {
-        if (!hex) return;
-        var root = document.documentElement;
-        // Convert hex to RGB
-        var m = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
-        if (!m) return;
-        var r = parseInt(m[1], 16), g = parseInt(m[2], 16), b = parseInt(m[3], 16);
-        // In dark mode, lighten the accent for visibility; in light mode, darken slightly for hover
-        var adapted = isDark ? lighten(r, g, b, 0.4) : [r, g, b];
-        var hover = isDark ? lighten(r, g, b, 0.6) : darken(r, g, b, 0.15);
-        root.style.setProperty('--primary', rgb(adapted));
-        root.style.setProperty('--primary-hover', rgb(hover));
-        root.style.setProperty('--primary-10', 'rgba(' + adapted.join(',') + ',0.10)');
-        root.style.setProperty('--primary-06', 'rgba(' + adapted.join(',') + ',0.06)');
-      }
-      function lighten(r, g, b, amt) {
-        return [
-          Math.min(255, Math.round(r + (255 - r) * amt)),
-          Math.min(255, Math.round(g + (255 - g) * amt)),
-          Math.min(255, Math.round(b + (255 - b) * amt))
-        ];
-      }
-      function darken(r, g, b, amt) {
-        return [Math.round(r * (1 - amt)), Math.round(g * (1 - amt)), Math.round(b * (1 - amt))];
-      }
-      function rgb(arr) { return 'rgb(' + arr[0] + ',' + arr[1] + ',' + arr[2] + ')'; }
-
-      // Expose for later use by app.js
-      window.__applyAccentColor = applyAccentColor;
-    })();
-  </script>
+  <script src="/js/theme.js"></script>
 </head>
 <body>
   <div class="app-layout">

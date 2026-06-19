@@ -10,17 +10,7 @@
   <link rel="icon" type="image/png" sizes="64x64" href="/assets/favicon-64.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
   <link rel="stylesheet" href="/css/style.css">
-  <script>
-    // Anti-flicker: apply theme ASAP from localStorage
-    (function(){
-      try {
-        var theme = localStorage.getItem('socra_theme') || 'system';
-        var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        var isDark = theme === 'dark' || (theme === 'system' && prefersDark);
-        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-      } catch(e) {}
-    })();
-  </script>
+  <script src="/js/theme.js"></script>
 </head>
 <body>
   <nav class="nav">
@@ -84,8 +74,7 @@
       // Load and apply theme preference (sync server -> localStorage for anti-flicker)
       try {
         const { data: profile } = await sb.from('profiles').select('theme,accent_color').eq('id', session.user.id).single();
-        if (profile?.theme) { localStorage.setItem('socra_theme', profile.theme); }
-        if (profile?.accent_color) { localStorage.setItem('socra_accent', profile.accent_color); }
+        if (profile && window.SocraTheme) SocraTheme.initProfile(profile);
       } catch (e) { /* ignore */ }
 
       const loadingEl = document.getElementById('metrics-loading');

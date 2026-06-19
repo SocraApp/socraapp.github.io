@@ -155,16 +155,23 @@ async function loadProfile(){
   profileName.textContent=n;
   profilePlan.textContent=currentProfile.plan.charAt(0).toUpperCase()+currentProfile.plan.slice(1);
   upgradeBtn.classList.toggle('hidden',currentProfile.plan==='nous');
-  // Load and apply theme preference. Server value syncs to localStorage for anti-flicker.
+  // Sync theme + accent from server profile to localStorage + apply.
+  // SocraTheme.initProfile handles localStorage caching (anti-flicker) + re-application.
+  if(window.SocraTheme)SocraTheme.initProfile(currentProfile);
   const theme=currentProfile.theme||'system';
-  localStorage.setItem('socra_theme',theme);
-  applyTheme(theme);
   if(themeSelect)themeSelect.value=theme;
-  // Load and apply accent color preference
   const accent=currentProfile.accent_color||'';
-  localStorage.setItem('socra_accent',accent);
-  if(accentColorInput)accentColorInput.value=accent||'#252422';
-  applyAccentColorJS(accent);
+  // Show the effective accent color in the picker. When no custom accent is set,
+  // show the CSS default for the current mode (#252422 light / #E8E6E1 dark)
+  // so the picker reflects what the user actually sees.
+  if(accentColorInput){
+    if(accent){
+      accentColorInput.value=accent;
+    }else{
+      const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+      accentColorInput.value=isDark?'#E8E6E1':'#252422';
+    }
+  }
 }
 
 async function loadChats(){
@@ -567,9 +574,9 @@ function autoResizeComposer(){
     if(!el)return;
     // Reset height so scrollHeight reflects the natural content height
     el.style.height='auto';
-    // Clamp to [24, 120]. 24px content + 8px padding = 32px, matching the
-    // send button height so they sit inline on a single empty line.
-    const sh=Math.max(el.scrollHeight,24),max=120;
+    // Clamp to [32, 120]. 32px matches the send button height so they sit
+    // inline on a single empty line. line-height is 32px so one line = 32px.
+    const sh=Math.max(el.scrollHeight,32),max=120;
     if(sh>max){
       el.style.height=max+'px';
       el.style.overflowY='auto';
@@ -694,31 +701,10 @@ function scrollSpotlightToSelected(){
 function openSettings(){if(settingsPanel){settingsPanel.classList.add('open');settingsOverlay.classList.add('open');document.body.style.overflow='hidden';}}
 function closeSettings(){if(settingsPanel){settingsPanel.classList.remove('open');settingsOverlay.classList.remove('open');document.body.style.overflow='';}}
 // ============================================
-// Theme system: System / Light / Dark
+// Theme system: delegates to SocraTheme (shared in /js/theme.js)
 // ============================================
-// Returns true if the effective theme is dark.
-function isEffectivelyDark(theme){
-  if(theme==='dark')return true;
-  if(theme==='light')return false;
-  // system
-  return window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
-}
-
 function applyTheme(theme){
-  const isDark=isEffectivelyDark(theme);
-  document.documentElement.setAttribute('data-theme',isDark?'dark':'light');
-  // Swap highlight.js theme stylesheet to match
-  const hljsLink=document.getElementById('hljs-theme');
-  if(hljsLink){
-    hljsLink.href=isDark
-      ?'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css'
-      :'https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css';
-  }
-  // Re-apply accent color so it adapts to the new mode
-  const accent=localStorage.getItem('socra_accent')||'';
-  if(accent)applyAccentColorJS(accent);
-  // Cache in localStorage for anti-flicker on next page load
-  localStorage.setItem('socra_theme',theme);
+  if(window.SocraTheme)SocraTheme.applyTheme(theme);
 }
 
 async function setTheme(theme){
@@ -729,62 +715,15 @@ async function setTheme(theme){
   }
 }
 
-// Listen for OS theme changes when in System mode
-if(window.matchMedia){
-  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{
-    const current=localStorage.getItem('socra_theme')||'system';
-    if(current==='system')applyTheme('system');
-  });
-}
-
-// ============================================
-// Custom accent color
-// ============================================
-function hexToRgb(hex){
-  const m=hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
-  if(!m)return null;
-  return [parseInt(m[1],16),parseInt(m[2],16),parseInt(m[3],16)];
-}
-function lightenRgb([r,g,b],amt){
-  return [
-    Math.min(255,Math.round(r+(255-r)*amt)),
-    Math.min(255,Math.round(g+(255-g)*amt)),
-    Math.min(255,Math.round(b+(255-b)*amt))
-  ];
-}
-function darkenRgb([r,g,b],amt){
-  return [Math.round(r*(1-amt)),Math.round(g*(1-amt)),Math.round(b*(1-amt))];
-}
-function rgbStr([r,g,b]){return `rgb(${r},${g},${b})`;}
-
-function applyAccentColorJS(hex){
-  if(!hex){
-    // Reset to default (clear inline styles so CSS defaults apply)
-    document.documentElement.style.removeProperty('--primary');
-    document.documentElement.style.removeProperty('--primary-hover');
-    document.documentElement.style.removeProperty('--primary-10');
-    document.documentElement.style.removeProperty('--primary-06');
-    return;
-  }
-  const rgb=hexToRgb(hex);
-  if(!rgb)return;
-  const isDark=document.documentElement.getAttribute('data-theme')==='dark';
-  // In dark mode, lighten the accent for visibility; in light mode, use as-is
-  const adapted=isDark?lightenRgb(rgb,0.4):rgb;
-  const hover=isDark?lightenRgb(rgb,0.6):darkenRgb(rgb,0.15);
-  document.documentElement.style.setProperty('--primary',rgbStr(adapted));
-  document.documentElement.style.setProperty('--primary-hover',rgbStr(hover));
-  document.documentElement.style.setProperty('--primary-10',`rgba(${adapted.join(',')},0.10)`);
-  document.documentElement.style.setProperty('--primary-06',`rgba(${adapted.join(',')},0.06)`);
-}
-
 async function setAccentColor(hex){
-  if(hex){
-    localStorage.setItem('socra_accent',hex);
-    applyAccentColorJS(hex);
-  }else{
-    localStorage.removeItem('socra_accent');
-    applyAccentColorJS('');
+  if(window.SocraTheme){
+    if(hex){
+      localStorage.setItem('socra_accent',hex);
+      SocraTheme.applyAccentColor(hex);
+    }else{
+      localStorage.removeItem('socra_accent');
+      SocraTheme.applyAccentColor('');
+    }
   }
   if(currentProfile)currentProfile.accent_color=hex||null;
   if(currentUser&&sb){
@@ -799,7 +738,13 @@ function setupSettingsEvents(){
   if(themeSelect)themeSelect.addEventListener('change',e=>setTheme(e.target.value));
   // Accent color picker
   if(accentColorInput)accentColorInput.addEventListener('input',e=>setAccentColor(e.target.value));
-  if(accentResetBtn)accentResetBtn.addEventListener('click',()=>{setAccentColor('');if(accentColorInput)accentColorInput.value='#252422';});
+  if(accentResetBtn)accentResetBtn.addEventListener('click',()=>{
+    setAccentColor('');
+    if(accentColorInput){
+      const isDark=document.documentElement.getAttribute('data-theme')==='dark';
+      accentColorInput.value=isDark?'#E8E6E1':'#252422';
+    }
+  });
   // Settings section navigation
   document.querySelectorAll('.settings-nav-btn').forEach(btn=>{
     btn.addEventListener('click',()=>{
