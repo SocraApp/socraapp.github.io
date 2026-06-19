@@ -135,12 +135,13 @@
             </div>
             <div class="composer-wrapper">
               <textarea class="composer-input" id="composer-input" placeholder="Share your thoughts... Socra will guide your reasoning." rows="1"></textarea>
-              <!-- Document button: always visible, sits inline at the bottom-right -->
-              <button class="composer-btn attach-btn" id="workspace-btn" title="Create workspace document"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg><span>Document</span></button>
-              <!-- Standalone send button: visible in row layout (welcome + workspace-closed) -->
+              <!-- Document button (standalone): visible in default row layout, hidden in workspace-open -->
+              <button class="composer-btn attach-btn standalone" id="workspace-btn" title="Create workspace document"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg><span>Document</span></button>
+              <!-- Send button (standalone): visible in default row layout, hidden in workspace-open -->
               <button class="composer-btn send-btn standalone" id="send-btn" disabled title="Send"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg></button>
-              <!-- Action row: only visible in workspace-open mode (column layout). Contains the Send button on the right. -->
+              <!-- Action row: only visible in workspace-open mode (column layout). Document button (left) + Send button (right). -->
               <div class="composer-action-row">
+                <button class="composer-btn attach-btn" id="workspace-btn-action" title="Create workspace document"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg><span>Document</span></button>
                 <div class="spacer"></div>
                 <button class="composer-btn send-btn" id="send-btn-action" disabled title="Send"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg></button>
               </div>

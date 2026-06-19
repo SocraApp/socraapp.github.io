@@ -771,14 +771,12 @@ img { max-width: 100%; height: auto; display: block; }
 .composer-wrapper .composer-action-row { display: none; }
 
 /* Workspace-open layout: column with textarea on top, action row below.
-   The Document button stays inline at the bottom-right of the textarea row.
-   The action row (with the send button) appears below. */
+   The action row has Document button (left) + Send button (right).
+   Hide the standalone Document + send buttons; show the action row. */
 .chat-panel.workspace-open .composer-wrapper { display: flex; flex-direction: column; align-items: stretch; gap: 10px; padding: 12px 12px 8px 16px; }
 .chat-panel.workspace-open .composer-input { width: 100%; display: block; flex: none; min-height: 32px; }
-/* In workspace-open mode, hide the standalone send button (the action-row send button is used instead) */
-.chat-panel.workspace-open .composer-wrapper .composer-btn.send-btn.standalone { display: none; }
-/* The Document button aligns to the right in the column layout */
-.chat-panel.workspace-open .composer-wrapper > .composer-btn.attach-btn { align-self: flex-end; }
+/* Hide standalone buttons in workspace-open mode */
+.chat-panel.workspace-open .composer-wrapper > .composer-btn.standalone { display: none; }
 .chat-panel.workspace-open .composer-wrapper .composer-action-row { display: flex; align-items: center; gap: 8px; }
 .chat-panel.workspace-open .composer-wrapper .composer-action-row .spacer { flex: 1; }
 .composer-action-row .spacer { flex: 1; }

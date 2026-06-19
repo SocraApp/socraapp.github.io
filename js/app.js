@@ -703,6 +703,8 @@ function setupEvents(){
     welcomeComposerInput.addEventListener('input',()=>{autoResizeComposer();if(welcomeSendBtn)welcomeSendBtn.disabled=!welcomeComposerInput.value.trim()||isSending;});
   }
   workspaceBtn.addEventListener('click',createWorkspaceDocument);
+  const workspaceBtnAction=$('workspace-btn-action');
+  if(workspaceBtnAction)workspaceBtnAction.addEventListener('click',createWorkspaceDocument);
   closeWorkspace.addEventListener('click',()=>{
     // If in doc-only mode (opened from Documents view), go back to documents list
     if($('workspace-chat-split').classList.contains('doc-only-mode')){
