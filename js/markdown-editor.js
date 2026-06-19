@@ -139,8 +139,8 @@ class MarkdownEditor {
           this.cursorPos = targetPos;
           this.selectionStart = targetPos;
           this.selectionEnd = targetPos;
+          // render() calls placeCursorFromModel() + onCursorChange() + scrollCursorIntoView()
           this.render();
-          requestAnimationFrame(() => this.placeCursorFromModel());
         }
       }
     });
@@ -326,6 +326,43 @@ class MarkdownEditor {
     this._highlightCodeBlocks(cursorLineIdx);
     this.placeCursorFromModel();
     this.onCursorChange();
+    // Auto-scroll to keep cursor visible
+    this.scrollCursorIntoView();
+  }
+
+  /**
+   * Scroll the editor so the cursor remains visible when typing causes
+   * the document to grow beyond the viewport.
+   */
+  scrollCursorIntoView() {
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
+    const range = sel.getRangeAt(0);
+    // Get the cursor position — use a temporary span if the range is collapsed
+    let rect = range.getBoundingClientRect();
+    if (rect.top === 0 && rect.bottom === 0 && rect.left === 0 && rect.right === 0) {
+      // Collapsed range — try to get the position of the cursor's container
+      const node = range.startContainer;
+      if (node.nodeType === Node.ELEMENT_NODE) {
+        rect = node.getBoundingClientRect();
+      } else if (node.parentElement) {
+        rect = node.parentElement.getBoundingClientRect();
+      }
+    }
+    if (!rect || (rect.top === 0 && rect.bottom === 0)) return;
+
+    const wrapper = this.editorEl.parentElement; // .live-editor-wrapper
+    if (!wrapper) return;
+    const wrapperRect = wrapper.getBoundingClientRect();
+
+    // If cursor is below the visible area, scroll down
+    if (rect.bottom > wrapperRect.bottom - 20) {
+      wrapper.scrollTop += (rect.bottom - wrapperRect.bottom) + 40;
+    }
+    // If cursor is above the visible area, scroll up
+    else if (rect.top < wrapperRect.top + 20) {
+      wrapper.scrollTop -= (wrapperRect.top - rect.top) + 40;
+    }
   }
 
   /**
@@ -760,13 +797,17 @@ class MarkdownEditor {
         const elId = `${lineIndex}-${pos}`;
         const iac = inlineActiveCls(elId);
         html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="latex-display">${this.esc('$$')}</span>`;
-        try {
-          const rendered = katex.renderToString(match[1], { displayMode: true, throwOnError: false });
-          // data-raw-length stores the raw markdown length so cursor positioning
-          // can use it instead of textContent.length (which differs for KaTeX output)
-          html += `<span class="md-katex md-katex-display md-element" data-element="${elId}" data-raw-length="${match[1].length}">${rendered}</span>`;
-        } catch (e) {
-          html += `<code class="md-element" data-element="${elId}">${this.esc(match[1])}</code>`;
+        if (iac) {
+          // Cursor is on this line — show raw LaTeX source (editable)
+          html += `<span class="md-element" data-element="${elId}">${this.esc(match[1])}</span>`;
+        } else {
+          // Render KaTeX
+          try {
+            const rendered = katex.renderToString(match[1], { displayMode: true, throwOnError: false });
+            html += `<span class="md-katex md-katex-display md-element" data-element="${elId}" data-raw-length="${match[1].length}">${rendered}</span>`;
+          } catch (e) {
+            html += `<code class="md-element" data-element="${elId}">${this.esc(match[1])}</code>`;
+          }
         }
         html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="latex-display">${this.esc('$$')}</span>`;
         pos += match[0].length;
@@ -779,13 +820,17 @@ class MarkdownEditor {
         const elId = `${lineIndex}-${pos}`;
         const iac = inlineActiveCls(elId);
         html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="latex-inline">${this.esc('$')}</span>`;
-        try {
-          const rendered = katex.renderToString(match[1], { displayMode: false, throwOnError: false });
-          // data-raw-length stores the raw markdown length so cursor positioning
-          // can use it instead of textContent.length (which differs for KaTeX output)
-          html += `<span class="md-katex md-katex-inline md-element" data-element="${elId}" data-raw-length="${match[1].length}">${rendered}</span>`;
-        } catch (e) {
-          html += `<code class="md-element" data-element="${elId}">${this.esc(match[1])}</code>`;
+        if (iac) {
+          // Cursor is on this line — show raw LaTeX source (editable)
+          html += `<span class="md-element" data-element="${elId}">${this.esc(match[1])}</span>`;
+        } else {
+          // Render KaTeX
+          try {
+            const rendered = katex.renderToString(match[1], { displayMode: false, throwOnError: false });
+            html += `<span class="md-katex md-katex-inline md-element" data-element="${elId}" data-raw-length="${match[1].length}">${rendered}</span>`;
+          } catch (e) {
+            html += `<code class="md-element" data-element="${elId}">${this.esc(match[1])}</code>`;
+          }
         }
         html += `<span class="md-syntax md-inline-syntax${iac}" data-line="${lineIndex}" data-element="${elId}" data-type="latex-inline">${this.esc('$')}</span>`;
         pos += match[0].length;

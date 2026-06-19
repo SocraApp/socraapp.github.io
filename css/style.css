@@ -246,9 +246,11 @@ img { max-width: 100%; height: auto; display: block; }
 .auth-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--surface-1); padding: var(--pad); }
 .auth-container { width: 100%; max-width: 440px; }
 .auth-logo { display: flex; justify-content: center; margin-bottom: 40px; }
-.auth-logo img { width: 56px; height: 56px; object-fit: contain; }
-/* In dark mode, swap to the inverted logo (auth page doesn't use dark mode, but keep for safety) */
-[data-theme="dark"] .auth-logo img { content: url('/assets/inverted-small-logo.png'); }
+.auth-logo img { width: 200px; height: auto; object-fit: contain; }
+.auth-logo-dark { display: none; }
+/* In dark mode, swap to the inverted full logo */
+[data-theme="dark"] .auth-logo-light { display: none; }
+[data-theme="dark"] .auth-logo-dark { display: block; }
 .auth-card { background: var(--canvas); border: 1.5px solid var(--border); border-radius: var(--r-lg); padding: 36px; box-shadow: var(--shadow-elevated); }
 .auth-tabs { display: flex; border-bottom: 1.5px solid var(--border); margin-bottom: 28px; }
 .auth-tab { flex: 1; padding: 12px; text-align: center; font-weight: 600; color: var(--ink-muted); border-bottom: 2px solid transparent; transition: all var(--fast); cursor: pointer; }
@@ -554,15 +556,16 @@ img { max-width: 100%; height: auto; display: block; }
 .md-list-item { list-style-type: disc; }
 .live-editor hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
 
-/* Question blocks — charcoal accent */
-.live-editor .question-block { background: var(--primary-06); border-left: 3px solid var(--primary); padding: 10px 16px; border-radius: 0 var(--r) var(--r) 0; cursor: pointer; margin: 8px 0; transition: background var(--fast); display: inline-flex; align-items: center; gap: 10px; color: var(--ink); }
+/* Question blocks — use display: inline so cursor can enter text in contentEditable.
+   The ::before circle is styled separately and doesn't block cursor navigation. */
+.live-editor .question-block { background: var(--primary-06); border-left: 3px solid var(--primary); padding: 6px 12px; border-radius: 0 var(--r) var(--r) 0; cursor: pointer; margin: 4px 0; display: inline; color: var(--ink); }
 .live-editor .question-block:hover { background: var(--primary-10); }
-.live-editor .question-block::before { content: '?'; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: var(--primary); color: #FFFFFF; border-radius: var(--r-full); font-size: 13px; font-weight: 700; flex-shrink: 0; }
+.live-editor .question-block::before { content: '?'; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background: var(--primary); color: #FFFFFF; border-radius: var(--r-full); font-size: 12px; font-weight: 700; margin-right: 6px; vertical-align: middle; }
 
-/* KaTeX */
+/* KaTeX — no scrollbars, full height always renders */
 .md-katex { display: inline; }
-.md-katex-display { display: block; margin: 12px 0; text-align: center; overflow: visible; max-height: none; height: auto; }
-.live-editor .katex-display { margin: 12px 0; overflow-x: auto; overflow-y: visible; max-height: none; height: auto; }
+.md-katex-display { display: block; margin: 12px 0; text-align: center; overflow: visible !important; max-height: none !important; height: auto !important; }
+.live-editor .katex-display { margin: 12px 0; overflow: visible !important; max-height: none !important; height: auto !important; }
 .live-editor .katex { font-size: 1.1em; }
 
 /* Fenced code blocks */
