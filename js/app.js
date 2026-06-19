@@ -8,6 +8,8 @@ const sidebarSearch=$('sidebar-search'),chatSearchInput=$('chat-search-input'),n
 const chatHistory=$('chat-history'),chatHistoryEmpty=$('chat-history-empty'),chatMessages=$('chat-messages');
 const welcomeScreen=$('welcome-screen'),welcomeHeading=$('welcome-heading'),welcomeText=$('welcome-text');
 const welcomePresets=$('welcome-presets'),composerInput=$('composer-input'),sendBtn=$('send-btn');
+const welcomeComposerInput=$('welcome-composer-input'),welcomeSendBtn=$('welcome-send-btn');
+const chatPanel=$('chat-panel');
 const workspaceBtn=$('workspace-btn'),workspacePanel=$('workspace-panel'),closeWorkspace=$('close-workspace');
 const workspaceTitle=$('workspace-title'),profileAvatar=$('profile-avatar'),profileName=$('profile-name');
 const profilePlan=$('profile-plan'),upgradeBtn=$('upgrade-btn'),formatHeading=$('format-heading');
@@ -35,6 +37,7 @@ async function init(){
   sb.auth.onAuthStateChange(e=>{if(e==='SIGNED_OUT')window.location.href='auth.html';});
   await loadChats();
   setWelcomeMessage();
+  setWelcomeMode(true);
   setupFormatBar();
   checkMobile();
   window.addEventListener('resize',checkMobile);
@@ -48,7 +51,7 @@ async function init(){
   window.addEventListener('popstate',()=>{
     const chatId=getChatIdFromUrl();
     if(chatId)openChat(chatId,true);
-    else{currentChat=null;workspaceDoc=null;chatMessages.innerHTML='';chatMessages.appendChild(welcomeScreen);welcomeScreen.style.display='flex';closeWorkspacePanel();document.querySelectorAll('.chat-item').forEach(i=>i.classList.remove('active'));newChatBtn.classList.add('active');}
+    else{currentChat=null;workspaceDoc=null;chatMessages.innerHTML='';chatMessages.appendChild(welcomeScreen);welcomeScreen.style.display='flex';setWelcomeMessage();setWelcomeMode(true);closeWorkspacePanel();document.querySelectorAll('.chat-item').forEach(i=>i.classList.remove('active'));newChatBtn.classList.add('active');}
   });
   // Auto-open chat if URL has a chat ID (either from direct /chat/UUID or 404 redirect)
   let urlChatId=getChatIdFromUrl();
@@ -242,6 +245,7 @@ async function deleteChat(chatId){
       chatMessages.innerHTML='';
       chatMessages.appendChild(welcomeScreen);
       welcomeScreen.style.display='flex';
+      setWelcomeMessage();setWelcomeMode(true);
       closeWorkspacePanel();
     }
     renderChatHistory(chatSearchInput.value);
@@ -256,7 +260,7 @@ async function createNewChat(){
   chatMessages.innerHTML='';chatMessages.appendChild(welcomeScreen);welcomeScreen.style.display='flex';
   closeWorkspacePanel();
   document.querySelectorAll('.chat-item').forEach(i=>i.classList.remove('active'));
-  newChatBtn.classList.add('active');setWelcomeMessage();
+  newChatBtn.classList.add('active');setWelcomeMessage();setWelcomeMode(true);
   // Only update URL if currently on a /chat/UUID path
   if(window.location.pathname.match(/\/chat\//)){
     history.pushState({},'','/app.html');
@@ -270,14 +274,17 @@ async function openChat(chatId,skipPush){
   if(!skipPush)history.pushState({chatId},'',window.location.pathname.replace(/\/chat\/.*$/,'').replace(/\/app\.html.*$/,'')+'/chat/'+chatId);
   const{data:messages}=await sb.from('messages').select('*').eq('chat_id',chatId).order('created_at',{ascending:true});
   chatMessages.innerHTML='';
-  if(messages?.length){messages.forEach(msg=>renderMessage(msg.role,msg.content));chatMessages.scrollTop=chatMessages.scrollHeight;}
-  else{chatMessages.appendChild(welcomeScreen);welcomeScreen.style.display='flex';}
+  if(messages?.length){messages.forEach(msg=>renderMessage(msg.role,msg.content));chatMessages.scrollTop=chatMessages.scrollHeight;setWelcomeMode(false);}
+  else{chatMessages.appendChild(welcomeScreen);welcomeScreen.style.display='flex';setWelcomeMessage();setWelcomeMode(true);}
   await loadWorkspaceDocument(chatId);
 }
 
 async function sendMessage(content){
   if(!content.trim()||isSending)return;
-  isSending=true;sendBtn.disabled=true;composerInput.value='';autoResizeComposer();
+  isSending=true;sendBtn.disabled=true;composerInput.value='';
+  if(welcomeComposerInput)welcomeComposerInput.value='';
+  if(welcomeSendBtn)welcomeSendBtn.disabled=true;
+  autoResizeComposer();
   if(!currentChat){
     const{data:newChat,error}=await sb.from('chats').insert({user_id:currentUser.id,title:'New Conversation'}).select().single();
     if(error){showToast('Failed to create chat.',true);isSending=false;sendBtn.disabled=false;return;}
@@ -285,6 +292,7 @@ async function sendMessage(content){
     history.pushState({chatId:currentChat.id},'',window.location.pathname.replace(/\/chat\/.*$/,'').replace(/\/app\.html.*$/,'')+'/chat/'+currentChat.id);
   }
   if(welcomeScreen.parentNode===chatMessages)chatMessages.removeChild(welcomeScreen);
+  setWelcomeMode(false); // Switch to full-width bottom composer now that the conversation has started
   renderMessage('user',content);
   await sb.from('messages').insert({chat_id:currentChat.id,role:'user',content});
   await sb.from('chats').update({updated_at:new Date().toISOString()}).eq('id',currentChat.id);
@@ -404,11 +412,23 @@ function setupEvents(){
   sendBtn.addEventListener('click',()=>sendMessage(composerInput.value));
   composerInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage(composerInput.value);}});
   composerInput.addEventListener('input',()=>{autoResizeComposer();sendBtn.disabled=!composerInput.value.trim()||isSending;});
+  // Welcome composer — same behavior, sends first message and switches to chat layout
+  if(welcomeSendBtn)welcomeSendBtn.addEventListener('click',()=>sendMessage(welcomeComposerInput.value));
+  if(welcomeComposerInput){
+    welcomeComposerInput.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage(welcomeComposerInput.value);}});
+    welcomeComposerInput.addEventListener('input',()=>{autoResizeComposer();if(welcomeSendBtn)welcomeSendBtn.disabled=!welcomeComposerInput.value.trim()||isSending;});
+  }
   workspaceBtn.addEventListener('click',createWorkspaceDocument);
   closeWorkspace.addEventListener('click',closeWorkspacePanel);
   reopenWorkspaceBtn.addEventListener('click',openWorkspacePanel);
   workspaceTitle.addEventListener('change',async()=>{if(workspaceDoc)await sb.from('workspace_documents').update({title:workspaceTitle.value,updated_at:new Date().toISOString()}).eq('id',workspaceDoc.id);});
-  welcomePresets.addEventListener('click',e=>{const p=e.target.closest('.welcome-preset');if(p){composerInput.value=p.dataset.prompt;autoResizeComposer();sendBtn.disabled=false;composerInput.focus();}});
+  welcomePresets.addEventListener('click',e=>{const p=e.target.closest('.welcome-preset');if(p){
+    // Prefer the welcome composer (visible when welcome screen is shown); fall back to the bottom composer
+    const target=welcomeComposerInput&&chatPanel.classList.contains('welcome-active')?welcomeComposerInput:composerInput;
+    target.value=p.dataset.prompt;autoResizeComposer();
+    if(target===welcomeComposerInput){if(welcomeSendBtn)welcomeSendBtn.disabled=false;}else{sendBtn.disabled=false;}
+    target.focus();
+  }});
   $('profile-info').addEventListener('click',e=>{if(!e.target.closest('.settings-btn'))window.location.href='/metrics.html';});
   upgradeBtn.addEventListener('click',()=>window.location.href='/pricing.html');
   $('logout-btn').addEventListener('click',async()=>{await sb.auth.signOut();window.location.href='/auth.html';});
@@ -452,12 +472,33 @@ function setupEvents(){
 
 function setWelcomeMessage(){
   const n=currentProfile?.name||'';
-  const g=[{h:n?`Welcome, ${n}`:'Welcome to Socra',t:'I am your Socratic reasoning partner. I will not give you answers — I will help you find them yourself.'},{h:n?`${n}, let's think together`:"Let's think together",t:'The best way to learn is to reason through problems yourself. I will be your guide.'},{h:'Ready to reason?',t:'True understanding comes from within. Share a problem, a question, or a topic you want to explore.'},{h:n?`Hello, ${n}`:'Hello',t:"Every great thinker started with a question. What's yours?"}];
-  const pick=g[Math.floor(Math.random()*g.length)];
-  welcomeHeading.textContent=pick.h;welcomeText.textContent=pick.t;
+  // The wordmark stays "Socra" — only the subtitle rotates.
+  welcomeHeading.textContent='Socra';
+  const g=[
+    n?`Welcome back, ${n}. I am your Socratic reasoning partner.`:'I am your Socratic reasoning partner. I will not give you answers — I will help you find them yourself.',
+    n?`${n}, let's think together. The best way to learn is to reason through problems yourself.`:'The best way to learn is to reason through problems yourself. I will be your guide.',
+    'True understanding comes from within. Share a problem, a question, or a topic you want to explore.',
+    n?`Hello, ${n}. Every great thinker started with a question — what's yours?`:"Every great thinker started with a question. What's yours?"
+  ];
+  welcomeText.textContent=g[Math.floor(Math.random()*g.length)];
 }
 
-function autoResizeComposer(){composerInput.style.height='auto';composerInput.style.height=Math.min(composerInput.scrollHeight,120)+'px';}
+// Toggle between welcome layout (centered wordmark + compact composer) and chat layout (full-width bottom composer)
+function setWelcomeMode(active){
+  if(!chatPanel)return;
+  if(active){
+    chatPanel.classList.add('welcome-active');
+    // Auto-focus the welcome composer for quick start
+    if(welcomeComposerInput)setTimeout(()=>welcomeComposerInput.focus(),50);
+  }else{
+    chatPanel.classList.remove('welcome-active');
+  }
+}
+
+function autoResizeComposer(){
+  if(composerInput){composerInput.style.height='auto';composerInput.style.height=Math.min(composerInput.scrollHeight,120)+'px';}
+  if(welcomeComposerInput){welcomeComposerInput.style.height='auto';welcomeComposerInput.style.height=Math.min(welcomeComposerInput.scrollHeight,120)+'px';}
+}
 function escapeHtml(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
 function showToast(msg,isErr=false){const t=document.createElement('div');t.className='toast'+(isErr?' error':'');t.textContent=msg;toastContainer.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(20px)';t.style.transition='all 0.3s';setTimeout(()=>t.remove(),300);},4000);}
 function checkMobile(){if(window.innerWidth<=768){mobileMenuBtn.style.display='flex';sidebar.classList.remove('collapsed');sidebar.classList.remove('mobile-open');}else{mobileMenuBtn.style.display='none';sidebar.classList.remove('mobile-open');}}

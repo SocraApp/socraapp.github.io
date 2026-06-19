@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Socra — Think</title>
   <link rel="icon" type="image/png" href="/assets/small-logo.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <link rel="stylesheet" href="/css/style.css">
 </head>
@@ -32,10 +29,7 @@
           <div class="profile-details"><div class="profile-name" id="profile-name">Loading...</div><div class="profile-plan" id="profile-plan">Doxa</div></div>
           <button class="settings-btn" id="settings-btn" title="Settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
         </div>
-        <div class="profile-btns">
-          <button class="upgrade-btn" id="upgrade-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>Upgrade</button>
-          <button class="logout-btn" id="logout-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>Log Out</button>
-        </div>
+        <button class="logout-btn full-width" id="logout-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>Log Out</button>
       </div>
     </aside>
     <main class="main-content">
@@ -73,13 +67,19 @@
           <div class="chat-messages" id="chat-messages">
             <div class="welcome-screen" id="welcome-screen">
               <div class="welcome-icon"><img src="/assets/small-logo.png" alt="Socra"></div>
-              <h2 id="welcome-heading">Welcome to Socra</h2>
-              <p id="welcome-text">I am your Socratic reasoning partner. I will not give you answers — I will help you find them yourself.</p>
+              <div class="welcome-wordmark" id="welcome-heading">Socra</div>
+              <div class="welcome-subtitle" id="welcome-text">I am your Socratic reasoning partner. I will not give you answers — I will help you find them yourself.</div>
               <div class="welcome-presets" id="welcome-presets">
                 <button class="welcome-preset" data-prompt="Help me understand a concept I'm struggling with">Understand a concept</button>
                 <button class="welcome-preset" data-prompt="I have a problem I need to reason through">Reason through a problem</button>
                 <button class="welcome-preset" data-prompt="I want to challenge my assumptions">Challenge my assumptions</button>
                 <button class="welcome-preset" data-prompt="Help me build an argument step by step">Build an argument</button>
+              </div>
+              <div class="welcome-composer">
+                <div class="welcome-composer-wrapper">
+                  <textarea class="welcome-composer-input" id="welcome-composer-input" placeholder="Share your thoughts... Socra will guide your reasoning." rows="1"></textarea>
+                  <button class="welcome-composer-btn" id="welcome-send-btn" disabled title="Send"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></button>
+                </div>
               </div>
             </div>
           </div>
@@ -97,6 +97,8 @@
                   <button class="model-option locked" data-model="nous"><span class="model-option-dot high"></span><span class="model-option-info"><strong>Nous</strong> <span class="model-tier">High</span></span><span class="model-lock-icon" title="Upgrade"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span></button>
                 </div>
               </div>
+              <div class="spacer"></div>
+              <button class="upgrade-btn" id="upgrade-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>Upgrade</button>
             </div>
             <div class="composer-wrapper">
               <textarea class="composer-input" id="composer-input" placeholder="Share your thoughts... Socra will guide your reasoning." rows="1"></textarea>
