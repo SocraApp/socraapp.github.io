@@ -216,6 +216,20 @@ img { max-width: 100%; height: auto; display: block; }
 .pricing-features li.disabled .check-icon { color: var(--border-strong); }
 .pricing-card .btn { width: 100%; }
 
+/* Per-plan accent colors — match the model selector dot colors:
+   Doxa = teal (--primary), Elenchus = green (--success), Nous = gold (#C9A84C).
+   This visually ties each pricing card to its corresponding model tier. */
+#plan-doxa { border-color: var(--primary); }
+#plan-elenchus { border-color: var(--success); }
+#plan-nous { border-color: #C9A84C; }
+/* Recommended badge inherits the plan's accent color */
+#plan-elenchus.featured::before { background: var(--success); color: #FFFFFF; }
+/* Current Plan badge inherits the plan's accent color */
+#plan-doxa.current-plan::after { background: var(--primary); color: #FFFFFF; }
+#plan-elenchus.current-plan::after { background: var(--success); color: #FFFFFF; }
+#plan-nous.current-plan::after { background: #C9A84C; color: #FFFFFF; }
+
+
 /* ============================================
    Auth page
    ============================================ */
@@ -276,7 +290,7 @@ img { max-width: 100%; height: auto; display: block; }
 /* Chat history list — cleaner, less dense */
 .chat-history { flex: 1; overflow-y: auto; padding: 4px 8px 8px; }
 .chat-history-label { padding: 12px 8px 4px; font-size: 11px; font-weight: 600; color: var(--ink-muted); letter-spacing: 0.06em; text-transform: uppercase; }
-.chat-history-empty { padding: 24px 14px; text-align: center; color: var(--ink-muted); font-size: var(--body); line-height: 1.6; }
+.chat-history-empty { padding: 24px 14px; text-align: center; color: var(--ink-muted); font-size: var(--body); line-height: 1.6; flex: 1; display: flex; align-items: center; justify-content: center; }
 .chat-item { display: flex; align-items: center; padding: 8px 10px; border-radius: var(--r); cursor: pointer; transition: background var(--fast); gap: 8px; margin-bottom: 1px; position: relative; color: var(--ink); }
 .chat-item:hover { background: var(--surface-2); }
 .chat-item.active { background: var(--surface-2); color: var(--ink); font-weight: 500; }
@@ -315,6 +329,51 @@ img { max-width: 100%; height: auto; display: block; }
 
 /* Hide upgrade button in sidebar (moved to chat panel) */
 .sidebar .upgrade-btn { display: none; }
+
+/* Sidebar-pinned Upgrade button at the bottom of .chat-history.
+   margin-top: auto pushes it to the bottom of the flex column when the chat
+   list is short; position: sticky + bottom: 0 keeps it visible at the bottom
+   of the scroll viewport when the chat list is long. */
+.sidebar-upgrade-btn {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 9px 12px;
+  margin-top: auto;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary-hover);
+  background: var(--primary-06);
+  border: 1px solid var(--primary-10);
+  border-radius: var(--r);
+  transition: all var(--fast);
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.sidebar-upgrade-btn:hover {
+  background: var(--primary);
+  color: #FFFFFF;
+  border-color: var(--primary);
+}
+.sidebar-upgrade-btn svg { flex-shrink: 0; }
+.sidebar.collapsed .sidebar-upgrade-btn {
+  /* In collapsed sidebar, show only the icon centered */
+  justify-content: center;
+  padding: 9px;
+  margin: 8px 8px 0;
+  width: calc(100% - 16px);
+}
+.sidebar.collapsed .sidebar-upgrade-btn span { display: none; }
+
+/* Lay out chat-history as a flex column so margin-top: auto on the upgrade
+   button can push it to the bottom. Preserve original scroll behavior. */
+.chat-history { display: flex; flex-direction: column; }
+
 
 /* ============================================
    Main content / top bar
@@ -422,9 +481,10 @@ img { max-width: 100%; height: auto; display: block; }
 
 /* Welcome composer — centered, not full-width */
 .welcome-composer { width: 100%; max-width: 640px; margin: 0 auto; }
+.welcome-model-row { display: flex; justify-content: center; margin-bottom: 12px; }
 .welcome-composer-wrapper { display: flex; align-items: flex-end; gap: 8px; background: var(--canvas); border: 1.5px solid var(--border); border-radius: var(--r-xl); padding: 8px 8px 8px 16px; transition: border-color var(--fast), box-shadow var(--fast); box-shadow: var(--shadow-card); }
 .welcome-composer-wrapper:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-10); }
-.welcome-composer-input { flex: 1; resize: none; border: none; background: transparent; font-size: var(--body); line-height: 1.5; max-height: 120px; min-height: 24px; padding: 6px 0; color: var(--ink); }
+.welcome-composer-input { flex: 1; resize: none; border: none; background: transparent; font-size: var(--body); line-height: 1.5; max-height: 120px; min-height: 24px; padding: 6px 0; color: var(--ink); overflow-y: hidden; }
 .welcome-composer-input::placeholder { color: var(--ink-muted); }
 .welcome-composer-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: var(--r-full); background: var(--primary); color: #FFFFFF; transition: all var(--fast); flex-shrink: 0; }
 .welcome-composer-btn:hover { background: var(--primary-hover); transform: scale(1.04); }
@@ -540,7 +600,7 @@ img { max-width: 100%; height: auto; display: block; }
 /* Composer wrapper — full width */
 .composer-wrapper { display: flex; align-items: flex-end; gap: 8px; background: var(--canvas); border: 1.5px solid var(--border); border-radius: var(--r-xl); padding: 8px 8px 8px 16px; transition: border-color var(--fast), box-shadow var(--fast); }
 .composer-wrapper:focus-within { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-10); }
-.composer-input { flex: 1; resize: none; border: none; background: transparent; font-size: var(--body); line-height: 1.5; max-height: 120px; min-height: 24px; padding: 6px 0; color: var(--ink); }
+.composer-input { flex: 1; resize: none; border: none; background: transparent; font-size: var(--body); line-height: 1.5; max-height: 120px; min-height: 24px; padding: 6px 0; color: var(--ink); overflow-y: hidden; }
 .composer-input::placeholder { color: var(--ink-muted); }
 .composer-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: var(--r-full); transition: all var(--fast); flex-shrink: 0; }
 .composer-btn.send-btn { background: var(--primary); color: #FFFFFF; }
@@ -762,6 +822,14 @@ img { max-width: 100%; height: auto; display: block; }
 [data-theme="dark"] .pricing-features .check-icon { color: var(--primary); }
 [data-theme="dark"] .pricing-card.featured { border-color: var(--primary); background: var(--surface-2); }
 [data-theme="dark"] .pricing-card.current-plan { border-color: var(--ink); }
+/* Dark-mode per-plan accent colors (brighter variants to match dark-mode model dots) */
+[data-theme="dark"] #plan-doxa { border-color: var(--primary); }
+[data-theme="dark"] #plan-elenchus { border-color: var(--success); }
+[data-theme="dark"] #plan-nous { border-color: #C9A84C; }
+[data-theme="dark"] #plan-elenchus.featured::before { background: var(--success); color: #1C1C1C; }
+[data-theme="dark"] #plan-doxa.current-plan::after { background: var(--primary); color: #1C1C1C; }
+[data-theme="dark"] #plan-elenchus.current-plan::after { background: var(--success); color: #1C1C1C; }
+[data-theme="dark"] #plan-nous.current-plan::after { background: #C9A84C; color: #1C1C1C; }
 
 /* Auth */
 [data-theme="dark"] .auth-page { background: var(--surface-1); }

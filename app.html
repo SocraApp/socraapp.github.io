@@ -4,7 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Socra — Think</title>
-  <link rel="icon" type="image/png" href="/assets/small-logo.png">
+  <link rel="icon" type="image/x-icon" href="/assets/favicon.ico">
+  <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="64x64" href="/assets/favicon-64.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
   <link rel="stylesheet" href="/css/style.css">
 </head>
@@ -22,7 +26,10 @@
       <div class="sidebar-search" id="sidebar-search"><input type="text" placeholder="Search chats..." id="chat-search-input"></div>
       <button class="new-chat-btn active" id="new-chat-btn"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg><span>New Chat</span></button>
       <div class="sidebar-divider"></div>
-      <div class="chat-history" id="chat-history"><div class="chat-history-empty" id="chat-history-empty">Start a new chat to begin your Socratic journey.</div></div>
+      <div class="chat-history" id="chat-history">
+        <div class="chat-history-empty" id="chat-history-empty">Start a new chat to begin your Socratic journey.</div>
+        <button class="sidebar-upgrade-btn" id="upgrade-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg><span>Upgrade Plan</span></button>
+      </div>
       <div class="sidebar-profile">
         <div class="profile-info" id="profile-info">
           <div class="profile-avatar" id="profile-avatar">?</div>
@@ -69,13 +76,21 @@
               <div class="welcome-icon"><img src="/assets/small-logo.png" alt="Socra"></div>
               <div class="welcome-wordmark" id="welcome-heading">Socra</div>
               <div class="welcome-subtitle" id="welcome-text">I am your Socratic reasoning partner. I will not give you answers — I will help you find them yourself.</div>
-              <div class="welcome-presets" id="welcome-presets">
-                <button class="welcome-preset" data-prompt="Help me understand a concept I'm struggling with">Understand a concept</button>
-                <button class="welcome-preset" data-prompt="I have a problem I need to reason through">Reason through a problem</button>
-                <button class="welcome-preset" data-prompt="I want to challenge my assumptions">Challenge my assumptions</button>
-                <button class="welcome-preset" data-prompt="Help me build an argument step by step">Build an argument</button>
-              </div>
               <div class="welcome-composer">
+                <div class="welcome-model-row">
+                  <div class="model-selector" id="welcome-model-selector">
+                    <button class="model-selector-btn" id="welcome-model-selector-btn">
+                      <span class="model-selector-dot"></span>
+                      <span class="model-selector-label" id="welcome-model-selector-label">Doxa</span>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                    </button>
+                    <div class="model-selector-dropdown" id="welcome-model-selector-dropdown">
+                      <button class="model-option active" data-model="doxa"><span class="model-option-dot low"></span><span class="model-option-info"><strong>Doxa</strong> <span class="model-tier">Low</span></span></button>
+                      <button class="model-option locked" data-model="elenchus"><span class="model-option-dot med"></span><span class="model-option-info"><strong>Elenchus</strong> <span class="model-tier">Medium</span></span><span class="model-lock-icon" title="Upgrade"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span></button>
+                      <button class="model-option locked" data-model="nous"><span class="model-option-dot high"></span><span class="model-option-info"><strong>Nous</strong> <span class="model-tier">High</span></span><span class="model-lock-icon" title="Upgrade"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span></button>
+                    </div>
+                  </div>
+                </div>
                 <div class="welcome-composer-wrapper">
                   <textarea class="welcome-composer-input" id="welcome-composer-input" placeholder="Share your thoughts... Socra will guide your reasoning." rows="1"></textarea>
                   <button class="welcome-composer-btn" id="welcome-send-btn" disabled title="Send"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg></button>
@@ -97,8 +112,6 @@
                   <button class="model-option locked" data-model="nous"><span class="model-option-dot high"></span><span class="model-option-info"><strong>Nous</strong> <span class="model-tier">High</span></span><span class="model-lock-icon" title="Upgrade"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg></span></button>
                 </div>
               </div>
-              <div class="spacer"></div>
-              <button class="upgrade-btn" id="upgrade-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>Upgrade</button>
             </div>
             <div class="composer-wrapper">
               <textarea class="composer-input" id="composer-input" placeholder="Share your thoughts... Socra will guide your reasoning." rows="1"></textarea>

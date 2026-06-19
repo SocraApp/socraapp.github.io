@@ -39,6 +39,8 @@ async function init(){
   setWelcomeMessage();
   setWelcomeMode(true);
   setupFormatBar();
+  // Ensure textareas have correct initial height (prevents the empty-state scrollbar glitch)
+  autoResizeComposer();
   checkMobile();
   window.addEventListener('resize',checkMobile);
   // Close dropdown when clicking outside
@@ -422,8 +424,8 @@ function setupEvents(){
   closeWorkspace.addEventListener('click',closeWorkspacePanel);
   reopenWorkspaceBtn.addEventListener('click',openWorkspacePanel);
   workspaceTitle.addEventListener('change',async()=>{if(workspaceDoc)await sb.from('workspace_documents').update({title:workspaceTitle.value,updated_at:new Date().toISOString()}).eq('id',workspaceDoc.id);});
-  welcomePresets.addEventListener('click',e=>{const p=e.target.closest('.welcome-preset');if(p){
-    // Prefer the welcome composer (visible when welcome screen is shown); fall back to the bottom composer
+  // Welcome presets have been removed from the UI; keep this listener defensive in case the element reappears.
+  if(welcomePresets)welcomePresets.addEventListener('click',e=>{const p=e.target.closest('.welcome-preset');if(p){
     const target=welcomeComposerInput&&chatPanel.classList.contains('welcome-active')?welcomeComposerInput:composerInput;
     target.value=p.dataset.prompt;autoResizeComposer();
     if(target===welcomeComposerInput){if(welcomeSendBtn)welcomeSendBtn.disabled=false;}else{sendBtn.disabled=false;}
@@ -433,41 +435,53 @@ function setupEvents(){
   upgradeBtn.addEventListener('click',()=>window.location.href='/pricing.html');
   $('logout-btn').addEventListener('click',async()=>{await sb.auth.signOut();window.location.href='/auth.html';});
   if(mobileMenuBtn)mobileMenuBtn.addEventListener('click',()=>sidebar.classList.toggle('mobile-open'));
-  // Model selector
-  const modelSelectorBtn=$('model-selector-btn');
-  const modelDropdown=$('model-selector-dropdown');
-  const modelLabel=$('model-selector-label');
-  const modelDot=modelSelectorBtn?.querySelector('.model-selector-dot');
-  if(modelSelectorBtn&&modelDropdown){
-    modelSelectorBtn.addEventListener('click',e=>{
+  // Model selectors — main composer + welcome composer. Both share state via setSelectedModel().
+  const selectors=[
+    {btn:$('model-selector-btn'),dropdown:$('model-selector-dropdown'),label:$('model-selector-label')},
+    {btn:$('welcome-model-selector-btn'),dropdown:$('welcome-model-selector-dropdown'),label:$('welcome-model-selector-label')}
+  ].filter(s=>s.btn&&s.dropdown);
+  // Track the currently selected model + dot class so both selectors stay in sync.
+  let currentModel='doxa';
+  let currentDotClass='low';
+  function setSelectedModel(model,dotClass,label){
+    currentModel=model;currentDotClass=dotClass;
+    selectors.forEach(({btn,dropdown,label:labelEl})=>{
+      if(labelEl)labelEl.textContent=label;
+      const dot=btn.querySelector('.model-selector-dot');
+      if(dot){dot.className='model-selector-dot '+dotClass;}
+      dropdown.querySelectorAll('.model-option').forEach(o=>{
+        const isActive=o.dataset.model===model;
+        o.classList.toggle('active',isActive);
+      });
+      dropdown.classList.remove('open');
+    });
+  }
+  selectors.forEach(({btn,dropdown})=>{
+    btn.addEventListener('click',e=>{
       e.stopPropagation();
-      modelDropdown.classList.toggle('open');
+      // Close any other open dropdowns first
+      selectors.forEach(s=>{if(s.dropdown!==dropdown)s.dropdown.classList.remove('open');});
+      dropdown.classList.toggle('open');
     });
-    document.addEventListener('click',e=>{
-      if(!e.target.closest('.model-selector'))modelDropdown.classList.remove('open');
-    });
-    modelDropdown.querySelectorAll('.model-option').forEach(opt=>{
+    dropdown.querySelectorAll('.model-option').forEach(opt=>{
       opt.addEventListener('click',()=>{
         const model=opt.dataset.model;
         if(opt.classList.contains('locked')){
-          modelDropdown.classList.remove('open');
+          dropdown.classList.remove('open');
           window.location.href='pricing.html';
           return;
         }
-        // Select this model
-        modelDropdown.querySelectorAll('.model-option').forEach(o=>o.classList.remove('active'));
-        opt.classList.add('active');
-        modelLabel.textContent=opt.querySelector('strong').textContent;
-        // Update dot color
         const dotClass=[...opt.querySelector('.model-option-dot').classList].find(c=>['low','med','high'].includes(c))||'low';
-        modelDot.className='model-selector-dot';
-        modelDot.classList.add(dotClass);
-        modelDropdown.classList.remove('open');
+        const label=opt.querySelector('strong').textContent;
+        setSelectedModel(model,dotClass,label);
       });
     });
-    // Set initial dot color
-    if(modelDot)modelDot.classList.add('low');
-  }
+  });
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('.model-selector'))selectors.forEach(s=>s.dropdown.classList.remove('open'));
+  });
+  // Initialize both selectors with the default model
+  setSelectedModel(currentModel,currentDotClass,'Doxa');
 }
 
 function setWelcomeMessage(){
@@ -496,8 +510,20 @@ function setWelcomeMode(active){
 }
 
 function autoResizeComposer(){
-  if(composerInput){composerInput.style.height='auto';composerInput.style.height=Math.min(composerInput.scrollHeight,120)+'px';}
-  if(welcomeComposerInput){welcomeComposerInput.style.height='auto';welcomeComposerInput.style.height=Math.min(welcomeComposerInput.scrollHeight,120)+'px';}
+  const resize=el=>{
+    if(!el)return;
+    el.style.height='auto';
+    const sh=el.scrollHeight,max=120;
+    if(sh>max){
+      el.style.height=max+'px';
+      el.style.overflowY='auto';
+    }else{
+      el.style.height=sh+'px';
+      el.style.overflowY='hidden';
+    }
+  };
+  resize(composerInput);
+  resize(welcomeComposerInput);
 }
 function escapeHtml(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
 function showToast(msg,isErr=false){const t=document.createElement('div');t.className='toast'+(isErr?' error':'');t.textContent=msg;toastContainer.appendChild(t);setTimeout(()=>{t.style.opacity='0';t.style.transform='translateX(20px)';t.style.transition='all 0.3s';setTimeout(()=>t.remove(),300);},4000);}
