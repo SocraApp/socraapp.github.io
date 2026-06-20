@@ -216,7 +216,7 @@ class MarkdownEditor {
         codeBlockLang = (fenceOpen[3] || '').trim();
         if (!isActive) {
           // Hide the entire fence-open line (backticks + lang text)
-          this._mark(i, 0, line.length, { collapsed: true, atomic: true, inclusiveLeft: true, inclusiveRight: true });
+          this._mark(i, 0, line.length, { collapsed: true });
           // Show language label as a widget positioned to the right
           if (codeBlockLang) {
             const label = document.createElement('span');
@@ -234,7 +234,7 @@ class MarkdownEditor {
         if (fenceClose) {
           inCodeBlock = false;
           if (!isActive) {
-            this._mark(i, 0, line.length, { collapsed: true, atomic: true, inclusiveLeft: true, inclusiveRight: true });
+            this._mark(i, 0, line.length, { collapsed: true });
           }
           this._lineHandles.push(this.cm.addLineClass(i, 'text', 'cm-code-line'));
           continue;
@@ -270,7 +270,7 @@ class MarkdownEditor {
       const level = headingMatch[1].length;
       const prefixLen = headingMatch[1].length + 1;
       if (!isActive) {
-        this._mark(lineNum, 0, prefixLen, { collapsed: true, atomic: true, inclusiveLeft: true, inclusiveRight: true });
+        this._mark(lineNum, 0, prefixLen, { collapsed: true });
       }
       this._mark(lineNum, isActive ? 0 : prefixLen, line.length, { className: 'cm-header cm-header-' + level });
       return;
@@ -281,7 +281,7 @@ class MarkdownEditor {
     if (quoteMatch) {
       const prefixLen = 2;
       if (!isActive) {
-        this._mark(lineNum, 0, prefixLen, { collapsed: true, atomic: true, inclusiveLeft: true, inclusiveRight: true });
+        this._mark(lineNum, 0, prefixLen, { collapsed: true });
       }
       this._mark(lineNum, isActive ? 0 : prefixLen, line.length, { className: 'cm-quote' });
       return;
@@ -292,7 +292,7 @@ class MarkdownEditor {
     if (listMatch) {
       const prefixLen = listMatch[1].length + 1;
       if (!isActive) {
-        this._mark(lineNum, 0, prefixLen, { collapsed: true, atomic: true, inclusiveLeft: true, inclusiveRight: true });
+        this._mark(lineNum, 0, prefixLen, { collapsed: true });
       }
       return;
     }
@@ -300,7 +300,7 @@ class MarkdownEditor {
     // Horizontal rule
     if (line.match(/^(-{3,}|\*{3,}|_{3,})\s*$/)) {
       if (!isActive) {
-        this._mark(lineNum, 0, line.length, { collapsed: true, atomic: true, inclusiveLeft: true, inclusiveRight: true });
+        this._mark(lineNum, 0, line.length, { collapsed: true });
         const hr = document.createElement('hr');
         hr.style.cssText = 'border: none; border-top: 1px solid var(--border); margin: 8px 0;';
         this._marks.push(this.cm.setBookmark({ line: lineNum, ch: 0 }, { widget: hr }));
@@ -342,7 +342,7 @@ class MarkdownEditor {
         const elStart = i, elEnd = i + match[0].length;
         const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
         if (!cursorInEl) {
-          this._mark(lineNum, elStart, elEnd, { collapsed: true, atomic: true, inclusiveLeft: true, inclusiveRight: true });
+          this._mark(lineNum, elStart, elEnd, { collapsed: true });
           try {
             const rendered = katex.renderToString(match[1], { displayMode: true, throwOnError: false });
             const span = document.createElement('span');
@@ -359,7 +359,7 @@ class MarkdownEditor {
         const elStart = i, elEnd = i + match[0].length;
         const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
         if (!cursorInEl) {
-          this._mark(lineNum, elStart, elEnd, { collapsed: true, atomic: true, inclusiveLeft: true, inclusiveRight: true });
+          this._mark(lineNum, elStart, elEnd, { collapsed: true });
           try {
             const rendered = katex.renderToString(match[1], { displayMode: false, throwOnError: false });
             const span = document.createElement('span');
@@ -376,8 +376,8 @@ class MarkdownEditor {
         const elStart = i, elEnd = i + match[0].length;
         const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
         if (!cursorInEl) {
-          this._mark(lineNum, elStart, elStart + 1, { collapsed: true, atomic: true, inclusiveLeft: true, inclusiveRight: true });
-          this._mark(lineNum, elEnd - 1, elEnd, { collapsed: true, atomic: true, inclusiveLeft: true, inclusiveRight: true });
+          this._mark(lineNum, elStart, elStart + 1, { collapsed: true });
+          this._mark(lineNum, elEnd - 1, elEnd, { collapsed: true });
           this._mark(lineNum, elStart + 1, elEnd - 1, { className: 'cm-question-content' });
           const badge = document.createElement('span');
           badge.textContent = '?';
@@ -391,8 +391,8 @@ class MarkdownEditor {
         const elStart = i, elEnd = i + match[0].length;
         const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
         if (!cursorInEl) {
-          this._mark(lineNum, elStart, elStart + 1, { collapsed: true, atomic: true, inclusiveLeft: true, inclusiveRight: true });
-          this._mark(lineNum, elStart + 1 + match[1].length, elEnd, { collapsed: true, atomic: true, inclusiveLeft: true, inclusiveRight: true });
+          this._mark(lineNum, elStart, elStart + 1, { collapsed: true });
+          this._mark(lineNum, elStart + 1 + match[1].length, elEnd, { collapsed: true });
           this._mark(lineNum, elStart + 1, elStart + 1 + match[1].length, { className: 'cm-link' });
         }
         i = elEnd; continue;
@@ -414,8 +414,8 @@ class MarkdownEditor {
   _decorateSpan(lineNum, elStart, elEnd, delimLen, className, isActive, cursorCh) {
     const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
     if (!cursorInEl) {
-      this._mark(lineNum, elStart, elStart + delimLen, { collapsed: true, atomic: true, inclusiveLeft: true, inclusiveRight: true });
-      this._mark(lineNum, elEnd - delimLen, elEnd, { collapsed: true, atomic: true, inclusiveLeft: true, inclusiveRight: true });
+      this._mark(lineNum, elStart, elStart + delimLen, { collapsed: true });
+      this._mark(lineNum, elEnd - delimLen, elEnd, { collapsed: true });
     }
     this._mark(lineNum, cursorInEl ? elStart : elStart + delimLen, cursorInEl ? elEnd : elEnd - delimLen, { className });
   }
