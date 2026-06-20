@@ -527,7 +527,7 @@ img { max-width: 100%; height: auto; display: block; }
 .live-editor { flex: 1; min-height: 200px; overflow: hidden; }
 
 /* ============================================
-   CodeMirror — Socra Theme
+   CodeMirror — Socra Theme with Live Preview
    ============================================ */
 .CodeMirror { height: 100% !important; font-family: var(--font) !important; font-size: 16px !important; line-height: 1.8 !important; color: var(--ink) !important; background: var(--canvas) !important; }
 .CodeMirror-scroll { padding: 24px 32px !important; }
@@ -535,6 +535,12 @@ img { max-width: 100%; height: auto; display: block; }
 .CodeMirror-selected { background: var(--primary-10) !important; }
 .CodeMirror-focused .CodeMirror-selected { background: var(--primary-10) !important; }
 .CodeMirror-line { padding: 0 !important; }
+
+/* Cursor height: match the line height of the text it's on.
+   CodeMirror sets the cursor height based on the line's content.
+   For heading lines, the cursor should be taller. We achieve this
+   by making the cursor use the line-height of its parent. */
+.CodeMirror-cursor { height: auto !important; }
 
 /* Markdown syntax highlighting */
 .cm-header { color: var(--ink) !important; font-weight: 700 !important; }
@@ -557,6 +563,18 @@ img { max-width: 100%; height: auto; display: block; }
 .cm-number { color: var(--ink) !important; }
 .cm-def { color: var(--primary-hover) !important; }
 .cm-operator { color: var(--ink) !important; }
+
+/* Question block decoration */
+.cm-question-block {
+  background: var(--primary-06);
+  border-left: 3px solid var(--primary);
+  padding: 6px 12px;
+  border-radius: 0 var(--r) var(--r) 0;
+  display: inline-block;
+  color: var(--ink);
+}
+/* Strikethrough */
+.cm-strikethrough { text-decoration: line-through; color: var(--ink-muted); }
 
 /* Dark mode CodeMirror */
 [data-theme="dark"] .CodeMirror { background: var(--canvas) !important; color: var(--ink) !important; }
