@@ -60,19 +60,11 @@ class MarkdownEditor {
     this.cm.on('change', () => {
       this.rawMarkdown = this.cm.getValue();
       this._scheduleAutoSave();
-      this._scheduleRender();
-      // Scroll cursor into view after content change (typing/enter)
-      // Use a small delay so decorations are applied first
-      setTimeout(() => {
-        if (this.cm) {
-          const c = this.cm.getCursor();
-          this.cm.scrollIntoView({ from: { line: c.line, ch: c.ch }, to: { line: c.line, ch: c.ch } }, 40);
-        }
-      }, 10);
+      this._scheduleRender(true); // true = scroll after render
     });
 
     this.cm.on('cursorActivity', () => {
-      this._scheduleRender();
+      this._scheduleRender(false); // false = no scroll on cursor-only moves
     });
 
     // Click handler
@@ -163,12 +155,22 @@ class MarkdownEditor {
     return null;
   }
 
-  _scheduleRender() {
-    if (this._renderScheduled) return;
+  _scheduleRender(scrollAfter = false) {
+    if (this._renderScheduled) {
+      // If a render is already scheduled, just upgrade the scroll flag
+      if (scrollAfter) this._scrollAfterRender = true;
+      return;
+    }
     this._renderScheduled = true;
+    this._scrollAfterRender = scrollAfter;
     requestAnimationFrame(() => {
       this._renderScheduled = false;
       this._renderDecorations();
+      // Scroll AFTER decorations are applied so the DOM is settled
+      if (this._scrollAfterRender && this.cm) {
+        const c = this.cm.getCursor();
+        this.cm.scrollIntoView({ from: { line: c.line, ch: c.ch }, to: { line: c.line, ch: c.ch } }, 40);
+      }
     });
   }
 
