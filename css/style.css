@@ -530,15 +530,12 @@ img { max-width: 100%; height: auto; display: block; }
    CodeMirror — Socra Theme with Live Preview (v3)
    ============================================ */
 .CodeMirror { height: 100% !important; font-family: var(--font) !important; font-size: 16px !important; line-height: 1.6 !important; color: var(--ink) !important; background: var(--canvas) !important; }
-/* Padding on .CodeMirror-sizer (not .CodeMirror-scroll) so scrollIntoView
-   calculations are accurate. CodeMirror's scrollIntoView doesn't account
-   for CSS padding on the scroll container. */
-.CodeMirror-sizer { padding-top: 24px !important; padding-bottom: 24px !important; }
-.CodeMirror-content { padding-left: 32px !important; padding-right: 32px !important; }
-.CodeMirror-cursor { border-left: 2px solid var(--primary) !important; }
-.CodeMirror-selected { background: var(--primary-10) !important; }
-.CodeMirror-focused .CodeMirror-selected { background: var(--primary-10) !important; }
+/* Padding on .CodeMirror-lines (the actual content container in CM5). */
+.CodeMirror-lines { padding: 24px 32px !important; }
 .CodeMirror-line { padding: 0 !important; }
+.CodeMirror-cursor { border-left: 2px solid var(--primary) !important; }
+.CodeMirror-selected { background: var(--primary-10) !important; padding-left: 32px !important; margin-left: -32px !important; }
+.CodeMirror-focused .CodeMirror-selected { background: var(--primary-10) !important; padding-left: 32px !important; margin-left: -32px !important; }
 
 /* Markdown syntax highlighting */
 /* Header classes include line-height so the cursor height scales with

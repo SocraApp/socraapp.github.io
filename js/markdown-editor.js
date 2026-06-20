@@ -172,23 +172,13 @@ class MarkdownEditor {
         requestAnimationFrame(() => {
           if (!this.cm) return;
           const c = this.cm.getCursor();
-          // Use charCoords with 'local' to get position relative to the editor content
-          const coordsTop = this.cm.charCoords({ line: c.line, ch: 0 }, 'local');
-          const coordsBottom = this.cm.charCoords({ line: c.line, ch: c.ch || 0 }, 'local');
-          const scroller = this.cm.getScrollerElement();
-          const scrollerHeight = scroller.clientHeight;
-          const scrollTop = scroller.scrollTop;
-          const visibleBottom = scrollTop + scrollerHeight;
-          const lineTop = coordsTop.top;
-          const lineBottom = coordsBottom.bottom;
-          const lineHeight = lineBottom - lineTop;
-
-          // If any part of the cursor line is below the visible area,
-          // scroll so the full line is visible with one line of padding
-          if (lineBottom > visibleBottom - 5) {
-            // Scroll so the bottom of the line is one line-height above the viewport bottom
-            scroller.scrollTop = lineBottom - scrollerHeight + lineHeight + 10;
-          }
+          // Use CodeMirror's built-in scrollIntoView with the cursor position.
+          // The margin is the minimum distance from the cursor to the edge.
+          // We use a large margin to ensure the full line is visible.
+          this.cm.scrollIntoView(
+            { line: c.line, ch: c.ch },
+            60
+          );
         });
       }
     });
