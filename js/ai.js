@@ -4,33 +4,20 @@ Your purpose is not to provide answers, but to improve the user's ability to rea
 
 ---
 
-## HIGHEST PRIORITY: Recognize When the User Has Solved the Problem
+## Recognizing When the User Has Solved the Problem
 
-Before doing anything else, check: has the user already stated the correct answer? If YES, you MUST acknowledge it and conclude. This rule OVERRIDES all Socratic questioning rules. Do NOT ask another guiding question if the user has already arrived at the correct solution.
+When the user has clearly arrived at the correct final answer through their own reasoning, acknowledge it and wrap up. However, this should ONLY happen when:
+- The user has been working through a multi-step reasoning problem (not a simple question)
+- The user explicitly states the correct solution AND shows they understand why it's correct
+- The conversation has been going back and forth with Socratic guidance
 
-The user has "arrived at the correct answer" if ANY of these are true:
-- They state the correct solution explicitly (e.g., "x = i or x = -i")
-- They verify the solution and it checks out (e.g., "(-i)^2 = -1, so both work")
-- They express the key insight in their own words
-- They have completed all necessary reasoning steps
+Do NOT prematurely conclude or congratulate the user if:
+- They are asking a question (not answering one)
+- They have not yet attempted to solve the problem
+- The problem is a simple factual or calculational question
+- You are responding to their first message in the conversation
 
-When the user has arrived at the correct answer, your response MUST:
-1. Confirm their answer is correct ("That's exactly right!" or "Yes, that's correct!")
-2. Briefly summarize why it's correct (1-2 sentences)
-3. Congratulate them ("Well done!" or "Excellent reasoning!")
-4. Use intervention_type: "conclusion" in the metrics
-5. Do NOT ask any follow-up question about the same problem
-
-Example: If the user says "x = i or x = -i" for x^2 = -1, respond:
-"Exactly right! Both $x = i$ and $x = -i$ are solutions because $i^2 = -1$ and $(-i)^2 = -1$. You've successfully found all solutions by extending the number system to include imaginary numbers. Well done!"
-
-Do NOT respond with:
-- "What other number formed from i will also work?" (they already told you)
-- "Write both solutions using i" (they already wrote them)
-- "Verify that (-i)^2 = -1" (they may have already done this)
-- Any question that asks them to repeat or re-derive what they already said
-
-If the user has NOT yet stated the correct answer, proceed with Socratic guidance below.
+When concluding: confirm the answer is correct, briefly summarize why, and say "Well done!" Use intervention_type "conclusion". Do not ask another question about the same problem.
 
 ---
 
@@ -169,71 +156,12 @@ class AIClient {
   async sendMessage(messages) {
     const fullMessages = [{ role: 'system', content: SOCRA_SYSTEM_PROMPT }, ...messages];
 
-    // Inject a dynamic reminder as the LAST message (maximum recency bias).
-    // This checks the user's most recent message for solution-like patterns
-    // and explicitly tells the AI what to do. This is needed because the
-    // reasoning model sometimes ignores the system prompt's conclusion rules.
-    const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
-    let looksLikeSolution = false;
-    if (lastUserMsg) {
-      const userText = lastUserMsg.content.toLowerCase();
-      // Detect patterns that indicate the user is stating a solution/answer
-      const solutionPatterns = [
-        /x\s*=\s*[+-]?\s*i\b/,           // x = i, x = -i
-        /x\s*=\s*\d/,                      // x = 5
-        /the answer is/,                   // "the answer is..."
-        /solution[s]? (is|are)/,           // "solutions are..."
-        /therefore/,                       // "therefore x = ..."
-        /so (x|the|it)/,                   // "so x = ..."
-        /thus/,                            // "thus..."
-        /\([+-]?i\)\s*\^?\s*2\s*=\s*-?\d/, // (-i)^2 = -1 (verification)
-        /\bis\s+(-?\d+)/,                  // "is 5" / "is -1"
-        /equals?\s+-?\d/,                  // "equals -1"
-      ];
-      looksLikeSolution = solutionPatterns.some(p => p.test(userText));
-
-      if (looksLikeSolution) {
-        // Add a strong reminder as the last system message
-        fullMessages.push({
-          role: 'system',
-          content: `STOP AND READ CAREFULLY: The user's last message appears to state a solution or answer. Their message was: "${lastUserMsg.content.substring(0, 500)}". If this is a correct solution to the problem being discussed, you MUST acknowledge it as correct, briefly explain why it's correct, congratulate the user, and STOP. Do NOT ask another question. Do NOT ask them to verify, write, or compute anything they already stated. Use intervention_type "conclusion" in your metrics.`
-        });
-      }
-    }
-
     try {
       const { data, error } = await this.sb.functions.invoke('chat', { body: { messages: fullMessages } });
       if (error) throw new Error('Failed to get AI response.');
       if (data?.error) throw new Error(data.error);
       const aiMessage = data?.choices?.[0]?.message?.content || '';
-      const result = this.parseResponse(aiMessage);
-
-      // Post-check: if the user's last message looked like a solution but the AI
-      // responded with a question (not a conclusion), do a second call with an
-      // even stronger instruction. This catches cases where the model ignores
-      // the reminder.
-      if (lastUserMsg && looksLikeSolution && result.content) {
-        const responseText = result.content.toLowerCase();
-        const isQuestion = responseText.includes('?') && !responseText.includes('correct') && !responseText.includes('exactly') && !responseText.includes('right') && !responseText.includes('well done') && !responseText.includes('congratul');
-        if (isQuestion) {
-          console.log('[Socra] AI responded with a question despite solution detection — retrying with stronger instruction');
-          const retryMessages = [...fullMessages];
-          // Replace the last system reminder with an even stronger one
-          retryMessages[retryMessages.length - 1] = {
-            role: 'system',
-            content: `CRITICAL OVERRIDE: The user has ALREADY stated the correct answer: "${lastUserMsg.content.substring(0, 500)}". You must NOT ask any question. You must NOT ask them to verify, compute, or write anything. Your response MUST be: (1) confirm their answer is correct, (2) briefly explain why, (3) say "Well done!" or similar. Use intervention_type "conclusion". This is non-negotiable — do not ask a question.`
-          };
-          const { data: retryData, error: retryError } = await this.sb.functions.invoke('chat', { body: { messages: retryMessages } });
-          if (!retryError && retryData?.choices?.[0]?.message?.content) {
-            const retryResult = this.parseResponse(retryData.choices[0].message.content);
-            if (retryResult.content && !retryResult.content.includes('?')) {
-              return retryResult;
-            }
-          }
-        }
-      }
-
-      return result;
+      return this.parseResponse(aiMessage);
     } catch (err) {
       console.error('AI error:', err);
       throw err;

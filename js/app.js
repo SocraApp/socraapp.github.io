@@ -761,7 +761,7 @@ function setupEvents(){
     {btn:$('model-selector-btn'),dropdown:$('model-selector-dropdown'),label:$('model-selector-label')},
     {btn:$('welcome-model-selector-btn'),dropdown:$('welcome-model-selector-dropdown'),label:$('welcome-model-selector-label')}
   ].filter(s=>s.btn&&s.dropdown);
-  let currentModel='openrouter';
+  let currentModel='srm1dev';
   function setSelectedModel(model,label){
     currentModel=model;
     selectors.forEach(({dropdown,label:labelEl})=>{
@@ -793,7 +793,7 @@ function setupEvents(){
   document.addEventListener('click',e=>{
     if(!e.target.closest('.model-selector'))selectors.forEach(s=>s.dropdown.classList.remove('open'));
   });
-  setSelectedModel(currentModel,'OpenRouter');
+  setSelectedModel(currentModel,'SRM-1-dev');
 }
 
 function setWelcomeMessage(){

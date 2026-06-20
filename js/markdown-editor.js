@@ -61,14 +61,18 @@ class MarkdownEditor {
       this.rawMarkdown = this.cm.getValue();
       this._scheduleAutoSave();
       this._scheduleRender();
+      // Scroll cursor into view after content change (typing/enter)
+      // Use a small delay so decorations are applied first
+      setTimeout(() => {
+        if (this.cm) {
+          const c = this.cm.getCursor();
+          this.cm.scrollIntoView({ from: { line: c.line, ch: c.ch }, to: { line: c.line, ch: c.ch } }, 40);
+        }
+      }, 10);
     });
 
     this.cm.on('cursorActivity', () => {
       this._scheduleRender();
-      // Defer scroll to after decorations are applied
-      setTimeout(() => {
-        if (this.cm) this.cm.scrollIntoView(null, 100);
-      }, 0);
     });
 
     // Click handler
@@ -103,7 +107,43 @@ class MarkdownEditor {
         this.cm.focus();
         return;
       }
+
+      // Code block content line — if the line has a replacedWith mark
+      // (syntax highlighting widget), clicking won't map correctly via
+      // coordsChar because the text is replaced. Set cursor to the
+      // clicked line and let the re-render remove the widget.
+      const lineEl = this.cm.lineInfo(coords.line);
+      if (lineEl && lineEl.textClass && lineEl.textClass.includes('cm-code-line')) {
+        // Calculate character position from click X
+        const lineCoords = this.cm.charCoords({ line: coords.line, ch: 0 }, 'page');
+        const charWidth = this._estimateCharWidth(coords.line);
+        const clickX = e.clientX - lineCoords.left;
+        const targetCh = Math.max(0, Math.min(Math.round(clickX / charWidth), line.length));
+        this.cm.setCursor({ line: coords.line, ch: targetCh });
+        this.cm.focus();
+        return;
+      }
     });
+  }
+
+  /**
+   * Estimate the character width for a code line (monospace font).
+   * Measures the actual rendered width of the first character.
+   */
+  _estimateCharWidth(lineNum) {
+    // Try to measure from the actual DOM
+    const lineEl = this.cm.getLineHandle(lineNum);
+    if (lineEl && lineEl.textClass && lineEl.textClass.includes('cm-code-line')) {
+      // For monospace font, all characters are the same width
+      // Measure by getting the width of a 10-character string
+      const measure = this.cm.charCoords({ line: lineNum, ch: 0 }, 'page');
+      const measure10 = this.cm.charCoords({ line: lineNum, ch: 10 }, 'page');
+      if (measure10.left > measure.left) {
+        return (measure10.left - measure.left) / 10;
+      }
+    }
+    // Fallback: estimate based on font size (monospace ~0.6em)
+    return 16 * 0.9 * 0.6; // 16px base * 0.9em code size * 0.6 char ratio
   }
 
   _findEnclosing(line, ch, open, close) {
