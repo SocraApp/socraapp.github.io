@@ -172,16 +172,22 @@ class MarkdownEditor {
         requestAnimationFrame(() => {
           if (!this.cm) return;
           const c = this.cm.getCursor();
-          // Get the actual pixel position of the cursor line
-          const coords = this.cm.charCoords({ line: c.line, ch: 0 }, 'local');
+          // Use charCoords with 'local' to get position relative to the editor content
+          const coordsTop = this.cm.charCoords({ line: c.line, ch: 0 }, 'local');
+          const coordsBottom = this.cm.charCoords({ line: c.line, ch: c.ch || 0 }, 'local');
           const scroller = this.cm.getScrollerElement();
           const scrollerHeight = scroller.clientHeight;
           const scrollTop = scroller.scrollTop;
-          const lineBottom = coords.bottom;
-          // If the cursor line is below the visible area, scroll so it's
-          // fully visible with some padding
-          if (lineBottom > scrollTop + scrollerHeight - 20) {
-            scroller.scrollTop = lineBottom - scrollerHeight + 40;
+          const visibleBottom = scrollTop + scrollerHeight;
+          const lineTop = coordsTop.top;
+          const lineBottom = coordsBottom.bottom;
+          const lineHeight = lineBottom - lineTop;
+
+          // If any part of the cursor line is below the visible area,
+          // scroll so the full line is visible with one line of padding
+          if (lineBottom > visibleBottom - 5) {
+            // Scroll so the bottom of the line is one line-height above the viewport bottom
+            scroller.scrollTop = lineBottom - scrollerHeight + lineHeight + 10;
           }
         });
       }
