@@ -154,20 +154,21 @@ class MarkdownEditor {
       const isActive = (i === cursorLine);
 
       // Fenced code block tracking
-      const fenceOpen = line.match(/^(`{3,})(\s*\w*)?/);
+      const fenceOpen = line.match(/^(`{3,})(\s*(\w*))?/);
       if (fenceOpen && !inCodeBlock) {
         inCodeBlock = true;
-        codeBlockLang = (fenceOpen[2] || '').trim();
+        codeBlockLang = (fenceOpen[3] || '').trim();
         if (!isActive) {
-          this._mark(i, 0, fenceOpen[1].length, { css: 'display: none' });
+          // Hide the entire fence-open line (backticks + lang text)
+          this._mark(i, 0, line.length, { css: 'display: none' });
+          // Show language label as a widget positioned to the right
           if (codeBlockLang) {
             const label = document.createElement('span');
             label.textContent = codeBlockLang;
-            label.style.cssText = 'font-family: var(--font-mono); font-size: 0.85em; color: var(--ink-muted); margin-left: 4px;';
-            this._marks.push(this.cm.setBookmark({ line: i, ch: fenceOpen[1].length }, { widget: label }));
+            label.style.cssText = 'font-family: var(--font-mono); font-size: 0.85em; color: var(--ink-muted); position: absolute; right: 16px; opacity: 0.6;';
+            this._marks.push(this.cm.setBookmark({ line: i, ch: 0 }, { widget: label }));
           }
         }
-        // Use 'text' class to avoid wrapper DOM changes that affect cursor
         this._lineHandles.push(this.cm.addLineClass(i, 'text', 'cm-code-line'));
         continue;
       }
@@ -182,7 +183,19 @@ class MarkdownEditor {
           this._lineHandles.push(this.cm.addLineClass(i, 'text', 'cm-code-line'));
           continue;
         }
+        // Code content line — add background + syntax highlighting
         this._lineHandles.push(this.cm.addLineClass(i, 'text', 'cm-code-line'));
+        if (!isActive && window.hljs && codeBlockLang) {
+          try {
+            if (hljs.getLanguage(codeBlockLang)) {
+              const result = hljs.highlight(line, { language: codeBlockLang, ignoreIllegals: true });
+              const codeEl = document.createElement('span');
+              codeEl.innerHTML = result.value;
+              codeEl.style.cssText = 'display: inline;';
+              this._mark(i, 0, line.length, { replacedWith: codeEl });
+            }
+          } catch (e) {}
+        }
         continue;
       }
 

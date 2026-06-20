@@ -529,7 +529,7 @@ img { max-width: 100%; height: auto; display: block; }
 /* ============================================
    CodeMirror — Socra Theme with Live Preview (v3)
    ============================================ */
-.CodeMirror { height: 100% !important; font-family: var(--font) !important; font-size: 16px !important; line-height: 1.8 !important; color: var(--ink) !important; background: var(--canvas) !important; }
+.CodeMirror { height: 100% !important; font-family: var(--font) !important; font-size: 16px !important; line-height: 1.6 !important; color: var(--ink) !important; background: var(--canvas) !important; }
 /* Padding on .CodeMirror-sizer (not .CodeMirror-scroll) so scrollIntoView
    calculations are accurate. CodeMirror's scrollIntoView doesn't account
    for CSS padding on the scroll container. */
@@ -576,7 +576,7 @@ img { max-width: 100%; height: auto; display: block; }
 .cm-strikethrough { text-decoration: line-through; color: var(--ink-muted); }
 
 /* Code block line styling — applied to text element (not wrapper) to avoid cursor offset */
-.cm-code-line { background: var(--surface-2) !important; font-family: var(--font-mono) !important; font-size: 0.9em !important; display: block; padding: 2px 12px !important; }
+.cm-code-line { background: var(--surface-2) !important; font-family: var(--font-mono) !important; font-size: 0.9em !important; display: block; padding: 2px 12px !important; line-height: 1.5 !important; }
 /* Inline code styling */
 .cm-mono { font-family: var(--font-mono) !important; background: var(--surface-2) !important; padding: 2px 6px !important; border-radius: 4px !important; font-size: 0.9em !important; }
 
