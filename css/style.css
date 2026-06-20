@@ -536,12 +536,6 @@ img { max-width: 100%; height: auto; display: block; }
 .CodeMirror-focused .CodeMirror-selected { background: var(--primary-10) !important; }
 .CodeMirror-line { padding: 0 !important; }
 
-/* Cursor height: match the line height of the text it's on.
-   CodeMirror sets the cursor height based on the line's content.
-   For heading lines, the cursor should be taller. We achieve this
-   by making the cursor use the line-height of its parent. */
-.CodeMirror-cursor { height: auto !important; }
-
 /* Markdown syntax highlighting */
 .cm-header { color: var(--ink) !important; font-weight: 700 !important; }
 .cm-header-1 { font-size: 1.75em !important; }
@@ -565,16 +559,21 @@ img { max-width: 100%; height: auto; display: block; }
 .cm-operator { color: var(--ink) !important; }
 
 /* Question block decoration */
-.cm-question-block {
+.cm-question-content {
   background: var(--primary-06);
   border-left: 3px solid var(--primary);
   padding: 6px 12px;
   border-radius: 0 var(--r) var(--r) 0;
-  display: inline-block;
   color: var(--ink);
 }
 /* Strikethrough */
 .cm-strikethrough { text-decoration: line-through; color: var(--ink-muted); }
+
+/* Code block line styling */
+.cm-code-fence-line { background: var(--surface-2) !important; border-radius: var(--r-md) var(--r-md) 0 0; font-family: var(--font-mono) !important; font-size: 0.9em !important; padding: 4px 12px !important; }
+.cm-code-content-line { background: var(--surface-2) !important; font-family: var(--font-mono) !important; font-size: 0.9em !important; padding: 0 12px !important; }
+/* Inline code styling */
+.cm-mono { font-family: var(--font-mono) !important; background: var(--surface-2) !important; padding: 2px 6px !important; border-radius: 4px !important; font-size: 0.9em !important; }
 
 /* Dark mode CodeMirror */
 [data-theme="dark"] .CodeMirror { background: var(--canvas) !important; color: var(--ink) !important; }
