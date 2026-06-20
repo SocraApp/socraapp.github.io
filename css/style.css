@@ -516,8 +516,8 @@ img { max-width: 100%; height: auto; display: block; }
 .workspace-chat-split.doc-only-mode .chat-panel { display: none; }
 
 .workspace-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 16px; border-bottom: 1px solid var(--border); background: var(--canvas); }
-.workspace-title-input { border: none; background: transparent; font-size: var(--body); font-weight: 500; color: var(--ink); width: 200px; }
-.workspace-title-input:focus { outline: none; }
+.workspace-title-input { border: none; background: transparent; font-size: var(--body); font-weight: 500; color: var(--ink); max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.workspace-title-input:focus { outline: none; overflow: visible; }
 .workspace-actions { display: flex; align-items: center; gap: 4px; }
 .workspace-action-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: var(--r); color: var(--ink-muted); transition: all var(--fast); }
 .workspace-action-btn:hover { background: var(--surface-2); color: var(--ink); }

@@ -157,7 +157,6 @@ class MarkdownEditor {
 
   _scheduleRender(scrollAfter = false) {
     if (this._renderScheduled) {
-      // If a render is already scheduled, just upgrade the scroll flag
       if (scrollAfter) this._scrollAfterRender = true;
       return;
     }
@@ -166,10 +165,25 @@ class MarkdownEditor {
     requestAnimationFrame(() => {
       this._renderScheduled = false;
       this._renderDecorations();
-      // Scroll AFTER decorations are applied so the DOM is settled
       if (this._scrollAfterRender && this.cm) {
-        const c = this.cm.getCursor();
-        this.cm.scrollIntoView({ from: { line: c.line, ch: c.ch }, to: { line: c.line, ch: c.ch } }, 40);
+        // Use a second rAF to ensure the browser has painted the
+        // decoration changes before we scroll. This prevents the
+        // scroll from targeting stale layout.
+        requestAnimationFrame(() => {
+          if (!this.cm) return;
+          const c = this.cm.getCursor();
+          // Get the actual pixel position of the cursor line
+          const coords = this.cm.charCoords({ line: c.line, ch: 0 }, 'local');
+          const scroller = this.cm.getScrollerElement();
+          const scrollerHeight = scroller.clientHeight;
+          const scrollTop = scroller.scrollTop;
+          const lineBottom = coords.bottom;
+          // If the cursor line is below the visible area, scroll so it's
+          // fully visible with some padding
+          if (lineBottom > scrollTop + scrollerHeight - 20) {
+            scroller.scrollTop = lineBottom - scrollerHeight + 40;
+          }
+        });
       }
     });
   }
