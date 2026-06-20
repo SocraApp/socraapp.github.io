@@ -536,16 +536,12 @@ img { max-width: 100%; height: auto; display: block; }
 .CodeMirror-cursor { border-left: 2px solid var(--primary) !important; }
 .CodeMirror-selected { background: var(--primary-10) !important; }
 .CodeMirror-focused .CodeMirror-selected { background: var(--primary-10) !important; }
-/* Fix selection not extending to full line width on lines with collapsed marks.
-   CodeMirror wraps each line's content in a span inside .CodeMirror-line.
-   When collapsed marks hide text at the start of a line, the selection
-   starts at the first visible character position, leaving a gap. We fix
-   this by making .CodeMirror-line a block container and extending the
-   selection to fill it. */
-.CodeMirror-line { position: relative; }
-.CodeMirror-line > span { position: relative; }
-.CodeMirror-selected { display: inline-block; min-width: 100%; }
-
+/* Hidden syntax markers: invisible but in the DOM flow so selection works.
+   color: transparent keeps the text taking up space (so selection rectangles
+   align correctly) while making it invisible. This is the key difference
+   from collapsed:true (which removes text from the DOM and breaks selection)
+   and display:none (which also removes from flow). */
+.cm-hidden { color: transparent !important; }
 /* Markdown syntax highlighting */
 /* Header classes include line-height so the cursor height scales with
    the font size. Without this, the cursor stays at the base line-height

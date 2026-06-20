@@ -270,7 +270,7 @@ class MarkdownEditor {
       const level = headingMatch[1].length;
       const prefixLen = headingMatch[1].length + 1;
       if (!isActive) {
-        this._mark(lineNum, 0, prefixLen, { collapsed: true });
+        this._mark(lineNum, 0, prefixLen, { className: 'cm-hidden' });
       }
       this._mark(lineNum, isActive ? 0 : prefixLen, line.length, { className: 'cm-header cm-header-' + level });
       return;
@@ -281,7 +281,7 @@ class MarkdownEditor {
     if (quoteMatch) {
       const prefixLen = 2;
       if (!isActive) {
-        this._mark(lineNum, 0, prefixLen, { collapsed: true });
+        this._mark(lineNum, 0, prefixLen, { className: 'cm-hidden' });
       }
       this._mark(lineNum, isActive ? 0 : prefixLen, line.length, { className: 'cm-quote' });
       return;
@@ -292,7 +292,7 @@ class MarkdownEditor {
     if (listMatch) {
       const prefixLen = listMatch[1].length + 1;
       if (!isActive) {
-        this._mark(lineNum, 0, prefixLen, { collapsed: true });
+        this._mark(lineNum, 0, prefixLen, { className: 'cm-hidden' });
       }
       return;
     }
@@ -300,7 +300,7 @@ class MarkdownEditor {
     // Horizontal rule
     if (line.match(/^(-{3,}|\*{3,}|_{3,})\s*$/)) {
       if (!isActive) {
-        this._mark(lineNum, 0, line.length, { collapsed: true });
+        this._mark(lineNum, 0, line.length, { className: 'cm-hidden' });
         const hr = document.createElement('hr');
         hr.style.cssText = 'border: none; border-top: 1px solid var(--border); margin: 8px 0;';
         this._marks.push(this.cm.setBookmark({ line: lineNum, ch: 0 }, { widget: hr }));
