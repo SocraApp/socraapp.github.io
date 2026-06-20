@@ -60,11 +60,17 @@ class MarkdownEditor {
     this.cm.on('change', () => {
       this.rawMarkdown = this.cm.getValue();
       this._scheduleAutoSave();
-      this._scheduleRender(true); // true = scroll after render
+      // Only schedule scroll if the cursor is near or below the bottom
+      const c = this.cm.getCursor();
+      const coords = this.cm.charCoords({ line: c.line, ch: 0 }, 'local');
+      const scroller = this.cm.getScrollerElement();
+      const visibleBottom = scroller.scrollTop + scroller.clientHeight;
+      const needsScroll = coords.bottom > visibleBottom - 10;
+      this._scheduleRender(needsScroll);
     });
 
     this.cm.on('cursorActivity', () => {
-      this._scheduleRender(false); // false = no scroll on cursor-only moves
+      this._scheduleRender(false);
     });
 
     // Click handler
@@ -166,19 +172,17 @@ class MarkdownEditor {
       this._renderScheduled = false;
       this._renderDecorations();
       if (this._scrollAfterRender && this.cm) {
-        // Use a second rAF to ensure the browser has painted the
-        // decoration changes before we scroll. This prevents the
-        // scroll from targeting stale layout.
         requestAnimationFrame(() => {
           if (!this.cm) return;
           const c = this.cm.getCursor();
-          // Use CodeMirror's built-in scrollIntoView with the cursor position.
-          // The margin is the minimum distance from the cursor to the edge.
-          // We use a large margin to ensure the full line is visible.
-          this.cm.scrollIntoView(
-            { line: c.line, ch: c.ch },
-            60
-          );
+          // Only scroll if the cursor is actually below the visible area
+          const coords = this.cm.charCoords({ line: c.line, ch: 0 }, 'local');
+          const scroller = this.cm.getScrollerElement();
+          const visibleBottom = scroller.scrollTop + scroller.clientHeight;
+          if (coords.bottom > visibleBottom) {
+            // Scroll just enough to show the cursor line fully
+            this.cm.scrollIntoView({ line: c.line, ch: c.ch }, 10);
+          }
         });
       }
     });
