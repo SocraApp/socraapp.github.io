@@ -524,7 +524,47 @@ img { max-width: 100%; height: auto; display: block; }
 
 .editor-split { flex: 1; display: flex; overflow: hidden; flex-direction: column; }
 .live-editor-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-.live-editor { flex: 1; padding: 24px 32px; overflow-y: auto; outline: none; font-size: var(--body); line-height: 1.8; color: var(--ink); background: var(--canvas); min-height: 200px; white-space: pre-wrap; word-wrap: break-word; }
+.live-editor { flex: 1; min-height: 200px; overflow: hidden; }
+
+/* ============================================
+   CodeMirror — Socra Theme
+   ============================================ */
+.CodeMirror { height: 100% !important; font-family: var(--font) !important; font-size: 16px !important; line-height: 1.8 !important; color: var(--ink) !important; background: var(--canvas) !important; }
+.CodeMirror-scroll { padding: 24px 32px !important; }
+.CodeMirror-cursor { border-left: 2px solid var(--primary) !important; }
+.CodeMirror-selected { background: var(--primary-10) !important; }
+.CodeMirror-focused .CodeMirror-selected { background: var(--primary-10) !important; }
+.CodeMirror-line { padding: 0 !important; }
+
+/* Markdown syntax highlighting */
+.cm-header { color: var(--ink) !important; font-weight: 700 !important; }
+.cm-header-1 { font-size: 1.75em !important; }
+.cm-header-2 { font-size: 1.4em !important; }
+.cm-header-3 { font-size: 1.2em !important; }
+.cm-header-4 { font-size: 1.1em !important; }
+.cm-em { font-style: italic !important; }
+.cm-strong { font-weight: 700 !important; }
+.cm-link { color: var(--primary-hover) !important; text-decoration: underline !important; }
+.cm-url { color: var(--primary-hover) !important; }
+.cm-comment { color: var(--ink-muted) !important; }
+.cm-quote { color: var(--ink-muted) !important; border-left: 3px solid var(--primary) !important; padding-left: 12px !important; }
+.cm-variable-2, .cm-variable-3, .cm-keyword { color: var(--primary-hover) !important; }
+.cm-string { color: var(--ink) !important; }
+.cm-builtin { color: var(--primary-hover) !important; }
+.cm-tag { color: var(--ink-muted) !important; }
+.cm-bracket { color: var(--ink-muted) !important; }
+.cm-atom { color: var(--primary-hover) !important; }
+.cm-number { color: var(--ink) !important; }
+.cm-def { color: var(--primary-hover) !important; }
+.cm-operator { color: var(--ink) !important; }
+
+/* Dark mode CodeMirror */
+[data-theme="dark"] .CodeMirror { background: var(--canvas) !important; color: var(--ink) !important; }
+[data-theme="dark"] .CodeMirror-cursor { border-left-color: var(--primary) !important; }
+[data-theme="dark"] .CodeMirror-selected { background: var(--primary-10) !important; }
+[data-theme="dark"] .cm-header { color: var(--ink) !important; }
+[data-theme="dark"] .cm-link { color: var(--primary-hover) !important; }
+[data-theme="dark"] .cm-quote { color: var(--ink-muted) !important; }
 
 /* ── Obsidian-style syntax visibility ── */
 .md-syntax { font-size: 0; line-height: 0; display: inline; overflow: hidden; vertical-align: middle; user-select: none; pointer-events: none; color: var(--ink-muted); }
