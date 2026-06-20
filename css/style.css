@@ -527,21 +527,27 @@ img { max-width: 100%; height: auto; display: block; }
 .live-editor { flex: 1; min-height: 200px; overflow: hidden; }
 
 /* ============================================
-   CodeMirror — Socra Theme with Live Preview
+   CodeMirror — Socra Theme with Live Preview (v3)
    ============================================ */
 .CodeMirror { height: 100% !important; font-family: var(--font) !important; font-size: 16px !important; line-height: 1.8 !important; color: var(--ink) !important; background: var(--canvas) !important; }
-.CodeMirror-scroll { padding: 24px 32px !important; }
+/* Padding on .CodeMirror-sizer (not .CodeMirror-scroll) so scrollIntoView
+   calculations are accurate. CodeMirror's scrollIntoView doesn't account
+   for CSS padding on the scroll container. */
+.CodeMirror-sizer { padding: 24px 32px !important; }
 .CodeMirror-cursor { border-left: 2px solid var(--primary) !important; }
 .CodeMirror-selected { background: var(--primary-10) !important; }
 .CodeMirror-focused .CodeMirror-selected { background: var(--primary-10) !important; }
 .CodeMirror-line { padding: 0 !important; }
 
 /* Markdown syntax highlighting */
+/* Header classes include line-height so the cursor height scales with
+   the font size. Without this, the cursor stays at the base line-height
+   even on large heading lines. */
 .cm-header { color: var(--ink) !important; font-weight: 700 !important; }
-.cm-header-1 { font-size: 1.75em !important; }
-.cm-header-2 { font-size: 1.4em !important; }
-.cm-header-3 { font-size: 1.2em !important; }
-.cm-header-4 { font-size: 1.1em !important; }
+.cm-header-1 { font-size: 1.75em !important; line-height: 1.3 !important; }
+.cm-header-2 { font-size: 1.4em !important; line-height: 1.35 !important; }
+.cm-header-3 { font-size: 1.2em !important; line-height: 1.4 !important; }
+.cm-header-4 { font-size: 1.1em !important; line-height: 1.45 !important; }
 .cm-em { font-style: italic !important; }
 .cm-strong { font-weight: 700 !important; }
 .cm-link { color: var(--primary-hover) !important; text-decoration: underline !important; }
@@ -569,9 +575,8 @@ img { max-width: 100%; height: auto; display: block; }
 /* Strikethrough */
 .cm-strikethrough { text-decoration: line-through; color: var(--ink-muted); }
 
-/* Code block line styling */
-.cm-code-fence-line { background: var(--surface-2) !important; border-radius: var(--r-md) var(--r-md) 0 0; font-family: var(--font-mono) !important; font-size: 0.9em !important; padding: 4px 12px !important; }
-.cm-code-content-line { background: var(--surface-2) !important; font-family: var(--font-mono) !important; font-size: 0.9em !important; padding: 0 12px !important; }
+/* Code block line styling — applied to text element (not wrapper) to avoid cursor offset */
+.cm-code-line { background: var(--surface-2) !important; font-family: var(--font-mono) !important; font-size: 0.9em !important; display: block; padding: 2px 12px !important; }
 /* Inline code styling */
 .cm-mono { font-family: var(--font-mono) !important; background: var(--surface-2) !important; padding: 2px 6px !important; border-radius: 4px !important; font-size: 0.9em !important; }
 

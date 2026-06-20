@@ -1,17 +1,11 @@
 /**
- * Socra Markdown Editor — CodeMirror 5 with Live Preview (v2)
+ * Socra Markdown Editor — CodeMirror 5 with Live Preview (v3)
  *
- * Key design decisions for v2:
- * 1. LaTeX/question rendering happens even on the ACTIVE line, as long as
- *    the cursor is not INSIDE the specific element. This means closing the
- *    $ delimiters renders the math immediately, even if the cursor is
- *    still on that line (just outside the $...$ range).
- * 2. CodeMirror's native scrollIntoView is used for auto-scroll (reliable).
- * 3. No cursor height override — CodeMirror handles it natively.
- * 4. Inline code backticks are hidden when not active.
- * 5. Clicking rendered LaTeX moves cursor into the raw source.
- * 6. Clicking question blocks sends to AI.
- * 7. Code blocks get a background style via line classes.
+ * v3 fixes:
+ * - Code block styling via CSS text classes (not wrapper) to avoid cursor offset
+ * - Scroll padding moved to .CodeMirror-content to fix scroll offset
+ * - Cursor height scales with heading font-size via line-height on cm-header-N
+ * - Decoration pass deferred slightly to let CodeMirror update its own DOM first
  */
 class MarkdownEditor {
   constructor(textarea, previewEl, options = {}) {
@@ -22,7 +16,7 @@ class MarkdownEditor {
     this.lastSavedContent = '';
     this.cm = null;
     this._marks = [];
-    this._lineClasses = []; // Track line class marks
+    this._lineHandles = [];
     this._renderScheduled = false;
 
     this._init();
@@ -71,37 +65,38 @@ class MarkdownEditor {
 
     this.cm.on('cursorActivity', () => {
       this._scheduleRender();
-      // Use CodeMirror's built-in scrollIntoView with a margin
-      this.cm.scrollIntoView(null, 80);
+      // Defer scroll to after decorations are applied
+      setTimeout(() => {
+        if (this.cm) this.cm.scrollIntoView(null, 100);
+      }, 0);
     });
 
-    // Click handler: question blocks → send, LaTeX → edit
+    // Click handler
     this.cm.getWrapperElement().addEventListener('click', (e) => {
       const coords = this.cm.coordsChar({ left: e.clientX, top: e.clientY });
       if (!coords) return;
       const line = this.cm.getLine(coords.line);
       const ch = coords.ch;
 
-      // Check for question block: find enclosing ?...?
+      // Question block → send to AI
       const qbMatch = this._findEnclosing(line, ch, '?', '?');
       if (qbMatch) {
-        const content = line.substring(qbMatch.start + 1, qbMatch.end).trim();
+        const content = line.substring(qbMatch.start + 1, qbMatch.end - 1).trim();
         if (content && window.sendMessage) {
           window.sendMessage(content);
           return;
         }
       }
 
-      // Check for LaTeX: find enclosing $...$ or $$...$$
+      // LaTeX $...$ → edit
       const latexMatch = this._findEnclosing(line, ch, '$', '$');
       if (latexMatch) {
-        // Place cursor inside the LaTeX source so it un-renders
         this.cm.setCursor({ line: coords.line, ch: latexMatch.start + 1 });
         this.cm.focus();
         return;
       }
 
-      // Check for display LaTeX $$...$$
+      // LaTeX $$...$$ → edit
       const dlatexMatch = this._findEnclosing(line, ch, '$$', '$$');
       if (dlatexMatch) {
         this.cm.setCursor({ line: coords.line, ch: dlatexMatch.start + 2 });
@@ -111,20 +106,13 @@ class MarkdownEditor {
     });
   }
 
-  /**
-   * Find if position `ch` is inside a delimited construct like ?...? or $...$
-   * Returns {start, end} of the full match (including delimiters) or null.
-   */
   _findEnclosing(line, ch, open, close) {
     const openLen = open.length;
     const closeLen = close.length;
-    // Search backwards for the opening delimiter
     for (let i = ch - 1; i >= 0; i--) {
       if (line.substring(i, i + openLen) === open) {
-        // Search forwards for the closing delimiter
         for (let j = ch; j <= line.length - closeLen; j++) {
-          if (line.substring(j, j + closeLen) === close && j > i + openLen) {
-            // Check ch is between i+openLen and j
+          if (line.substring(j, j + closeLen) === close && j > i + openLen - 1) {
             if (ch > i && ch <= j + closeLen) {
               return { start: i, end: j + closeLen };
             }
@@ -150,15 +138,14 @@ class MarkdownEditor {
     // Clear old marks
     this._marks.forEach(m => { if (m.clear) m.clear(); });
     this._marks = [];
-    this._lineClasses.forEach(lh => { if (lh.clear) lh.clear(); });
-    this._lineClasses = [];
+    this._lineHandles.forEach(lh => { if (lh.clear) lh.clear(); });
+    this._lineHandles = [];
 
     const cursor = this.cm.getCursor();
     const cursorLine = cursor.line;
     const cursorCh = cursor.ch;
     const lineCount = this.cm.lineCount();
 
-    // Track if we're inside a fenced code block
     let inCodeBlock = false;
     let codeBlockLang = '';
 
@@ -166,15 +153,13 @@ class MarkdownEditor {
       const line = this.cm.getLine(i);
       const isActive = (i === cursorLine);
 
-      // ── Fenced code block tracking ──
+      // Fenced code block tracking
       const fenceOpen = line.match(/^(`{3,})(\s*\w*)?/);
       if (fenceOpen && !inCodeBlock) {
         inCodeBlock = true;
         codeBlockLang = (fenceOpen[2] || '').trim();
         if (!isActive) {
-          // Hide the backticks
           this._mark(i, 0, fenceOpen[1].length, { css: 'display: none' });
-          // Show language label as widget
           if (codeBlockLang) {
             const label = document.createElement('span');
             label.textContent = codeBlockLang;
@@ -182,8 +167,8 @@ class MarkdownEditor {
             this._marks.push(this.cm.setBookmark({ line: i, ch: fenceOpen[1].length }, { widget: label }));
           }
         }
-        // Style the fence line
-        this._lineClasses.push(this.cm.addLineClass(i, 'wrapper', 'cm-code-fence-line'));
+        // Use 'text' class to avoid wrapper DOM changes that affect cursor
+        this._lineHandles.push(this.cm.addLineClass(i, 'text', 'cm-code-line'));
         continue;
       }
 
@@ -194,15 +179,14 @@ class MarkdownEditor {
           if (!isActive) {
             this._mark(i, 0, line.length, { css: 'display: none' });
           }
-          this._lineClasses.push(this.cm.addLineClass(i, 'wrapper', 'cm-code-fence-line'));
+          this._lineHandles.push(this.cm.addLineClass(i, 'text', 'cm-code-line'));
           continue;
         }
-        // Code content line — add background styling
-        this._lineClasses.push(this.cm.addLineClass(i, 'wrapper', 'cm-code-content-line'));
+        this._lineHandles.push(this.cm.addLineClass(i, 'text', 'cm-code-line'));
         continue;
       }
 
-      this._decorateLine(i, line, isActive, cursorLine, cursorCh);
+      this._decorateLine(i, line, isActive, cursorCh);
     }
   }
 
@@ -210,8 +194,8 @@ class MarkdownEditor {
     this._marks.push(this.cm.markText({ line, ch: from }, { line, ch: to }, opts));
   }
 
-  _decorateLine(lineNum, line, isActive, cursorLine, cursorCh) {
-    // ── Heading ──
+  _decorateLine(lineNum, line, isActive, cursorCh) {
+    // Heading
     const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
     if (headingMatch) {
       const level = headingMatch[1].length;
@@ -223,7 +207,7 @@ class MarkdownEditor {
       return;
     }
 
-    // ── Blockquote ──
+    // Blockquote
     const quoteMatch = line.match(/^>\s+(.*)$/);
     if (quoteMatch) {
       const prefixLen = 2;
@@ -234,7 +218,7 @@ class MarkdownEditor {
       return;
     }
 
-    // ── List items ──
+    // List items
     const listMatch = line.match(/^([-*+]|\d+\.)\s+(.*)$/);
     if (listMatch) {
       const prefixLen = listMatch[1].length + 1;
@@ -244,7 +228,7 @@ class MarkdownEditor {
       return;
     }
 
-    // ── Horizontal rule ──
+    // Horizontal rule
     if (line.match(/^(-{3,}|\*{3,}|_{3,})\s*$/)) {
       if (!isActive) {
         this._mark(lineNum, 0, line.length, { css: 'display: none' });
@@ -255,73 +239,40 @@ class MarkdownEditor {
       return;
     }
 
-    // ── Inline decorations ──
-    this._decorateInline(lineNum, line, isActive, cursorLine, cursorCh);
+    // Inline decorations
+    this._decorateInline(lineNum, line, isActive, cursorCh);
   }
 
-  _decorateInline(lineNum, line, isActive, cursorLine, cursorCh) {
+  _decorateInline(lineNum, line, isActive, cursorCh) {
     let i = 0;
     while (i < line.length) {
       let match;
 
-      // Bold+Italic: ***text***
+      // Bold+Italic
       if ((match = line.substring(i).match(/^\*\*\*(.+?)\*\*\*/))) {
-        const elStart = i, elEnd = i + match[0].length;
-        const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
-        if (!cursorInEl) {
-          this._mark(lineNum, elStart, elStart + 3, { css: 'display: none' });
-          this._mark(lineNum, elEnd - 3, elEnd, { css: 'display: none' });
-        }
-        this._mark(lineNum, cursorInEl ? elStart : elStart + 3, cursorInEl ? elEnd : elEnd - 3, { className: 'cm-strong cm-em' });
-        i = elEnd;
-        continue;
+        this._decorateSpan(lineNum, i, i + match[0].length, 3, 'cm-strong cm-em', isActive, cursorCh);
+        i += match[0].length; continue;
       }
-
-      // Bold: **text**
+      // Bold
       if ((match = line.substring(i).match(/^\*\*(.+?)\*\*/))) {
-        const elStart = i, elEnd = i + match[0].length;
-        const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
-        if (!cursorInEl) {
-          this._mark(lineNum, elStart, elStart + 2, { css: 'display: none' });
-          this._mark(lineNum, elEnd - 2, elEnd, { css: 'display: none' });
-        }
-        this._mark(lineNum, cursorInEl ? elStart : elStart + 2, cursorInEl ? elEnd : elEnd - 2, { className: 'cm-strong' });
-        i = elEnd;
-        continue;
+        this._decorateSpan(lineNum, i, i + match[0].length, 2, 'cm-strong', isActive, cursorCh);
+        i += match[0].length; continue;
       }
-
-      // Italic: *text* or _text_
+      // Italic * or _
       if ((match = line.substring(i).match(/^\*(.+?)\*/)) || (match = line.substring(i).match(/^_(.+?)_/))) {
-        const elStart = i, elEnd = i + match[0].length;
-        const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
-        if (!cursorInEl) {
-          this._mark(lineNum, elStart, elStart + 1, { css: 'display: none' });
-          this._mark(lineNum, elEnd - 1, elEnd, { css: 'display: none' });
-        }
-        this._mark(lineNum, cursorInEl ? elStart : elStart + 1, cursorInEl ? elEnd : elEnd - 1, { className: 'cm-em' });
-        i = elEnd;
-        continue;
+        this._decorateSpan(lineNum, i, i + match[0].length, 1, 'cm-em', isActive, cursorCh);
+        i += match[0].length; continue;
       }
-
-      // Inline code: `text`
+      // Inline code
       if ((match = line.substring(i).match(/^`([^`]+)`/))) {
-        const elStart = i, elEnd = i + match[0].length;
-        const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
-        if (!cursorInEl) {
-          this._mark(lineNum, elStart, elStart + 1, { css: 'display: none' });
-          this._mark(lineNum, elEnd - 1, elEnd, { css: 'display: none' });
-        }
-        this._mark(lineNum, cursorInEl ? elStart : elStart + 1, cursorInEl ? elEnd : elEnd - 1, { className: 'cm-comment cm-mono' });
-        i = elEnd;
-        continue;
+        this._decorateSpan(lineNum, i, i + match[0].length, 1, 'cm-comment cm-mono', isActive, cursorCh);
+        i += match[0].length; continue;
       }
-
-      // Display LaTeX: $$...$$
+      // Display LaTeX $$...$$
       if ((match = line.substring(i).match(/^\$\$([^$]+)\$\$/))) {
         const elStart = i, elEnd = i + match[0].length;
         const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
         if (!cursorInEl) {
-          // Hide everything and show rendered KaTeX
           this._mark(lineNum, elStart, elEnd, { css: 'display: none' });
           try {
             const rendered = katex.renderToString(match[1], { displayMode: true, throwOnError: false });
@@ -332,16 +283,13 @@ class MarkdownEditor {
             this._marks.push(this.cm.setBookmark({ line: lineNum, ch: elStart }, { widget: span }));
           } catch (e) {}
         }
-        i = elEnd;
-        continue;
+        i = elEnd; continue;
       }
-
-      // Inline LaTeX: $...$
+      // Inline LaTeX $...$
       if ((match = line.substring(i).match(/^\$([^$\n]+)\$/))) {
         const elStart = i, elEnd = i + match[0].length;
         const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
         if (!cursorInEl) {
-          // Hide everything and show rendered KaTeX
           this._mark(lineNum, elStart, elEnd, { css: 'display: none' });
           try {
             const rendered = katex.renderToString(match[1], { displayMode: false, throwOnError: false });
@@ -352,31 +300,24 @@ class MarkdownEditor {
             this._marks.push(this.cm.setBookmark({ line: lineNum, ch: elStart }, { widget: span }));
           } catch (e) {}
         }
-        i = elEnd;
-        continue;
+        i = elEnd; continue;
       }
-
-      // Question block: ?text?
+      // Question block ?text?
       if ((match = line.substring(i).match(/^\?([^?\n]+)\?/))) {
         const elStart = i, elEnd = i + match[0].length;
         const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
         if (!cursorInEl) {
-          // Hide the ? delimiters
           this._mark(lineNum, elStart, elStart + 1, { css: 'display: none' });
           this._mark(lineNum, elEnd - 1, elEnd, { css: 'display: none' });
-          // Style the content
           this._mark(lineNum, elStart + 1, elEnd - 1, { className: 'cm-question-content' });
-          // Insert ? badge widget
           const badge = document.createElement('span');
           badge.textContent = '?';
           badge.style.cssText = 'display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background: var(--primary); color: #FFFFFF; border-radius: 50%; font-size: 12px; font-weight: 700; margin-right: 6px; vertical-align: middle; cursor: pointer;';
           this._marks.push(this.cm.setBookmark({ line: lineNum, ch: elStart }, { widget: badge }));
         }
-        i = elEnd;
-        continue;
+        i = elEnd; continue;
       }
-
-      // Link: [text](url)
+      // Link [text](url)
       if ((match = line.substring(i).match(/^\[([^\]]+)\]\(([^)]+)\)/))) {
         const elStart = i, elEnd = i + match[0].length;
         const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
@@ -385,25 +326,29 @@ class MarkdownEditor {
           this._mark(lineNum, elStart + 1 + match[1].length, elEnd, { css: 'display: none' });
           this._mark(lineNum, elStart + 1, elStart + 1 + match[1].length, { className: 'cm-link' });
         }
-        i = elEnd;
-        continue;
+        i = elEnd; continue;
       }
-
-      // Strikethrough: ~~text~~
+      // Strikethrough ~~text~~
       if ((match = line.substring(i).match(/^~~(.+?)~~/))) {
-        const elStart = i, elEnd = i + match[0].length;
-        const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
-        if (!cursorInEl) {
-          this._mark(lineNum, elStart, elStart + 2, { css: 'display: none' });
-          this._mark(lineNum, elEnd - 2, elEnd, { css: 'display: none' });
-        }
-        this._mark(lineNum, cursorInEl ? elStart : elStart + 2, cursorInEl ? elEnd : elEnd - 2, { className: 'cm-strikethrough' });
-        i = elEnd;
-        continue;
+        this._decorateSpan(lineNum, i, i + match[0].length, 2, 'cm-strikethrough', isActive, cursorCh);
+        i += match[0].length; continue;
       }
 
       i++;
     }
+  }
+
+  /**
+   * Helper: decorate a simple inline span with open/close delimiters.
+   * Hides delimiters when cursor is not inside, applies className to content.
+   */
+  _decorateSpan(lineNum, elStart, elEnd, delimLen, className, isActive, cursorCh) {
+    const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
+    if (!cursorInEl) {
+      this._mark(lineNum, elStart, elStart + delimLen, { css: 'display: none' });
+      this._mark(lineNum, elEnd - delimLen, elEnd, { css: 'display: none' });
+    }
+    this._mark(lineNum, cursorInEl ? elStart : elStart + delimLen, cursorInEl ? elEnd : elEnd - delimLen, { className });
   }
 
   _wrapSelection(open, close) {
