@@ -8,7 +8,7 @@
   'use strict';
 
   const MILKDOWN_VERSION = '7.21.2';
-  const MILKDOWN_CDN = `https://esm.sh/@milkdown/crepe@${MILKDOWN_VERSION}?bundle&deps=codemirror@6.0.1`;
+  const MILKDOWN_CDN = `https://esm.sh/@milkdown/crepe@${MILKDOWN_VERSION}?bundle`;
   let milkdownPromise = null;
 
   function loadMilkdown() {
@@ -50,7 +50,11 @@
     async _mount(markdown) {
       const { Crepe } = await loadMilkdown();
       if (this.crepe) {
-        await this.crepe.destroy();
+        try {
+          await this.crepe.destroy();
+        } catch (error) {
+          console.warn('Milkdown cleanup failed while remounting the editor.', error);
+        }
         this.crepe = null;
       }
       this.editorHost.innerHTML = '';
@@ -58,6 +62,14 @@
       const crepe = new Crepe({
         root: this.editorHost,
         defaultValue: markdown || '',
+        features: {
+          [Crepe.Feature.CodeMirror]: false,
+          [Crepe.Feature.Toolbar]: false,
+          [Crepe.Feature.BlockEdit]: false,
+          [Crepe.Feature.LinkTooltip]: false,
+          [Crepe.Feature.TopBar]: false,
+          [Crepe.Feature.AI]: false,
+        },
       });
 
       crepe.on(listener => {
