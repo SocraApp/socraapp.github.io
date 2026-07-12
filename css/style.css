@@ -507,19 +507,6 @@ img { max-width: 100%; height: auto; display: block; }
 [data-theme="dark"] .document-single-view { background: var(--canvas); }
 [data-theme="dark"] .document-open-chat-btn { color: #1C1C1C; }
 
-/* ============================================
-   Live markdown editor overrides
-   ============================================ */
-.cm-question-line { display: block; margin: 6px 0 !important; }
-.cm-question-line .cm-question-content { display: inline-block; width: calc(100% - 34px); vertical-align: top; cursor: pointer; }
-.cm-question-badge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; margin: 7px 8px 0 0; border-radius: var(--r-full); background: var(--primary); color: #FFFFFF; font-size: 13px; font-weight: 700; vertical-align: top; cursor: pointer; }
-.cm-code-fence { min-height: 1.5em; border-radius: var(--r) var(--r) 0 0; }
-.cm-code-rendered { display: inline-block; width: 100%; white-space: pre-wrap; word-break: normal; overflow-wrap: anywhere; }
-.cm-code-lang-badge { float: right; font-family: var(--font-mono); font-size: 12px; color: var(--ink-muted); opacity: 0.7; padding-right: 4px; }
-.cm-bullet-list-line::before, .cm-ordered-list-line::before { display: inline-block; width: 22px; margin-left: 2px; color: var(--ink-muted); }
-.cm-bullet-list-line::before { content: '\2022'; }
-.cm-ordered-list-line::before { content: '1.'; }
-.md-hr-widget { width: 100%; border: none; border-top: 1px solid var(--border); margin: 12px 0; }
 .workspace-panel { width: 58%; min-width: 0; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: var(--canvas); }
 .workspace-panel.hidden { display: none; }
 .chat-panel { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--canvas); }
@@ -539,19 +526,23 @@ img { max-width: 100%; height: auto; display: block; }
 .editor-split { flex: 1; display: flex; overflow: hidden; flex-direction: column; }
 .live-editor-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .live-editor { flex: 1; min-height: 200px; overflow: hidden; }
-.cm6-live-editor .cm-editor { height: 100%; }
-.cm6-hidden-syntax { color: transparent !important; font-size: 0 !important; line-height: 0 !important; letter-spacing: 0 !important; }
-.cm6-list-marker { display: inline-flex; width: 24px; color: var(--ink-muted); user-select: none; }
-.cm6-bullet-marker { justify-content: center; font-size: 18px; line-height: 1; transform: translateY(1px); }
-.cm6-ordered-marker { justify-content: flex-start; font-variant-numeric: tabular-nums; }
-.cm6-question-line { display: block; margin: 6px 0; }
-.cm6-question-badge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; margin: 7px 8px 0 0; border-radius: var(--r-full); background: var(--primary); color: #FFFFFF; font-size: 13px; font-weight: 700; vertical-align: top; cursor: pointer; user-select: none; }
-.cm6-question-content { display: inline-block; width: calc(100% - 34px); vertical-align: top; cursor: pointer; }
-.cm6-code-line { background: var(--surface-2); font-family: var(--font-mono); font-size: 0.9em; padding: 1px 12px 1px 12px; }
-.cm6-code-lang-badge { float: right; font-family: var(--font-mono); font-size: 12px; color: var(--ink-muted); opacity: 0.75; user-select: none; }
-.cm6-latex-inline { color: var(--ink); }
-.editor-load-error { padding: 24px 32px; color: var(--error); font-size: 14px; }
-
+.milkdown-live-editor-wrapper { background: var(--canvas); }
+.milkdown-live-editor { overflow: auto; }
+.milkdown-live-editor .milkdown { min-height: 100%; background: var(--canvas); color: var(--ink); }
+.milkdown-live-editor .ProseMirror { min-height: 100%; padding: 24px 32px; outline: none; font-family: var(--font); font-size: 16px; line-height: 1.7; color: var(--ink); background: var(--canvas); }
+.milkdown-live-editor .ProseMirror h1 { font-size: 32px; line-height: 1.25; margin: 0.7em 0 0.35em; font-weight: 700; color: var(--ink); }
+.milkdown-live-editor .ProseMirror h2 { font-size: 24px; line-height: 1.3; margin: 0.65em 0 0.3em; font-weight: 650; color: var(--ink); }
+.milkdown-live-editor .ProseMirror h3 { font-size: 20px; line-height: 1.35; margin: 0.6em 0 0.25em; font-weight: 650; color: var(--ink); }
+.milkdown-live-editor .ProseMirror ul, .milkdown-live-editor .ProseMirror ol { padding-left: 28px; margin: 8px 0; }
+.milkdown-live-editor .ProseMirror li { margin: 2px 0; padding-left: 4px; }
+.milkdown-live-editor .ProseMirror code { font-family: var(--font-mono); background: var(--surface-2); color: var(--ink); border-radius: 4px; padding: 2px 5px; }
+.milkdown-live-editor .ProseMirror pre { background: var(--surface-2); border-left: 3px solid var(--border-strong); border-radius: var(--r); padding: 12px 14px; overflow-x: auto; }
+.milkdown-live-editor .ProseMirror pre code { padding: 0; background: transparent; }
+.milkdown-live-editor .ProseMirror blockquote { border-left: 3px solid var(--primary); background: var(--primary-06); color: var(--ink-muted); padding: 6px 16px; border-radius: 0 var(--r) var(--r) 0; }
+.socra-question-block { position: relative; display: block; margin: 8px 0; padding: 8px 12px 8px 42px; border-left: 3px solid var(--primary); border-radius: 0 var(--r) var(--r) 0; background: var(--primary-06); color: transparent; font-size: 0; cursor: pointer; }
+.socra-question-block::before { content: '?'; position: absolute; left: 12px; top: 9px; display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: var(--r-full); background: var(--primary); color: #FFFFFF; font-size: 12px; font-weight: 700; }
+.socra-question-block::after { content: attr(data-question); color: var(--ink); font-size: 16px; line-height: 1.6; }
+.socra-question-block:hover { background: var(--primary-10); }
 /* ============================================
    CodeMirror — Socra Theme with Live Preview (v3)
    ============================================ */
