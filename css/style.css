@@ -506,6 +506,20 @@ img { max-width: 100%; height: auto; display: block; }
 [data-theme="dark"] .document-card:hover { border-color: var(--primary); }
 [data-theme="dark"] .document-single-view { background: var(--canvas); }
 [data-theme="dark"] .document-open-chat-btn { color: #1C1C1C; }
+
+/* ============================================
+   Live markdown editor overrides
+   ============================================ */
+.cm-question-line { display: block; margin: 6px 0 !important; }
+.cm-question-line .cm-question-content { display: inline-block; width: calc(100% - 34px); vertical-align: top; cursor: pointer; }
+.cm-question-badge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; margin: 7px 8px 0 0; border-radius: var(--r-full); background: var(--primary); color: #FFFFFF; font-size: 13px; font-weight: 700; vertical-align: top; cursor: pointer; }
+.cm-code-fence { min-height: 1.5em; border-radius: var(--r) var(--r) 0 0; }
+.cm-code-rendered { display: inline-block; width: 100%; white-space: pre-wrap; word-break: normal; overflow-wrap: anywhere; }
+.cm-code-lang-badge { float: right; font-family: var(--font-mono); font-size: 12px; color: var(--ink-muted); opacity: 0.7; padding-right: 4px; }
+.cm-bullet-list-line::before, .cm-ordered-list-line::before { display: inline-block; width: 22px; margin-left: 2px; color: var(--ink-muted); }
+.cm-bullet-list-line::before { content: '\2022'; }
+.cm-ordered-list-line::before { content: '1.'; }
+.md-hr-widget { width: 100%; border: none; border-top: 1px solid var(--border); margin: 12px 0; }
 .workspace-panel { width: 58%; min-width: 0; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: var(--canvas); }
 .workspace-panel.hidden { display: none; }
 .chat-panel { flex: 1; min-width: 0; display: flex; flex-direction: column; background: var(--canvas); }
@@ -541,7 +555,7 @@ img { max-width: 100%; height: auto; display: block; }
    align correctly) while making it invisible. This is the key difference
    from collapsed:true (which removes text from the DOM and breaks selection)
    and display:none (which also removes from flow). */
-.cm-hidden { color: transparent !important; }
+.cm-hidden { color: transparent !important; font-size: 0 !important; line-height: 0 !important; letter-spacing: 0 !important; }
 /* Markdown syntax highlighting */
 /* Header classes include line-height so the cursor height scales with
    the font size. Without this, the cursor stays at the base line-height

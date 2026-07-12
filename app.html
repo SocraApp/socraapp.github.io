@@ -99,6 +99,9 @@
             <button class="format-btn" data-format="bold" title="Bold"><b>B</b></button>
             <button class="format-btn" data-format="italic" title="Italic"><i>I</i></button>
             <div class="format-divider"></div>
+            <button class="format-btn" data-format="bullet-list" title="Bullet list">&bull;</button>
+            <button class="format-btn" data-format="numbered-list" title="Numbered list">1.</button>
+            <div class="format-divider"></div>
             <button class="format-btn" data-format="code-inline" title="Inline code">&lt;/&gt;</button>
             <button class="format-btn" data-format="code-block" title="Code block">{}</button>
             <div class="format-divider"></div>
@@ -272,7 +275,7 @@
   <!-- highlight.js: syntax highlighting for code blocks -->
   <link rel="stylesheet" id="hljs-theme" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css">
   <script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
-  <!-- CodeMirror 6 bundle (includes @codemirror/lang-markdown, @codemirror/commands, @codemirror/view, @codemirror/state, @codemirror/language-data) -->
+  <!-- CodeMirror 5 powers the workspace live markdown editor. -->
   <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/markdown/markdown.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/codemirror@5.65.16/addon/edit/continuelist.js"></script>

@@ -1,11 +1,8 @@
 /**
- * Socra Markdown Editor — CodeMirror 5 with Live Preview (v3)
+ * Socra Markdown Editor - Obsidian-style live markdown editing.
  *
- * v3 fixes:
- * - Code block styling via CSS text classes (not wrapper) to avoid cursor offset
- * - Scroll padding moved to .CodeMirror-content to fix scroll offset
- * - Cursor height scales with heading font-size via line-height on cm-header-N
- * - Decoration pass deferred slightly to let CodeMirror update its own DOM first
+ * The rest of the app talks to this through setContent/getContent,
+ * insertFormatting, insertHeading, and autosave callbacks.
  */
 class MarkdownEditor {
   constructor(textarea, previewEl, options = {}) {
@@ -16,8 +13,10 @@ class MarkdownEditor {
     this.lastSavedContent = '';
     this.cm = null;
     this._marks = [];
-    this._lineHandles = [];
+    this._lineClasses = [];
     this._renderScheduled = false;
+    this._scrollAfterRender = false;
+    this._pendingQuestionClick = null;
 
     this._init();
   }
@@ -48,11 +47,14 @@ class MarkdownEditor {
       autofocus: false,
       indentUnit: 2,
       tabSize: 2,
+      autoCloseBrackets: true,
       extraKeys: {
         'Ctrl-B': () => this._wrapSelection('**', '**'),
         'Cmd-B': () => this._wrapSelection('**', '**'),
         'Ctrl-I': () => this._wrapSelection('*', '*'),
         'Cmd-I': () => this._wrapSelection('*', '*'),
+        'Ctrl-`': () => this._wrapSelection('`', '`'),
+        'Cmd-`': () => this._wrapSelection('`', '`'),
         'Enter': 'newlineAndIndentContinueMarkdownList',
       },
     });
@@ -60,364 +62,391 @@ class MarkdownEditor {
     this.cm.on('change', () => {
       this.rawMarkdown = this.cm.getValue();
       this._scheduleAutoSave();
-      // Only schedule scroll if the cursor is near or below the bottom
+
       const c = this.cm.getCursor();
       const coords = this.cm.charCoords({ line: c.line, ch: 0 }, 'local');
       const scroller = this.cm.getScrollerElement();
       const visibleBottom = scroller.scrollTop + scroller.clientHeight;
-      const needsScroll = coords.bottom > visibleBottom - 10;
-      this._scheduleRender(needsScroll);
+      this._scheduleRender(coords.bottom > visibleBottom - 10);
     });
 
-    this.cm.on('cursorActivity', () => {
-      this._scheduleRender(false);
-    });
+    this.cm.on('cursorActivity', () => this._scheduleRender(false));
 
-    // Click handler
-    this.cm.getWrapperElement().addEventListener('click', (e) => {
+    this.cm.getWrapperElement().addEventListener('mousedown', (e) => {
       const coords = this.cm.coordsChar({ left: e.clientX, top: e.clientY });
       if (!coords) return;
       const line = this.cm.getLine(coords.line);
-      const ch = coords.ch;
-
-      // Question block → send to AI
-      const qbMatch = this._findEnclosing(line, ch, '?', '?');
-      if (qbMatch) {
-        const content = line.substring(qbMatch.start + 1, qbMatch.end - 1).trim();
-        if (content && window.sendMessage) {
-          window.sendMessage(content);
-          return;
-        }
-      }
-
-      // LaTeX $...$ → edit
-      const latexMatch = this._findEnclosing(line, ch, '$', '$');
-      if (latexMatch) {
-        this.cm.setCursor({ line: coords.line, ch: latexMatch.start + 1 });
-        this.cm.focus();
+      const question = this._findQuestion(line, coords.ch);
+      if (question && !this._isLineActive(coords.line)) {
+        this._pendingQuestionClick = line.substring(question.start + 1, question.end - 1).trim();
+        e.preventDefault();
         return;
       }
 
-      // LaTeX $$...$$ → edit
-      const dlatexMatch = this._findEnclosing(line, ch, '$$', '$$');
-      if (dlatexMatch) {
-        this.cm.setCursor({ line: coords.line, ch: dlatexMatch.start + 2 });
-        this.cm.focus();
-        return;
-      }
-
-      // Code block content line — if the line has a replacedWith mark
-      // (syntax highlighting widget), clicking won't map correctly via
-      // coordsChar because the text is replaced. Set cursor to the
-      // clicked line and let the re-render remove the widget.
-      const lineEl = this.cm.lineInfo(coords.line);
-      if (lineEl && lineEl.textClass && lineEl.textClass.includes('cm-code-line')) {
-        // Calculate character position from click X
-        const lineCoords = this.cm.charCoords({ line: coords.line, ch: 0 }, 'page');
-        const charWidth = this._estimateCharWidth(coords.line);
-        const clickX = e.clientX - lineCoords.left;
-        const targetCh = Math.max(0, Math.min(Math.round(clickX / charWidth), line.length));
-        this.cm.setCursor({ line: coords.line, ch: targetCh });
-        this.cm.focus();
-        return;
+      const info = this.cm.lineInfo(coords.line);
+      if (info?.textClass?.includes('cm-code-line') && !this._isLineActive(coords.line)) {
+        this.cm.setCursor({ line: coords.line, ch: Math.min(coords.ch, this.cm.getLine(coords.line).length) });
+        this._scheduleRender(false);
       }
     });
-  }
 
-  /**
-   * Estimate the character width for a code line (monospace font).
-   * Measures the actual rendered width of the first character.
-   */
-  _estimateCharWidth(lineNum) {
-    // Try to measure from the actual DOM
-    const lineEl = this.cm.getLineHandle(lineNum);
-    if (lineEl && lineEl.textClass && lineEl.textClass.includes('cm-code-line')) {
-      // For monospace font, all characters are the same width
-      // Measure by getting the width of a 10-character string
-      const measure = this.cm.charCoords({ line: lineNum, ch: 0 }, 'page');
-      const measure10 = this.cm.charCoords({ line: lineNum, ch: 10 }, 'page');
-      if (measure10.left > measure.left) {
-        return (measure10.left - measure.left) / 10;
+    this.cm.getWrapperElement().addEventListener('click', (e) => {
+      if (this._pendingQuestionClick) {
+        const question = this._pendingQuestionClick;
+        this._pendingQuestionClick = null;
+        if (window.sendMessage) window.sendMessage(question);
+        return;
       }
-    }
-    // Fallback: estimate based on font size (monospace ~0.6em)
-    return 16 * 0.9 * 0.6; // 16px base * 0.9em code size * 0.6 char ratio
-  }
 
-  _findEnclosing(line, ch, open, close) {
-    const openLen = open.length;
-    const closeLen = close.length;
-    for (let i = ch - 1; i >= 0; i--) {
-      if (line.substring(i, i + openLen) === open) {
-        for (let j = ch; j <= line.length - closeLen; j++) {
-          if (line.substring(j, j + closeLen) === close && j > i + openLen - 1) {
-            if (ch > i && ch <= j + closeLen) {
-              return { start: i, end: j + closeLen };
-            }
-          }
-        }
-      }
-    }
-    return null;
+      const coords = this.cm.coordsChar({ left: e.clientX, top: e.clientY });
+      if (!coords) return;
+      const line = this.cm.getLine(coords.line);
+      const match = this._findQuestion(line, coords.ch);
+      if (!match || this._isLineActive(coords.line)) return;
+
+      const content = line.substring(match.start + 1, match.end - 1).trim();
+      if (content && window.sendMessage) window.sendMessage(content);
+    });
   }
 
   _scheduleRender(scrollAfter = false) {
     if (this._renderScheduled) {
-      if (scrollAfter) this._scrollAfterRender = true;
+      this._scrollAfterRender = this._scrollAfterRender || scrollAfter;
       return;
     }
+
     this._renderScheduled = true;
     this._scrollAfterRender = scrollAfter;
     requestAnimationFrame(() => {
       this._renderScheduled = false;
       this._renderDecorations();
-      if (this._scrollAfterRender && this.cm) {
-        requestAnimationFrame(() => {
-          if (!this.cm) return;
-          const c = this.cm.getCursor();
-          // Only scroll if the cursor is actually below the visible area
-          const coords = this.cm.charCoords({ line: c.line, ch: 0 }, 'local');
-          const scroller = this.cm.getScrollerElement();
-          const visibleBottom = scroller.scrollTop + scroller.clientHeight;
-          if (coords.bottom > visibleBottom) {
-            // Scroll just enough to show the cursor line fully
-            this.cm.scrollIntoView({ line: c.line, ch: c.ch }, 10);
-          }
-        });
-      }
+      if (!this._scrollAfterRender || !this.cm) return;
+      requestAnimationFrame(() => {
+        if (!this.cm) return;
+        const c = this.cm.getCursor();
+        const coords = this.cm.charCoords({ line: c.line, ch: 0 }, 'local');
+        const scroller = this.cm.getScrollerElement();
+        if (coords.bottom > scroller.scrollTop + scroller.clientHeight) {
+          this.cm.scrollIntoView({ line: c.line, ch: c.ch }, 10);
+        }
+      });
     });
   }
 
   _renderDecorations() {
     if (!this.cm) return;
 
-    // Clear old marks
-    this._marks.forEach(m => { if (m.clear) m.clear(); });
+    this._marks.forEach(mark => mark?.clear?.());
     this._marks = [];
-    this._lineHandles.forEach(lh => { if (lh.clear) lh.clear(); });
-    this._lineHandles = [];
+    this._lineClasses.forEach(item => this.cm.removeLineClass(item.line, item.where, item.className));
+    this._lineClasses = [];
 
-    const cursor = this.cm.getCursor();
-    const cursorLine = cursor.line;
-    const cursorCh = cursor.ch;
     const lineCount = this.cm.lineCount();
-
     let inCodeBlock = false;
+    let codeBlockStart = -1;
     let codeBlockLang = '';
+    let inDisplayMath = false;
+    let displayMathStart = -1;
+    let displayMathLines = [];
 
-    for (let i = 0; i < lineCount; i++) {
-      const line = this.cm.getLine(i);
-      const isActive = (i === cursorLine);
+    for (let lineNum = 0; lineNum < lineCount; lineNum++) {
+      const line = this.cm.getLine(lineNum);
+      const active = this._isLineActive(lineNum);
 
-      // Fenced code block tracking
-      const fenceOpen = line.match(/^(`{3,})(\s*(\w*))?/);
+      if (line.trim() === '$$') {
+        if (!inDisplayMath) {
+          inDisplayMath = true;
+          displayMathStart = lineNum;
+          displayMathLines = [];
+          continue;
+        }
+
+        const blockActive = this._rangeIsActive(displayMathStart, lineNum);
+        if (!blockActive) this._renderDisplayMath(displayMathStart, lineNum, displayMathLines.join('\n'));
+        inDisplayMath = false;
+        displayMathStart = -1;
+        displayMathLines = [];
+        continue;
+      }
+
+      if (inDisplayMath) {
+        displayMathLines.push(line);
+        continue;
+      }
+
+      const fenceOpen = line.match(/^(`{3,}|~{3,})\s*([\w-]*)\s*$/);
       if (fenceOpen && !inCodeBlock) {
         inCodeBlock = true;
-        codeBlockLang = (fenceOpen[3] || '').trim();
-        if (!isActive) {
-          // Hide the entire fence-open line (backticks + lang text)
-          this._mark(i, 0, line.length, { collapsed: true });
-          // Show language label as a widget positioned to the right
-          if (codeBlockLang) {
-            const label = document.createElement('span');
-            label.textContent = codeBlockLang;
-            label.style.cssText = 'font-family: var(--font-mono); font-size: 0.85em; color: var(--ink-muted); position: absolute; right: 16px; opacity: 0.6;';
-            this._marks.push(this.cm.setBookmark({ line: i, ch: 0 }, { widget: label }));
-          }
+        codeBlockStart = lineNum;
+        codeBlockLang = fenceOpen[2] || '';
+        this._addLineClass(lineNum, 'text', 'cm-code-line');
+        this._addLineClass(lineNum, 'text', 'cm-code-fence');
+        if (!active) {
+          this._hideLine(lineNum);
+          if (codeBlockLang) this._addCodeLanguageBadge(lineNum, codeBlockLang);
         }
-        this._lineHandles.push(this.cm.addLineClass(i, 'text', 'cm-code-line'));
         continue;
       }
 
       if (inCodeBlock) {
-        const fenceClose = line.match(/^`{3,}\s*$/);
+        const fenceClose = line.match(/^(`{3,}|~{3,})\s*$/);
+        const blockActive = this._rangeIsActive(codeBlockStart, lineNum);
+        this._addLineClass(lineNum, 'text', 'cm-code-line');
+
         if (fenceClose) {
+          if (!blockActive) this._hideLine(lineNum);
           inCodeBlock = false;
-          if (!isActive) {
-            this._mark(i, 0, line.length, { collapsed: true });
-          }
-          this._lineHandles.push(this.cm.addLineClass(i, 'text', 'cm-code-line'));
+          codeBlockStart = -1;
+          codeBlockLang = '';
           continue;
         }
-        // Code content line — add background + syntax highlighting
-        this._lineHandles.push(this.cm.addLineClass(i, 'text', 'cm-code-line'));
-        if (!isActive && window.hljs && codeBlockLang) {
-          try {
-            if (hljs.getLanguage(codeBlockLang)) {
-              const result = hljs.highlight(line, { language: codeBlockLang, ignoreIllegals: true });
-              const codeEl = document.createElement('span');
-              codeEl.innerHTML = result.value;
-              codeEl.style.cssText = 'display: inline;';
-              this._mark(i, 0, line.length, { replacedWith: codeEl });
-            }
-          } catch (e) {}
-        }
+
+        if (!blockActive) this._highlightCodeLine(lineNum, line, codeBlockLang);
         continue;
       }
 
-      this._decorateLine(i, line, isActive, cursorCh);
+      this._decorateLine(lineNum, line, active);
     }
   }
 
-  _mark(line, from, to, opts) {
-    this._marks.push(this.cm.markText({ line, ch: from }, { line, ch: to }, opts));
-  }
+  _decorateLine(lineNum, line, active) {
+    const cursorCh = this.cm.getCursor().line === lineNum ? this.cm.getCursor().ch : -1;
 
-  _decorateLine(lineNum, line, isActive, cursorCh) {
-    // Heading
-    const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
-    if (headingMatch) {
-      const level = headingMatch[1].length;
-      const prefixLen = headingMatch[1].length + 1;
-      if (!isActive) {
-        this._mark(lineNum, 0, prefixLen, { collapsed: true });
-      }
-      this._mark(lineNum, isActive ? 0 : prefixLen, line.length, { className: 'cm-header cm-header-' + level });
+    const heading = line.match(/^(#{1,6})\s+(.*)$/);
+    if (heading) {
+      const prefixLen = heading[1].length + 1;
+      if (!active) this._hide(lineNum, 0, prefixLen);
+      this._mark(lineNum, active ? 0 : prefixLen, line.length, { className: `cm-header cm-header-${heading[1].length}` });
+      this._decorateInline(lineNum, line, active, cursorCh);
       return;
     }
 
-    // Blockquote
-    const quoteMatch = line.match(/^>\s+(.*)$/);
-    if (quoteMatch) {
-      const prefixLen = 2;
-      if (!isActive) {
-        this._mark(lineNum, 0, prefixLen, { collapsed: true });
-      }
-      this._mark(lineNum, isActive ? 0 : prefixLen, line.length, { className: 'cm-quote' });
+    const quote = line.match(/^>\s+(.*)$/);
+    if (quote) {
+      if (!active) this._hide(lineNum, 0, 2);
+      this._mark(lineNum, active ? 0 : 2, line.length, { className: 'cm-quote' });
+      this._decorateInline(lineNum, line, active, cursorCh);
       return;
     }
 
-    // List items
-    const listMatch = line.match(/^([-*+]|\d+\.)\s+(.*)$/);
-    if (listMatch) {
-      const prefixLen = listMatch[1].length + 1;
-      if (!isActive) {
-        this._mark(lineNum, 0, prefixLen, { collapsed: true });
-      }
+    const list = line.match(/^(\s*)([-*+]|\d+\.)\s+(.*)$/);
+    if (list) {
+      const prefixLen = list[1].length + list[2].length + 1;
+      this._addLineClass(lineNum, 'text', list[2].endsWith('.') ? 'cm-ordered-list-line' : 'cm-bullet-list-line');
+      if (!active) this._hide(lineNum, 0, prefixLen);
+      this._decorateInline(lineNum, line, active, cursorCh);
       return;
     }
 
-    // Horizontal rule
-    if (line.match(/^(-{3,}|\*{3,}|_{3,})\s*$/)) {
-      if (!isActive) {
-        this._mark(lineNum, 0, line.length, { collapsed: true });
+    if (/^(-{3,}|\*{3,}|_{3,})\s*$/.test(line)) {
+      if (!active) {
+        this._hideLine(lineNum);
         const hr = document.createElement('hr');
-        hr.style.cssText = 'border: none; border-top: 1px solid var(--border); margin: 8px 0;';
+        hr.className = 'md-hr-widget';
         this._marks.push(this.cm.setBookmark({ line: lineNum, ch: 0 }, { widget: hr }));
       }
       return;
     }
 
-    // Inline decorations
-    this._decorateInline(lineNum, line, isActive, cursorCh);
+    this._decorateInline(lineNum, line, active, cursorCh);
   }
 
-  _decorateInline(lineNum, line, isActive, cursorCh) {
+  _decorateInline(lineNum, line, active, cursorCh) {
     let i = 0;
     while (i < line.length) {
       let match;
 
-      // Bold+Italic
       if ((match = line.substring(i).match(/^\*\*\*(.+?)\*\*\*/))) {
-        this._decorateSpan(lineNum, i, i + match[0].length, 3, 'cm-strong cm-em', isActive, cursorCh);
-        i += match[0].length; continue;
+        this._decorateDelimited(lineNum, i, i + match[0].length, 3, 'cm-strong cm-em', active, cursorCh);
+        i += match[0].length;
+        continue;
       }
-      // Bold
+
       if ((match = line.substring(i).match(/^\*\*(.+?)\*\*/))) {
-        this._decorateSpan(lineNum, i, i + match[0].length, 2, 'cm-strong', isActive, cursorCh);
-        i += match[0].length; continue;
+        this._decorateDelimited(lineNum, i, i + match[0].length, 2, 'cm-strong', active, cursorCh);
+        i += match[0].length;
+        continue;
       }
-      // Italic * or _
-      if ((match = line.substring(i).match(/^\*(.+?)\*/)) || (match = line.substring(i).match(/^_(.+?)_/))) {
-        this._decorateSpan(lineNum, i, i + match[0].length, 1, 'cm-em', isActive, cursorCh);
-        i += match[0].length; continue;
+
+      if ((match = line.substring(i).match(/^(\*|_)([^\s].*?[^\s])\1/))) {
+        this._decorateDelimited(lineNum, i, i + match[0].length, 1, 'cm-em', active, cursorCh);
+        i += match[0].length;
+        continue;
       }
-      // Inline code
+
       if ((match = line.substring(i).match(/^`([^`]+)`/))) {
-        this._decorateSpan(lineNum, i, i + match[0].length, 1, 'cm-comment cm-mono', isActive, cursorCh);
-        i += match[0].length; continue;
+        this._decorateDelimited(lineNum, i, i + match[0].length, 1, 'cm-mono', active, cursorCh);
+        i += match[0].length;
+        continue;
       }
-      // Display LaTeX $$...$$
+
       if ((match = line.substring(i).match(/^\$\$([^$]+)\$\$/))) {
-        const elStart = i, elEnd = i + match[0].length;
-        const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
-        if (!cursorInEl) {
-          this._mark(lineNum, elStart, elEnd, { collapsed: true });
-          try {
-            const rendered = katex.renderToString(match[1], { displayMode: true, throwOnError: false });
-            const span = document.createElement('span');
-            span.className = 'md-katex-display';
-            span.innerHTML = rendered;
-            span.style.cssText = 'display: block; margin: 12px 0; text-align: center; overflow: visible;';
-            this._marks.push(this.cm.setBookmark({ line: lineNum, ch: elStart }, { widget: span }));
-          } catch (e) {}
-        }
-        i = elEnd; continue;
+        const start = i;
+        const end = i + match[0].length;
+        if (!this._cursorInRange(active, cursorCh, start, end)) this._replaceWithKatex(lineNum, start, end, match[1], true);
+        i = end;
+        continue;
       }
-      // Inline LaTeX $...$
+
       if ((match = line.substring(i).match(/^\$([^$\n]+)\$/))) {
-        const elStart = i, elEnd = i + match[0].length;
-        const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
-        if (!cursorInEl) {
-          this._mark(lineNum, elStart, elEnd, { collapsed: true });
-          try {
-            const rendered = katex.renderToString(match[1], { displayMode: false, throwOnError: false });
-            const span = document.createElement('span');
-            span.className = 'md-katex-inline';
-            span.innerHTML = rendered;
-            span.style.cssText = 'display: inline;';
-            this._marks.push(this.cm.setBookmark({ line: lineNum, ch: elStart }, { widget: span }));
-          } catch (e) {}
-        }
-        i = elEnd; continue;
+        const start = i;
+        const end = i + match[0].length;
+        if (!this._cursorInRange(active, cursorCh, start, end)) this._replaceWithKatex(lineNum, start, end, match[1], false);
+        i = end;
+        continue;
       }
-      // Question block ?text?
+
       if ((match = line.substring(i).match(/^\?([^?\n]+)\?/))) {
-        const elStart = i, elEnd = i + match[0].length;
-        const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
-        if (!cursorInEl) {
-          this._mark(lineNum, elStart, elStart + 1, { collapsed: true });
-          this._mark(lineNum, elEnd - 1, elEnd, { collapsed: true });
-          this._mark(lineNum, elStart + 1, elEnd - 1, { className: 'cm-question-content' });
-          const badge = document.createElement('span');
-          badge.textContent = '?';
-          badge.style.cssText = 'display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background: var(--primary); color: #FFFFFF; border-radius: 50%; font-size: 12px; font-weight: 700; margin-right: 6px; vertical-align: middle; cursor: pointer;';
-          this._marks.push(this.cm.setBookmark({ line: lineNum, ch: elStart }, { widget: badge }));
+        const start = i;
+        const end = i + match[0].length;
+        if (!this._cursorInRange(active, cursorCh, start, end)) {
+          this._addLineClass(lineNum, 'text', 'cm-question-line');
+          this._hide(lineNum, start, start + 1);
+          this._hide(lineNum, end - 1, end);
+          this._mark(lineNum, start + 1, end - 1, { className: 'cm-question-content' });
+          this._addQuestionBadge(lineNum, start);
         }
-        i = elEnd; continue;
+        i = end;
+        continue;
       }
-      // Link [text](url)
+
       if ((match = line.substring(i).match(/^\[([^\]]+)\]\(([^)]+)\)/))) {
-        const elStart = i, elEnd = i + match[0].length;
-        const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
-        if (!cursorInEl) {
-          this._mark(lineNum, elStart, elStart + 1, { collapsed: true });
-          this._mark(lineNum, elStart + 1 + match[1].length, elEnd, { collapsed: true });
-          this._mark(lineNum, elStart + 1, elStart + 1 + match[1].length, { className: 'cm-link' });
+        const start = i;
+        const end = i + match[0].length;
+        if (!this._cursorInRange(active, cursorCh, start, end)) {
+          this._hide(lineNum, start, start + 1);
+          this._hide(lineNum, start + 1 + match[1].length, end);
+          this._mark(lineNum, start + 1, start + 1 + match[1].length, { className: 'cm-link' });
         }
-        i = elEnd; continue;
+        i = end;
+        continue;
       }
-      // Strikethrough ~~text~~
+
       if ((match = line.substring(i).match(/^~~(.+?)~~/))) {
-        this._decorateSpan(lineNum, i, i + match[0].length, 2, 'cm-strikethrough', isActive, cursorCh);
-        i += match[0].length; continue;
+        this._decorateDelimited(lineNum, i, i + match[0].length, 2, 'cm-strikethrough', active, cursorCh);
+        i += match[0].length;
+        continue;
       }
 
       i++;
     }
   }
 
-  /**
-   * Helper: decorate a simple inline span with open/close delimiters.
-   * Hides delimiters when cursor is not inside, applies className to content.
-   */
-  _decorateSpan(lineNum, elStart, elEnd, delimLen, className, isActive, cursorCh) {
-    const cursorInEl = isActive && cursorCh > elStart && cursorCh <= elEnd;
-    if (!cursorInEl) {
-      this._mark(lineNum, elStart, elStart + delimLen, { collapsed: true });
-      this._mark(lineNum, elEnd - delimLen, elEnd, { collapsed: true });
+  _decorateDelimited(lineNum, start, end, delimiterLength, className, active, cursorCh) {
+    const cursorInside = this._cursorInRange(active, cursorCh, start, end);
+    if (!cursorInside) {
+      this._hide(lineNum, start, start + delimiterLength);
+      this._hide(lineNum, end - delimiterLength, end);
     }
-    this._mark(lineNum, cursorInEl ? elStart : elStart + delimLen, cursorInEl ? elEnd : elEnd - delimLen, { className });
+    this._mark(lineNum, cursorInside ? start : start + delimiterLength, cursorInside ? end : end - delimiterLength, { className });
+  }
+
+  _renderDisplayMath(startLine, endLine, tex) {
+    for (let lineNum = startLine; lineNum <= endLine; lineNum++) this._hideLine(lineNum);
+    const span = document.createElement('span');
+    span.className = 'md-katex-display';
+    try {
+      span.innerHTML = katex.renderToString(tex.trim(), { displayMode: true, throwOnError: false });
+    } catch (e) {
+      span.textContent = tex;
+    }
+    this._marks.push(this.cm.setBookmark({ line: startLine, ch: 0 }, { widget: span }));
+  }
+
+  _replaceWithKatex(lineNum, start, end, tex, displayMode) {
+    this._mark(lineNum, start, end, { className: 'cm-hidden' });
+    const span = document.createElement('span');
+    span.className = displayMode ? 'md-katex-display' : 'md-katex-inline';
+    try {
+      span.innerHTML = katex.renderToString(tex.trim(), { displayMode, throwOnError: false });
+    } catch (e) {
+      span.textContent = tex;
+    }
+    this._marks.push(this.cm.setBookmark({ line: lineNum, ch: start }, { widget: span }));
+  }
+
+  _highlightCodeLine(lineNum, line, language) {
+    if (!window.hljs || !language || !hljs.getLanguage(language) || line.length === 0) return;
+    try {
+      const result = hljs.highlight(line, { language, ignoreIllegals: true });
+      const codeEl = document.createElement('span');
+      codeEl.className = 'cm-code-rendered';
+      codeEl.innerHTML = result.value;
+      this._mark(lineNum, 0, line.length, { replacedWith: codeEl });
+    } catch (e) {
+      // Leave CodeMirror's own markdown styling in place.
+    }
+  }
+
+  _addCodeLanguageBadge(lineNum, language) {
+    const label = document.createElement('span');
+    label.className = 'cm-code-lang-badge';
+    label.textContent = language;
+    this._marks.push(this.cm.setBookmark({ line: lineNum, ch: 0 }, { widget: label }));
+  }
+
+  _addQuestionBadge(lineNum, ch) {
+    const badge = document.createElement('span');
+    badge.className = 'cm-question-badge';
+    badge.textContent = '?';
+    this._marks.push(this.cm.setBookmark({ line: lineNum, ch }, { widget: badge }));
+  }
+
+  _findQuestion(line, ch) {
+    const re = /\?([^?\n]+)\?/g;
+    let match;
+    while ((match = re.exec(line))) {
+      const start = match.index;
+      const end = start + match[0].length;
+      if (ch >= start && ch <= end) return { start, end };
+    }
+    return null;
+  }
+
+  _cursorInRange(active, cursorCh, start, end) {
+    return active && cursorCh >= start && cursorCh <= end;
+  }
+
+  _mark(line, from, to, opts) {
+    if (to <= from) return;
+    this._marks.push(this.cm.markText({ line, ch: from }, { line, ch: to }, opts));
+  }
+
+  _addLineClass(line, where, className) {
+    this.cm.addLineClass(line, where, className);
+    this._lineClasses.push({ line, where, className });
+  }
+
+  _hide(line, from, to) {
+    this._mark(line, from, to, { className: 'cm-hidden' });
+  }
+
+  _hideLine(lineNum) {
+    this._hide(lineNum, 0, (this.cm.getLine(lineNum) || '').length);
+  }
+
+  _isLineActive(lineNum) {
+    if (!this.cm) return false;
+    if (this.cm.getCursor().line === lineNum) return true;
+    return this._lineHasSelection(lineNum);
+  }
+
+  _lineHasSelection(lineNum) {
+    if (!this.cm || !this.cm.somethingSelected()) return false;
+    return this.cm.listSelections().some(sel => {
+      const from = sel.from();
+      const to = sel.to();
+      if (from.line === to.line && from.ch === to.ch) return false;
+      return lineNum >= from.line && lineNum <= to.line;
+    });
+  }
+
+  _rangeIsActive(fromLine, toLine) {
+    if (!this.cm) return false;
+    const cursorLine = this.cm.getCursor().line;
+    if (cursorLine >= fromLine && cursorLine <= toLine) return true;
+    if (!this.cm.somethingSelected()) return false;
+    return this.cm.listSelections().some(sel => sel.from().line <= toLine && sel.to().line >= fromLine);
   }
 
   _wrapSelection(open, close) {
@@ -434,6 +463,19 @@ class MarkdownEditor {
       this.cm.replaceSelection(open + close);
       const pos = this.cm.getCursor();
       this.cm.setCursor({ line: pos.line, ch: pos.ch - close.length });
+    }
+    this.cm.focus();
+  }
+
+  _wrapBlock(open, close) {
+    if (!this.cm) return;
+    const sel = this.cm.getSelection();
+    if (sel) {
+      this.cm.replaceSelection(open + '\n' + sel + '\n' + close);
+    } else {
+      const cursor = this.cm.getCursor();
+      this.cm.replaceSelection(open + '\n\n' + close);
+      this.cm.setCursor({ line: cursor.line + 1, ch: 0 });
     }
     this.cm.focus();
   }
@@ -457,10 +499,12 @@ class MarkdownEditor {
       case 'bold': this._wrapSelection('**', '**'); break;
       case 'italic': this._wrapSelection('*', '*'); break;
       case 'code-inline': this._wrapSelection('`', '`'); break;
-      case 'code-block': this._wrapSelection('```\n', '\n```'); break;
+      case 'code-block': this._wrapBlock('```javascript', '```'); break;
       case 'latex-inline': this._wrapSelection('$', '$'); break;
-      case 'latex-display': this._wrapSelection('$$\n', '\n$$'); break;
+      case 'latex-display': this._wrapBlock('$$', '$$'); break;
       case 'question': this._wrapSelection('?', '?'); break;
+      case 'bullet-list': this._insertLinePrefix('- '); break;
+      case 'numbered-list': this._insertLinePrefix('1. '); break;
       default: break;
     }
   }
@@ -476,6 +520,14 @@ class MarkdownEditor {
     this.cm.focus();
   }
 
+  _insertLinePrefix(prefix) {
+    const cursor = this.cm.getCursor();
+    const line = this.cm.getLine(cursor.line);
+    this.cm.replaceRange(prefix + line.replace(/^(\s*)([-*+]|\d+\.)\s+/, '$1'), { line: cursor.line, ch: 0 }, { line: cursor.line, ch: line.length });
+    this.cm.setCursor({ line: cursor.line, ch: prefix.length + line.length });
+    this.cm.focus();
+  }
+
   _scheduleAutoSave() {
     if (this.autoSaveTimer) clearTimeout(this.autoSaveTimer);
     this.autoSaveTimer = setTimeout(() => {
@@ -486,4 +538,5 @@ class MarkdownEditor {
     }, this.autoSaveDelay);
   }
 }
+
 window.MarkdownEditor = MarkdownEditor;
