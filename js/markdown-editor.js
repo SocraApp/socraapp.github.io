@@ -8,7 +8,7 @@
   'use strict';
 
   const MILKDOWN_VERSION = '7.21.2';
-  const MILKDOWN_CDN = `https://cdn.jsdelivr.net/npm/@milkdown/crepe@${MILKDOWN_VERSION}/+esm`;
+  const MILKDOWN_CDN = `https://esm.sh/@milkdown/crepe@${MILKDOWN_VERSION}?bundle&deps=codemirror@6.0.2`;
   let milkdownPromise = null;
 
   function loadMilkdown() {
