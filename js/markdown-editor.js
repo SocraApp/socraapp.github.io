@@ -307,7 +307,7 @@
         add(from, line.from + ordered[0].length, cm.Decoration.replace({ widget: new NumberWidget(ordered[2]), inclusive: false }));
       }
 
-      addInlineFormatting(cm, builder, line, text);
+      addInlineFormatting(cm, add, line, text);
     }
 
     const builder = new cm.RangeSetBuilder();
