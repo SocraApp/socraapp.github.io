@@ -8,7 +8,7 @@
   'use strict';
 
   const MILKDOWN_VERSION = '7.21.2';
-  const MILKDOWN_CDN = `https://esm.sh/@milkdown/crepe@${MILKDOWN_VERSION}?bundle`;
+  const MILKDOWN_CDN = `https://cdn.jsdelivr.net/npm/@milkdown/crepe@${MILKDOWN_VERSION}/+esm`;
   let milkdownPromise = null;
 
   function loadMilkdown() {
@@ -63,7 +63,6 @@
         root: this.editorHost,
         defaultValue: markdown || '',
         features: {
-          [Crepe.Feature.CodeMirror]: false,
           [Crepe.Feature.Toolbar]: false,
           [Crepe.Feature.BlockEdit]: false,
           [Crepe.Feature.LinkTooltip]: false,
