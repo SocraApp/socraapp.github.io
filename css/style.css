@@ -539,6 +539,18 @@ img { max-width: 100%; height: auto; display: block; }
 .editor-split { flex: 1; display: flex; overflow: hidden; flex-direction: column; }
 .live-editor-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
 .live-editor { flex: 1; min-height: 200px; overflow: hidden; }
+.cm6-live-editor .cm-editor { height: 100%; }
+.cm6-hidden-syntax { color: transparent !important; font-size: 0 !important; line-height: 0 !important; letter-spacing: 0 !important; }
+.cm6-list-marker { display: inline-flex; width: 24px; color: var(--ink-muted); user-select: none; }
+.cm6-bullet-marker { justify-content: center; font-size: 18px; line-height: 1; transform: translateY(1px); }
+.cm6-ordered-marker { justify-content: flex-start; font-variant-numeric: tabular-nums; }
+.cm6-question-line { display: block; margin: 6px 0; }
+.cm6-question-badge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; margin: 7px 8px 0 0; border-radius: var(--r-full); background: var(--primary); color: #FFFFFF; font-size: 13px; font-weight: 700; vertical-align: top; cursor: pointer; user-select: none; }
+.cm6-question-content { display: inline-block; width: calc(100% - 34px); vertical-align: top; cursor: pointer; }
+.cm6-code-line { background: var(--surface-2); font-family: var(--font-mono); font-size: 0.9em; padding: 1px 12px 1px 12px; }
+.cm6-code-lang-badge { float: right; font-family: var(--font-mono); font-size: 12px; color: var(--ink-muted); opacity: 0.75; user-select: none; }
+.cm6-latex-inline { color: var(--ink); }
+.editor-load-error { padding: 24px 32px; color: var(--error); font-size: 14px; }
 
 /* ============================================
    CodeMirror — Socra Theme with Live Preview (v3)
