@@ -167,7 +167,7 @@
     }
   }
 
-  function addInlineFormatting(cm, builder, line, text) {
+  function addInlineFormatting(cm, add, line, text) {
     const lineStart = line.from;
     let match;
 
