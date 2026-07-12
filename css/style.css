@@ -1526,3 +1526,38 @@ img { max-width: 100%; height: auto; display: block; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
 }
+
+/* ============================================
+   CodeMirror 6 Live Preview Editor
+   ============================================ */
+.cm-live-editor-wrapper { background: var(--canvas); }
+.cm-live-editor { flex: 1; min-height: 200px; overflow: hidden; background: var(--canvas); }
+.cm-live-editor .cm-editor { height: 100%; font-family: var(--font); font-size: 16px; background: var(--canvas); color: var(--ink); }
+.cm-live-editor .cm-scroller { overflow: auto; }
+.cm-live-editor .cm-content { min-height: 100%; }
+.cm-live-editor .cm-line { min-height: 1.7em; }
+.cm-live-editor .cm-cursor { border-left-color: var(--primary); border-left-width: 2px; }
+.cm-live-editor .cm-selectionBackground { background: var(--primary-10) !important; }
+.cm-live-heading-line { font-weight: 700; color: var(--ink); }
+.cm-live-h1 { font-size: 32px; line-height: 1.25; }
+.cm-live-h2 { font-size: 24px; line-height: 1.3; }
+.cm-live-h3 { font-size: 20px; line-height: 1.35; }
+.cm-live-h4 { font-size: 18px; line-height: 1.4; }
+.cm-live-h5, .cm-live-h6 { font-size: 16px; line-height: 1.45; }
+.cm-live-bold { font-weight: 700; }
+.cm-live-italic { font-style: italic; }
+.cm-live-inline-code { font-family: var(--font-mono); background: var(--surface-2); border-radius: 4px; padding: 2px 5px; font-size: 0.9em; }
+.cm-live-list-marker { display: inline-block; min-width: 1.35em; color: var(--ink); }
+.cm-live-question-block { width: 100%; display: flex; align-items: flex-start; gap: 10px; text-align: left; margin: 6px 0; padding: 8px 12px; border-left: 3px solid var(--primary); border-radius: 0 var(--r) var(--r) 0; background: var(--primary-06); color: var(--ink); cursor: pointer; font: inherit; line-height: 1.6; }
+.cm-live-question-block:hover { background: var(--primary-10); }
+.cm-live-question-icon { display: inline-flex; align-items: center; justify-content: center; width: 20px; min-width: 20px; height: 20px; margin-top: 3px; border-radius: var(--r-full); background: var(--primary); color: #FFFFFF; font-size: 12px; font-weight: 700; }
+.cm-live-latex-inline { display: inline-block; vertical-align: middle; }
+.cm-live-latex-block { display: block; margin: 12px 0; overflow-x: auto; text-align: center; }
+.cm-live-latex-block .katex-display { margin: 0; }
+.cm-live-code-block { position: relative; margin: 10px 0; padding: 12px 14px; border-left: 3px solid var(--border-strong); border-radius: var(--r); background: var(--surface-2); overflow-x: auto; }
+.cm-live-code-block pre { margin: 0; padding: 0; background: transparent; }
+.cm-live-code-block code { font-family: var(--font-mono); font-size: 14px; line-height: 1.55; background: transparent; padding: 0; white-space: pre; }
+.cm-live-code-lang { position: absolute; top: 8px; right: 12px; font-family: var(--font); font-size: 12px; color: var(--ink-muted); }
+.cm-live-code-lang + pre { padding-top: 18px; }
+[data-theme="dark"] .cm-live-editor .cm-editor { background: var(--canvas); color: var(--ink); }
+[data-theme="dark"] .cm-live-question-icon { color: #1C1C1C; }
