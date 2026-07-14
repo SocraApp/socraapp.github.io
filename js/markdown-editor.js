@@ -227,10 +227,9 @@
     return null;
   }
 
-  function buildDecorations(cm, view) {
+  function buildDecorations(cm, state) {
     const ranges = [];
     const add = (from, to, decoration) => ranges.push({ from, to, decoration });
-    const { state } = view;
     const doc = state.doc;
 
     for (let lineNo = 1; lineNo <= doc.lines; lineNo += 1) {
@@ -317,15 +316,14 @@
   }
 
   function livePreviewExtension(cm) {
-    return cm.ViewPlugin.fromClass(class {
-      constructor(view) { this.decorations = buildDecorations(cm, view); }
-      update(update) {
-        if (update.docChanged || update.selectionSet || update.viewportChanged) {
-          this.decorations = buildDecorations(cm, update.view);
-        }
-      }
-    }, {
-      decorations: plugin => plugin.decorations,
+    return cm.StateField.define({
+      create(state) {
+        return buildDecorations(cm, state);
+      },
+      update(_decorations, transaction) {
+        return buildDecorations(cm, transaction.state);
+      },
+      provide: field => cm.EditorView.decorations.from(field),
     });
   }
 
