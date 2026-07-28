@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Socra teaches you how to think through guided questions, reflection, and genuine understanding.">
-<meta name="theme-color" content="#020711">
+<meta name="theme-color" content="#FAF8F5">
 <title>Socra — Learn by thinking</title>
 <link rel="icon" href="/assets/favicon.ico">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
@@ -13,15 +13,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <link rel="stylesheet" href="/css/home.css">
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js"}}</script>
+<script src="/js/theme.js"></script>
 </head>
 <body class="home-page">
 <a class="skip-link" href="#main">Skip to content</a>
 
 <nav class="glass-nav" aria-label="Main navigation">
-<a class="nav-brand liquid-glass" href="#top" aria-label="Socra home"><span class="brand-lines" aria-hidden="true"><i></i><i></i><i></i></span><strong>socra</strong></a>
-<button class="mobile-menu liquid-glass" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Open navigation"><i class="fa-solid fa-bars"></i></button>
-<div class="nav-pill liquid-glass" id="nav-links">
+<a class="nav-brand soft-ui" href="#top" aria-label="Socra home"><img class="logo-light" src="/assets/text-logo.png" alt="Socra"><img class="logo-dark" src="/assets/inverted-text-logo.png" alt="Socra"></a>
+<button class="mobile-menu soft-ui" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Open navigation"><i class="fa-solid fa-bars"></i></button>
+<div class="nav-pill soft-ui" id="nav-links">
 <a href="#difference">Why Socra</a><a href="#method">Method</a><a href="#proof">Research</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a>
 <a class="nav-action" href="/auth.html">Start learning <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
 </div>
@@ -30,22 +30,22 @@
 <main id="main">
 <section class="hero" id="top">
 <div class="hero-pin">
-<div class="hero-fallback" aria-hidden="true"><div class="fallback-book"><i></i><i></i><i></i></div></div>
+<div class="hero-fallback" aria-hidden="true"><div class="fallback-book"><div class="fallback-back"></div><div class="fallback-page fp3"></div><div class="fallback-page fp2"></div><div class="fallback-page fp1"></div><div class="fallback-cover"><i></i><i></i><i></i></div></div></div>
 <canvas id="book-canvas" aria-label="A scroll-controlled Socra learning volume opening into a field of questions"></canvas>
 <div class="hero-vignette" aria-hidden="true"></div>
-<div class="model-loading liquid-glass"><i></i><span>Opening Socra</span></div>
+<div class="model-loading soft-ui"><i></i><span>Opening Socra</span></div>
 
 <div class="hero-content">
-<div class="hero-badge liquid-glass" data-reveal><span>Built for</span> independent minds</div>
+<div class="hero-badge soft-ui" data-reveal><span>Built for</span> independent minds</div>
 <h1 data-blur-text>Learn by thinking. Not by copying.</h1>
 <p class="hero-sub" data-reveal>Socra guides you with questions instead of revealing the answer—so curiosity becomes reasoning, and reasoning becomes understanding.</p>
 <div class="hero-actions" data-reveal>
-<a class="primary-cta liquid-glass-strong" href="/auth.html">Start learning <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+<a class="primary-cta soft-ui-strong" href="/auth.html">Start learning <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
 <a class="text-cta" href="#demo"><i class="fa-solid fa-circle-play"></i> See Socra in action</a>
 </div>
 <div class="hero-stats" data-reveal>
-<article class="liquid-glass"><i class="fa-solid fa-brain"></i><strong>+35%</strong><span>Retention in the pilot study</span></article>
-<article class="liquid-glass"><i class="fa-solid fa-fingerprint"></i><strong>−33%</strong><span>AI-style similarity</span></article>
+<article class="soft-ui"><i class="fa-solid fa-brain"></i><strong>+35%</strong><span>Retention in the pilot study</span></article>
+<article class="soft-ui"><i class="fa-solid fa-fingerprint"></i><strong>−33%</strong><span>AI-style similarity</span></article>
 </div>
 </div>
 
@@ -53,7 +53,7 @@
 <div class="hero-chapter chapter-open" aria-hidden="true"><span>Socra begins there.</span><strong data-blur-text>Open your thinking.</strong></div>
 <div class="hero-chapter chapter-inside" aria-hidden="true"><span>Question by question</span><strong>Ask. Guide.<br>Reflect. Understand.</strong></div>
 
-<div class="hero-trust" data-reveal><span class="liquid-glass">One method. Every discipline.</span><div><b>Mathematics</b><b>Science</b><b>Code</b><b>Writing</b><b>History</b></div></div>
+<div class="hero-trust" data-reveal><span class="soft-ui">One method. Every discipline.</span><div><b>Mathematics</b><b>Science</b><b>Code</b><b>Writing</b><b>History</b></div></div>
 <div class="hero-scroll"><span>Scroll to enter</span><i class="fa-solid fa-arrow-down"></i></div>
 <div class="hero-progress" aria-hidden="true"><i></i></div>
 </div>
@@ -66,13 +66,13 @@
 <p>Most AI is measured by how quickly it finishes the thought. Socra is designed to help you form one.</p>
 </header>
 <div class="path-grid">
-<article class="path-card liquid-glass" data-reveal>
+<article class="path-card soft-ui" data-reveal>
 <div class="path-top"><span>Traditional AI</span><i class="fa-solid fa-bolt"></i></div>
 <h3>Question in.<br><em>Answer out.</em></h3>
 <ul><li><i class="fa-solid fa-minus"></i> Gives answers</li><li><i class="fa-solid fa-minus"></i> Solves the problem</li><li><i class="fa-solid fa-minus"></i> Encourages dependency</li><li><i class="fa-solid fa-minus"></i> Ends the conversation</li></ul>
 <div class="answer-path"><span>Your question</span><i></i><span>Finished answer</span></div>
 </article>
-<article class="path-card socra-path liquid-glass-strong" data-reveal>
+<article class="path-card socra-path soft-ui-strong" data-reveal>
 <div class="path-top"><span>Socra</span><i class="fa-solid fa-comments"></i></div>
 <h3>Question in.<br><em>Thinking unfolds.</em></h3>
 <ul><li><i class="fa-solid fa-check"></i> Asks useful questions</li><li><i class="fa-solid fa-check"></i> Develops reasoning</li><li><i class="fa-solid fa-check"></i> Builds independence</li><li><i class="fa-solid fa-check"></i> Continues the conversation</li></ul>
@@ -87,16 +87,16 @@
 <p>The conversation adapts to where you are—not where a textbook assumes you should be.</p>
 </header>
 <div class="method-grid">
-<article class="liquid-glass" data-reveal><span>01</span><i class="fa-regular fa-circle-question"></i><h3>Ask</h3><p>Socra discovers what you already know.</p></article>
-<article class="liquid-glass" data-reveal><span>02</span><i class="fa-solid fa-route"></i><h3>Guide</h3><p>Each question adapts to your response.</p></article>
-<article class="liquid-glass" data-reveal><span>03</span><i class="fa-solid fa-pen-nib"></i><h3>Reflect</h3><p>You explain the idea in your own words.</p></article>
-<article class="liquid-glass" data-reveal><span>04</span><i class="fa-solid fa-lightbulb"></i><h3>Understand</h3><p>Reasoning replaces memorisation.</p></article>
+<article class="soft-ui" data-reveal><span>01</span><i class="fa-regular fa-circle-question"></i><h3>Ask</h3><p>Socra discovers what you already know.</p></article>
+<article class="soft-ui" data-reveal><span>02</span><i class="fa-solid fa-route"></i><h3>Guide</h3><p>Each question adapts to your response.</p></article>
+<article class="soft-ui" data-reveal><span>03</span><i class="fa-solid fa-pen-nib"></i><h3>Reflect</h3><p>You explain the idea in your own words.</p></article>
+<article class="soft-ui" data-reveal><span>04</span><i class="fa-solid fa-lightbulb"></i><h3>Understand</h3><p>Reasoning replaces memorisation.</p></article>
 </div>
 </section>
 
 <section class="demo section-shell" id="demo">
 <header class="section-head demo-head"><p class="section-label">// Try the method</p><h2 data-blur-text>Do not watch Socra think. Think with it.</h2></header>
-<div class="demo-frame liquid-glass-strong" data-reveal>
+<div class="demo-frame soft-ui-strong" data-reveal>
 <div class="demo-top"><div><i></i><span>Socra session</span></div><button class="replay-demo"><i class="fa-solid fa-rotate-right"></i> Replay</button></div>
 <div class="demo-body">
 <div class="prompt-list" role="tablist" aria-label="Choose a learning question">
@@ -105,7 +105,7 @@
 <button class="prompt-button" data-demo="chemistry"><i class="fa-solid fa-flask"></i><span><small>Chemistry</small>Teach me stoichiometry</span></button>
 <button class="prompt-button" data-demo="macbeth"><i class="fa-solid fa-book-open"></i><span><small>Literature</small>Analyse Macbeth</span></button>
 </div>
-<div class="demo-chat"><div class="demo-messages" aria-live="polite"></div><div class="demo-composer liquid-glass"><span>Continue your thought…</span><button aria-label="Send"><i class="fa-solid fa-arrow-up"></i></button></div></div>
+<div class="demo-chat"><div class="demo-messages" aria-live="polite"></div><div class="demo-composer soft-ui"><span>Continue your thought…</span><button aria-label="Send"><i class="fa-solid fa-arrow-up"></i></button></div></div>
 </div>
 </div>
 </section>
@@ -119,24 +119,24 @@
 <article data-reveal><strong>+35%</strong><span>Retention</span></article>
 <article data-reveal><strong>−33%</strong><span>AI-style similarity</span></article>
 </div>
-<p class="study-note liquid-glass" data-reveal><span>Study note</span> Results compare traditional answer-first AI assistance with question-led Socratic dialogue. Directional pilot findings; full methodology is being prepared for publication.</p>
+<p class="study-note soft-ui" data-reveal><span>Study note</span> Results compare traditional answer-first AI assistance with question-led Socratic dialogue. Directional pilot findings; full methodology is being prepared for publication.</p>
 </section>
 
 <section class="capabilities section-shell" id="features">
 <header class="section-head"><p class="section-label">// The thinking environment</p><h2 data-blur-text>Everything you need. Nothing that thinks for you.</h2></header>
 <div class="capability-grid">
-<article class="liquid-glass" data-reveal><div class="cap-top"><i class="fa-solid fa-comments"></i><div><span>Adaptive</span><span>Personal</span></div></div><h3>Question-led conversation</h3><p>Every next question responds to your reasoning, confidence, and pace. Choose the AI model that best fits the work.</p></article>
-<article class="liquid-glass" data-reveal><div class="cap-top"><i class="fa-solid fa-file-lines"></i><div><span>Markdown</span><span>History</span></div></div><h3>A workspace for thought</h3><p>Structure ideas clearly with rich writing, code explanations, organised documents, and conversations ready to revisit.</p></article>
-<article class="liquid-glass" data-reveal><div class="cap-top"><i class="fa-solid fa-chart-line"></i><div><span>Reflect</span><span>Grow</span></div></div><h3>Progress you can feel</h3><p>Reflection prompts, personalised dialogue, and progress tracking reveal how your thinking changes over time.</p></article>
+<article class="soft-ui" data-reveal><div class="cap-top"><i class="fa-solid fa-comments"></i><div><span>Adaptive</span><span>Personal</span></div></div><h3>Question-led conversation</h3><p>Every next question responds to your reasoning, confidence, and pace. Choose the AI model that best fits the work.</p></article>
+<article class="soft-ui" data-reveal><div class="cap-top"><i class="fa-solid fa-file-lines"></i><div><span>Markdown</span><span>History</span></div></div><h3>A workspace for thought</h3><p>Structure ideas clearly with rich writing, code explanations, organised documents, and conversations ready to revisit.</p></article>
+<article class="soft-ui" data-reveal><div class="cap-top"><i class="fa-solid fa-chart-line"></i><div><span>Reflect</span><span>Grow</span></div></div><h3>Progress you can feel</h3><p>Reflection prompts, personalised dialogue, and progress tracking reveal how your thinking changes over time.</p></article>
 </div>
 </section>
 
 <section class="pricing section-shell" id="pricing">
 <header class="section-head split-head"><div><p class="section-label">// Pricing</p><h2 data-blur-text>Choose your path to understanding.</h2></div><p>Every plan gives you a Socratic partner. The difference is how deep the partnership goes.</p></header>
 <div class="pricing-grid">
-<article class="price-card liquid-glass" data-reveal><div class="price-name">Doxa</div><p>The Socratic concept of common belief</p><strong>Free</strong><ul><li><i class="fa-solid fa-check"></i>Limited chat credits</li><li><i class="fa-solid fa-check"></i>1 workspace document</li><li><i class="fa-solid fa-check"></i>Basic model quality</li></ul><a href="/auth.html">Start your journey <i class="fa-solid fa-arrow-right"></i></a></article>
-<article class="price-card featured liquid-glass-strong" data-reveal><div class="price-top"><div class="price-name">Elenchus</div><span>Most popular</span></div><p>The Socratic concept of cross-examination</p><strong>$8<small>/month</small></strong><em>$79 when billed annually</em><ul><li><i class="fa-solid fa-check"></i>Unlimited chat credits</li><li><i class="fa-solid fa-check"></i>10 workspace documents</li><li><i class="fa-solid fa-check"></i>Better model quality</li><li><i class="fa-solid fa-check"></i>Cognitive portfolio + metrics</li></ul><span class="coming">Coming soon</span></article>
-<article class="price-card liquid-glass" data-reveal><div class="price-name">Nous</div><p>The Socratic concept of true understanding</p><strong>$15<small>/month</small></strong><em>$149 when billed annually</em><ul><li><i class="fa-solid fa-check"></i>Unlimited chat and documents</li><li><i class="fa-solid fa-check"></i>Fully unlocked portfolio + metrics</li><li><i class="fa-solid fa-check"></i>Best model quality</li><li><i class="fa-solid fa-check"></i>Priority feature access</li></ul><span class="coming">Coming soon</span></article>
+<article class="price-card soft-ui" data-reveal><div class="price-name">Doxa</div><p>The Socratic concept of common belief</p><strong>Free</strong><ul><li><i class="fa-solid fa-check"></i>Limited chat credits</li><li><i class="fa-solid fa-check"></i>1 workspace document</li><li><i class="fa-solid fa-check"></i>Basic model quality</li></ul><a href="/auth.html">Start your journey <i class="fa-solid fa-arrow-right"></i></a></article>
+<article class="price-card featured soft-ui-strong" data-reveal><div class="price-top"><div class="price-name">Elenchus</div><span>Most popular</span></div><p>The Socratic concept of cross-examination</p><strong>$8<small>/month</small></strong><em>$79 when billed annually</em><ul><li><i class="fa-solid fa-check"></i>Unlimited chat credits</li><li><i class="fa-solid fa-check"></i>10 workspace documents</li><li><i class="fa-solid fa-check"></i>Better model quality</li><li><i class="fa-solid fa-check"></i>Cognitive portfolio + metrics</li></ul><span class="coming">Coming soon</span></article>
+<article class="price-card soft-ui" data-reveal><div class="price-name">Nous</div><p>The Socratic concept of true understanding</p><strong>$15<small>/month</small></strong><em>$149 when billed annually</em><ul><li><i class="fa-solid fa-check"></i>Unlimited chat and documents</li><li><i class="fa-solid fa-check"></i>Fully unlocked portfolio + metrics</li><li><i class="fa-solid fa-check"></i>Best model quality</li><li><i class="fa-solid fa-check"></i>Priority feature access</li></ul><span class="coming">Coming soon</span></article>
 </div>
 </section>
 
@@ -147,9 +147,9 @@
 <section class="stories section-shell">
 <header class="section-head"><p class="section-label">// Early learners</p><h2 data-blur-text>What it feels like to find the answer yourself.</h2></header>
 <div class="story-grid">
-<figure class="liquid-glass" data-reveal><blockquote>“For the first time, an AI left me more capable than when I opened it. I understood the proof because I had built it.”</blockquote><figcaption><b>AM</b><span><strong>Aarav M.</strong><small>Undergraduate mathematics</small></span></figcaption></figure>
-<figure class="liquid-glass" data-reveal><blockquote>“It did not rescue me from being stuck. It helped me notice exactly why I was stuck.”</blockquote><figcaption><b>LP</b><span><strong>Leah P.</strong><small>Computer science student</small></span></figcaption></figure>
-<figure class="liquid-glass" data-reveal><blockquote>“The questions made my essay sound like me. My argument became clearer without becoming generic.”</blockquote><figcaption><b>SK</b><span><strong>Samira K.</strong><small>Secondary school learner</small></span></figcaption></figure>
+<figure class="soft-ui" data-reveal><blockquote>“For the first time, an AI left me more capable than when I opened it. I understood the proof because I had built it.”</blockquote><figcaption><b>AM</b><span><strong>Aarav M.</strong><small>Undergraduate mathematics</small></span></figcaption></figure>
+<figure class="soft-ui" data-reveal><blockquote>“It did not rescue me from being stuck. It helped me notice exactly why I was stuck.”</blockquote><figcaption><b>LP</b><span><strong>Leah P.</strong><small>Computer science student</small></span></figcaption></figure>
+<figure class="soft-ui" data-reveal><blockquote>“The questions made my essay sound like me. My argument became clearer without becoming generic.”</blockquote><figcaption><b>SK</b><span><strong>Samira K.</strong><small>Secondary school learner</small></span></figcaption></figure>
 </div>
 <p class="placeholder-note">Illustrative placeholders — learner stories coming soon.</p>
 </section>
@@ -170,14 +170,16 @@
 <p class="section-label">// The answer is not the destination</p>
 <h2 data-blur-text>Start thinking differently.</h2>
 <p>Experience learning through conversation.</p>
-<a class="primary-cta liquid-glass-strong" href="/auth.html">Start learning <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+<a class="primary-cta soft-ui-strong" href="/auth.html">Start learning <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
 </section>
 </main>
 
 <footer><a class="footer-brand" href="#top"><span class="brand-lines"><i></i><i></i><i></i></span><strong>socra</strong></a><p>Not another answer machine.<br>A better way to learn.</p><nav><a href="#difference">About</a><a href="#proof">Research</a><a href="/pricing.html">Pricing</a><a href="#">Privacy</a><a href="#">Terms</a><a href="https://github.com/SocraApp">GitHub</a><a href="mailto:hello@socra.in">Contact</a></nav><div><span>© 2026 Socra</span><span>Designed for the curious.</span><a href="#top">Back to top <i class="fa-solid fa-arrow-up"></i></a></div></footer>
 
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
-<script type="module" src="/js/home.js"></script>
+<script src="/js/home.js"></script>
 </body>
 </html>
