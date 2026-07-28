@@ -189,7 +189,7 @@ footer{background:var(--surface-1);border-color:var(--border-strong)}footer>p{fo
 .hero-chapter{z-index:4;align-items:flex-start;justify-content:flex-end;text-align:left;padding-bottom:11vh;pointer-events:none}
 .hero-chapter>strong{max-width:min(720px,55vw);font-size:clamp(46px,6.2vw,92px)}
 .hero-chapter>span{color:color-mix(in srgb,var(--ink) 65%,transparent)}
-.chapter-inside{align-items:flex-start;text-align:left}.chapter-inside>strong{max-width:min(680px,52vw);font-size:clamp(48px,6vw,88px)}
+.chapter-inside{align-items:center;text-align:center}.chapter-inside>strong{max-width:min(760px,62vw);font-size:clamp(48px,6vw,88px)}
 @media(max-width:720px){
  .hero-chapter{align-items:center;justify-content:flex-end;text-align:center;padding-bottom:10vh}
  .hero-chapter>strong,.chapter-inside>strong{max-width:94vw;font-size:13vw}
