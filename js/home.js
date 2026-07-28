@@ -103,9 +103,8 @@ function setupHeroScroll(){
   .to(".fallback-inkwell",{scale:2.35,opacity:.32,duration:.19,ease:"power1.in"},.48)
   .to(".hero-pin",{backgroundColor:"#02070D",duration:.13},.50)
   .to(".hero-vignette",{opacity:.05,duration:.12},.52)
-  .to(".chapter-inside",{opacity:1,duration:.07},.59)
+  .to(".chapter-inside",{opacity:1,duration:.07},.86)
   .to(".fallback-inkwell",{opacity:0,duration:.07},.67)
-  .to(".chapter-inside",{opacity:0,filter:"blur(14px)",duration:.075},.85)
   .to({}, {duration:.08},.92);
 }
 
@@ -124,6 +123,26 @@ function setupInkwellModel(){
  const key=new THREE.DirectionalLight(0xe3ddd2,.82);key.position.set(-4,5,6);scene.add(key);
  const rim=new THREE.DirectionalLight(0x416f96,.64);rim.position.set(5,2,3);scene.add(rim);
  const fill=new THREE.PointLight(0x244a68,.34,10);fill.position.set(1,-1,3);scene.add(fill);
+
+ // Full-screen ink portal: begins at the centred bottle mouth and expands until ink is the entire frame.
+ const inkUniforms={uTime:{value:0},uMix:{value:0},uAspect:{value:1}};
+ const inkMaterial=new THREE.ShaderMaterial({
+  transparent:true,depthTest:false,depthWrite:false,uniforms:inkUniforms,
+  vertexShader:"varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position,1.0);}",
+  fragmentShader:[
+   "precision highp float;varying vec2 vUv;uniform float uTime;uniform float uMix;uniform float uAspect;",
+   "float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123);}",
+   "float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),mix(hash(i+vec2(0.,1.)),hash(i+vec2(1.,1.)),f.x),f.y);}",
+   "float fbm(vec2 p){float v=0.;float a=.5;for(int i=0;i<5;i++){v+=a*noise(p);p=p*2.03+vec2(7.1,3.7);a*=.5;}return v;}",
+   "void main(){vec2 centred=vUv-.5;centred.x*=uAspect;float radius=mix(0.,2.0,uMix);float mask=(1.-smoothstep(radius-.13,radius,length(centred)))*smoothstep(0.,.08,uMix);",
+   "vec2 p=centred*mix(7.0,2.15,uMix);float t=uTime*.055;float flow=fbm(p+vec2(t,-t*.72)+fbm(p*1.8-t));float veins=fbm(p*3.2-vec2(t*.7,t));",
+   "vec3 deep=vec3(.002,.012,.028),blue=vec3(.014,.075,.115),glint=vec3(.16,.30,.38);vec3 col=mix(deep,blue,smoothstep(.28,.82,flow));col+=glint*pow(max(0.,veins-.68),2.)*.72;",
+   "float grain=(hash(gl_FragCoord.xy+uTime)-.5)*.018;col+=grain;gl_FragColor=vec4(col,mask);}"
+  ].join("")
+ });
+ const inkScene=new THREE.Scene(),inkCamera=new THREE.OrthographicCamera(-1,1,1,-1,.1,10);inkCamera.position.z=1;
+ const inkPlane=new THREE.Mesh(new THREE.PlaneGeometry(2,2),inkMaterial);inkScene.add(inkPlane);
+ renderer.autoClear=false;
 
  new THREE.GLTFLoader().load("/assets/socra-inkwell.glb",gltf=>{
   const root=gltf.scene,mobile=innerWidth<720;scene.add(root);
@@ -171,18 +190,20 @@ function setupInkwellModel(){
     .to(camera.position,{x:.18,y:3.15,z:2.05,duration:.18,ease:"power2.inOut"},.59)
     .to(lookTarget,{y:1.025,duration:.16,ease:"power2.inOut"},.59)
     .to(root.rotation,{x:.58,y:.18,z:-.03,duration:.2,ease:"sine.inOut"},.62)
+    .to(root.scale,{x:1.46,y:1.46,z:1.46,duration:.16,ease:"power2.in"},.66)
     .to(inkSurface?inkSurface.rotation:{},{y:.42,duration:.22,ease:"sine.inOut"},.64)
-    .to(camera.position,{x:-.12,y:3.3,z:1.82,duration:.18,ease:"sine.inOut"},.69)
-    .to(lookTarget,{y:1.01,duration:.18,ease:"sine.inOut"},.69)
+    .to(camera.position,{x:0,y:3.3,z:1.82,duration:.18,ease:"sine.inOut"},.69)
+    .to(lookTarget,{x:0,y:1.01,z:0,duration:.18,ease:"sine.inOut"},.69)
+    .to(inkUniforms.uMix,{value:1,duration:.2,ease:"power2.in"},.72)
     .to({}, {duration:.15},.82);
    heroTimeline.scrollTrigger?.refresh();
   }
 
   let raf=0;
-  function render(now){raf=requestAnimationFrame(render);if(document.hidden)return;if(inkTexture)inkTexture.offset.x=(now||0)*.000008;camera.lookAt(lookTarget);renderer.render(scene,camera)}
-  function resize(){const rect=canvas.getBoundingClientRect(),width=Math.max(1,rect.width),height=Math.max(1,rect.height);renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<720?1.2:1.55))}
+  function render(now){raf=requestAnimationFrame(render);if(document.hidden)return;const time=now||0;if(inkTexture)inkTexture.offset.x=time*.000008;inkUniforms.uTime.value=time*.001;camera.lookAt(lookTarget);renderer.clear();renderer.render(scene,camera);if(inkUniforms.uMix.value>.001)renderer.render(inkScene,inkCamera)}
+  function resize(){const rect=canvas.getBoundingClientRect(),width=Math.max(1,rect.width),height=Math.max(1,rect.height);renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();inkUniforms.uAspect.value=width/height;renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<720?1.2:1.55))}
   resize();addEventListener("resize",resize);render();
-  addEventListener("pagehide",()=>{cancelAnimationFrame(raf);inkTexture?.dispose();root.traverse(object=>{if(object.isMesh){object.geometry?.dispose();(Array.isArray(object.material)?object.material:[object.material]).forEach(material=>material?.dispose())}});renderer.dispose()},{once:true});
+  addEventListener("pagehide",()=>{cancelAnimationFrame(raf);inkTexture?.dispose();root.traverse(object=>{if(object.isMesh){object.geometry?.dispose();(Array.isArray(object.material)?object.material:[object.material]).forEach(material=>material?.dispose())}});inkPlane.geometry.dispose();inkMaterial.dispose();renderer.dispose()},{once:true});
  },undefined,()=>{loading?.classList.add("loaded");document.body.classList.add("model-failed")});
 }
 
