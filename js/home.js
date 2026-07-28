@@ -163,16 +163,11 @@ function setupInkwellModel(){
   // so hiding the duplicate removes transparent edge clipping during the close camera move.
   const mouthLip=root.getObjectByName("MouthLip");if(mouthLip)mouthLip.visible=false;
 
-  const inkSurface=root.getObjectByName("InkSurface");let inkTexture=null;
-  const inkLocalCenter=new THREE.Vector3();
-  if(inkSurface?.geometry){inkSurface.geometry.computeBoundingSphere();inkLocalCenter.copy(inkSurface.geometry.boundingSphere.center)}
-  if(inkSurface&&inkSurface.material){
-   const textureCanvas=document.createElement("canvas"),size=128;textureCanvas.width=size;textureCanvas.height=size;
-   const context=textureCanvas.getContext("2d"),image=context.createImageData(size,size);
-   for(let y=0;y<size;y++)for(let x=0;x<size;x++){const index=(y*size+x)*4,radial=Math.sin(Math.hypot(x-size/2,y-size/2)*.42)*24,grain=((x*17+y*31)%29)-14,value=Math.max(0,Math.min(255,126+radial+grain));image.data[index]=image.data[index+1]=image.data[index+2]=value;image.data[index+3]=255}
-   context.putImageData(image,0,0);inkTexture=new THREE.CanvasTexture(textureCanvas);inkTexture.wrapS=inkTexture.wrapT=THREE.RepeatWrapping;inkTexture.repeat.set(1.7,1.7);
-   inkSurface.material=inkSurface.material.clone();inkSurface.material.bumpMap=inkTexture;inkSurface.material.bumpScale=.018;inkSurface.material.roughness=.17;inkSurface.material.side=THREE.DoubleSide;inkSurface.material.needsUpdate=true;
-  }
+  // Keep the bottle-shaped InkVolume, but remove the flat circular InkSurface. The latter duplicated
+  // the procedural full-screen ink and visibly floated at the neck during the camera approach.
+  const inkSurface=root.getObjectByName("InkSurface");if(inkSurface)inkSurface.visible=false;
+  const inkAnchor=mouthLip||inkSurface,inkLocalCenter=new THREE.Vector3();
+  if(inkAnchor?.geometry){inkAnchor.geometry.computeBoundingSphere();inkLocalCenter.copy(inkAnchor.geometry.boundingSphere.center)}
 
   const capGroup=new THREE.Group();capGroup.position.set(0,1.365,0);root.add(capGroup);
   ["Cap","Cork","CapBand01","CapBand02","CapBand03","CapBand04"].map(name=>root.getObjectByName(name)).filter(Boolean).forEach(object=>capGroup.attach(object));
@@ -199,7 +194,6 @@ function setupInkwellModel(){
     .to(root.rotation,{x:.58,y:.18,z:-.03,duration:.2,ease:"sine.inOut"},.62)
     .to(finalAim,{value:1,duration:.12,ease:"power2.inOut"},.60)
     .to(root.scale,{x:1.46,y:1.46,z:1.46,duration:.16,ease:"power2.in"},.66)
-    .to(inkSurface?inkSurface.rotation:{},{y:.42,duration:.22,ease:"sine.inOut"},.64)
     .to(camera.position,{x:0,y:3.3,z:1.82,duration:.18,ease:"sine.inOut"},.69)
     .to(lookTarget,{x:0,y:1.01,z:0,duration:.18,ease:"sine.inOut"},.69)
     .to(inkUniforms.uMix,{value:1,duration:.2,ease:"power2.in"},.72)
@@ -208,10 +202,10 @@ function setupInkwellModel(){
   }
 
   let raf=0;const inkWorld=new THREE.Vector3(),inkProjected=new THREE.Vector3(),renderTarget=new THREE.Vector3();
-  function render(now){raf=requestAnimationFrame(render);if(document.hidden)return;const time=now||0;if(inkTexture)inkTexture.offset.x=time*.000008;inkUniforms.uTime.value=time*.001;root.updateMatrixWorld(true);inkWorld.copy(inkLocalCenter);if(inkSurface)inkSurface.localToWorld(inkWorld);renderTarget.copy(lookTarget).lerp(inkWorld,finalAim.value);camera.lookAt(renderTarget);camera.updateMatrixWorld();inkProjected.copy(inkWorld).project(camera);inkUniforms.uCenter.value.set((inkProjected.x+1)*.5,(inkProjected.y+1)*.5);renderer.clear();renderer.render(scene,camera);if(inkUniforms.uMix.value>.001)renderer.render(inkScene,inkCamera)}
+  function render(now){raf=requestAnimationFrame(render);if(document.hidden)return;const time=now||0;inkUniforms.uTime.value=time*.001;root.updateMatrixWorld(true);inkWorld.copy(inkLocalCenter);if(inkAnchor)inkAnchor.localToWorld(inkWorld);renderTarget.copy(lookTarget).lerp(inkWorld,finalAim.value);camera.lookAt(renderTarget);camera.updateMatrixWorld();inkProjected.copy(inkWorld).project(camera);inkUniforms.uCenter.value.set((inkProjected.x+1)*.5,(inkProjected.y+1)*.5);renderer.clear();renderer.render(scene,camera);if(inkUniforms.uMix.value>.001)renderer.render(inkScene,inkCamera)}
   function resize(){const rect=canvas.getBoundingClientRect(),width=Math.max(1,rect.width),height=Math.max(1,rect.height);renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();inkUniforms.uAspect.value=width/height;renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<720?1.2:1.55))}
   resize();addEventListener("resize",resize);render();
-  addEventListener("pagehide",()=>{cancelAnimationFrame(raf);inkTexture?.dispose();root.traverse(object=>{if(object.isMesh){object.geometry?.dispose();(Array.isArray(object.material)?object.material:[object.material]).forEach(material=>material?.dispose())}});inkPlane.geometry.dispose();inkMaterial.dispose();renderer.dispose()},{once:true});
+  addEventListener("pagehide",()=>{cancelAnimationFrame(raf);root.traverse(object=>{if(object.isMesh){object.geometry?.dispose();(Array.isArray(object.material)?object.material:[object.material]).forEach(material=>material?.dispose())}});inkPlane.geometry.dispose();inkMaterial.dispose();renderer.dispose()},{once:true});
  },undefined,()=>{loading?.classList.add("loaded");document.body.classList.add("model-failed")});
 }
 
