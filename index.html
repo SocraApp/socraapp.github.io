@@ -8,9 +8,6 @@
 <title>Socra — Learn by thinking</title>
 <link rel="icon" href="/assets/favicon.ico">
 <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <link rel="stylesheet" href="/css/home.css">
 <script src="/js/theme.js"></script>
@@ -19,7 +16,7 @@
 <a class="skip-link" href="#main">Skip to content</a>
 
 <nav class="glass-nav" aria-label="Main navigation">
-<a class="nav-brand soft-ui" href="#top" aria-label="Socra home"><img class="logo-light" src="/assets/text-logo.png" alt="Socra"><img class="logo-dark" src="/assets/inverted-text-logo.png" alt="Socra"></a>
+<a class="nav-brand" href="#top" aria-label="Socra home"><img class="logo-light" src="/assets/full-logo.png" alt="Socra"><img class="logo-dark" src="/assets/inverted-full-logo.png" alt="Socra"></a>
 <button class="mobile-menu soft-ui" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Open navigation"><i class="fa-solid fa-bars"></i></button>
 <div class="nav-pill soft-ui" id="nav-links">
 <a href="#difference">Why Socra</a><a href="#method">Method</a><a href="#proof">Research</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a>
@@ -113,11 +110,11 @@
 <section class="proof section-shell" id="proof">
 <header class="section-head split-head"><div><p class="section-label">// Pilot study</p><h2 data-blur-text>Built around better learning.</h2></div><p>In a controlled pilot, learners using Socratic dialogue outperformed those using traditional AI assistance across five measures of independent work.</p></header>
 <div class="metrics-row">
-<article data-reveal><strong>+32%</strong><span>Creativity</span></article>
-<article data-reveal><strong>+30%</strong><span>Argument quality</span></article>
-<article data-reveal><strong>+31%</strong><span>Understanding</span></article>
-<article data-reveal><strong>+35%</strong><span>Retention</span></article>
-<article data-reveal><strong>−33%</strong><span>AI-style similarity</span></article>
+<article data-reveal><strong>+32%</strong><span>Creativity</span><canvas class="metric-chart" data-points="18,22,31,38,49,61,72" aria-label="Creativity improvement trend"></canvas></article>
+<article data-reveal><strong>+30%</strong><span>Argument quality</span><canvas class="metric-chart" data-points="20,25,28,39,46,58,68" aria-label="Argument quality improvement trend"></canvas></article>
+<article data-reveal><strong>+31%</strong><span>Understanding</span><canvas class="metric-chart" data-points="15,19,30,35,48,60,70" aria-label="Understanding improvement trend"></canvas></article>
+<article data-reveal><strong>+35%</strong><span>Retention</span><canvas class="metric-chart" data-points="16,21,27,42,51,65,76" aria-label="Retention improvement trend"></canvas></article>
+<article data-reveal><strong>−33%</strong><span>AI-style similarity</span><canvas class="metric-chart metric-down" data-points="76,69,60,53,47,36,25" aria-label="AI-style similarity reduction trend"></canvas></article>
 </div>
 <p class="study-note soft-ui" data-reveal><span>Study note</span> Results compare traditional answer-first AI assistance with question-led Socratic dialogue. Directional pilot findings; full methodology is being prepared for publication.</p>
 </section>
@@ -125,9 +122,9 @@
 <section class="capabilities section-shell" id="features">
 <header class="section-head"><p class="section-label">// The thinking environment</p><h2 data-blur-text>Everything you need. Nothing that thinks for you.</h2></header>
 <div class="capability-grid">
-<article class="soft-ui" data-reveal><div class="cap-top"><i class="fa-solid fa-comments"></i><div><span>Adaptive</span><span>Personal</span></div></div><h3>Question-led conversation</h3><p>Every next question responds to your reasoning, confidence, and pace. Choose the AI model that best fits the work.</p></article>
-<article class="soft-ui" data-reveal><div class="cap-top"><i class="fa-solid fa-file-lines"></i><div><span>Markdown</span><span>History</span></div></div><h3>A workspace for thought</h3><p>Structure ideas clearly with rich writing, code explanations, organised documents, and conversations ready to revisit.</p></article>
-<article class="soft-ui" data-reveal><div class="cap-top"><i class="fa-solid fa-chart-line"></i><div><span>Reflect</span><span>Grow</span></div></div><h3>Progress you can feel</h3><p>Reflection prompts, personalised dialogue, and progress tracking reveal how your thinking changes over time.</p></article>
+<article class="soft-ui" data-reveal><div class="cap-top"><i class="fa-solid fa-comments" aria-hidden="true"></i></div><h3>Question-led conversation</h3><p>Every next question responds to your reasoning, confidence, and pace. Choose the AI model that best fits the work.</p></article>
+<article class="soft-ui" data-reveal><div class="cap-top"><i class="fa-solid fa-file-lines" aria-hidden="true"></i></div><h3>A workspace for thought</h3><p>Structure ideas clearly with rich writing, code explanations, organised documents, and conversations ready to revisit.</p></article>
+<article class="soft-ui" data-reveal><div class="cap-top"><i class="fa-solid fa-chart-line" aria-hidden="true"></i></div><h3>Progress you can feel</h3><p>Reflection prompts, personalised dialogue, and progress tracking reveal how your thinking changes over time.</p></article>
 </div>
 </section>
 
@@ -166,7 +163,7 @@
 </div>
 </section>
 
-<section class="final-cta">
+<section class="final-cta"><canvas class="ink-field" aria-hidden="true"></canvas>
 <p class="section-label">// The answer is not the destination</p>
 <h2 data-blur-text>Start thinking differently.</h2>
 <p>Experience learning through conversation.</p>
