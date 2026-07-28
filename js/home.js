@@ -12,7 +12,7 @@ const demoData={
 
 function setupBlurText(){
  qsa("[data-blur-text]").forEach(element=>{
-  const label=element.textContent.trim(),words=label.split(/s+/);element.setAttribute("aria-label",label);
+  const label=element.textContent.trim(),words=label.split(/\s+/);element.setAttribute("aria-label",label);
   element.innerHTML=words.map((word,index)=>`<span class="blur-word" aria-hidden="true" style="transition-delay:${index*90}ms">${word}</span>`).join(" ");
  });
  const targets=qsa("[data-reveal], [data-blur-text]");
@@ -44,85 +44,97 @@ function setupUI(){
 }
 
 function setupHeroScroll(){
- const hero=qs(".hero");if(!hero)return;
+ const hero=qs(".hero"),pin=qs(".hero-pin");if(!hero||!pin)return;
  if(reduced||!window.gsap||!window.ScrollTrigger){hero.classList.add("hero-static");return}
  gsap.registerPlugin(ScrollTrigger);
  heroTimeline=gsap.timeline({defaults:{ease:"none"},scrollTrigger:{
-  trigger:hero,start:"top top",end:"bottom bottom",scrub:.2,invalidateOnRefresh:true,
-  onUpdate:self=>{document.documentElement.style.setProperty("--hero-progress",`${self.progress*100}%`);document.documentElement.style.setProperty("--vignette",String(.88-self.progress*.34))}
+  trigger:hero,start:"top top",end:()=>"+="+Math.round(innerHeight*4.2),pin:pin,pinSpacing:true,scrub:.35,anticipatePin:1,invalidateOnRefresh:true,
+  onUpdate:self=>{document.documentElement.style.setProperty("--hero-progress",(self.progress*100)+"%");document.documentElement.style.setProperty("--vignette",String(.88-self.progress*.58))}
  }});
  heroTimeline
-  .to(".hero-content",{opacity:0,filter:"blur(11px)",y:-30,duration:.075},.075)
-  .to(".hero-trust",{opacity:0,duration:.045},.08)
-  .to(".fallback-book",{left:"50%",top:"50%",scale:1.3,rotationY:0,rotationZ:0,duration:.12},.09)
-  .to(".chapter-close",{opacity:1,duration:.055},.15)
-  .to(".chapter-close",{opacity:0,filter:"blur(12px)",duration:.05},.245)
-  .to(".fallback-cover",{rotationY:-155,duration:.18,ease:"power2.inOut"},.22)
-  .to(".fallback-page.fp1",{rotationY:-130,duration:.17,ease:"power2.inOut"},.25)
-  .to(".fallback-page.fp2",{rotationY:-88,duration:.17,ease:"power2.inOut"},.275)
-  .to(".fallback-page.fp3",{rotationY:-46,duration:.17,ease:"power2.inOut"},.30)
-  .to(".chapter-open",{opacity:1,duration:.055},.32)
-  .to(".fallback-book",{scale:1.75,duration:.14},.39)
+  .to(".hero-content",{opacity:0,filter:"blur(11px)",duration:.075},.065)
+  .to(".hero-trust",{opacity:0,duration:.045},.065)
+  .to(".fallback-inkwell",{left:"50%",scale:1.15,duration:.12},.10)
+  .to(".chapter-close",{opacity:1,duration:.06},.16)
+  .to(".chapter-close",{opacity:0,filter:"blur(12px)",duration:.055},.255)
+  .to(".fi-cap",{y:"-145%",rotation:135,duration:.18,ease:"power2.inOut"},.245)
+  .to(".chapter-open",{opacity:1,duration:.06},.34)
+  .to(".fallback-inkwell",{scale:1.45,duration:.14},.38)
   .to(".chapter-open",{opacity:0,filter:"blur(12px)",duration:.055},.46)
-  .to(".fallback-book",{scale:4.8,opacity:.18,duration:.19,ease:"power1.in"},.48)
-  .to(".hero-pin",{backgroundColor:"#071B33",duration:.12},.52)
-  .to(".hero-vignette",{opacity:.08,duration:.12},.52)
-  .to(".chapter-inside",{opacity:1,duration:.065},.59)
-  .to(".fallback-book",{opacity:0,duration:.08},.68)
-  .to(".chapter-inside",{opacity:0,filter:"blur(14px)",duration:.07},.85);
+  .to(".fallback-inkwell",{scale:6.3,opacity:.1,duration:.19,ease:"power1.in"},.48)
+  .to(".hero-pin",{backgroundColor:"#071B33",duration:.13},.50)
+  .to(".hero-vignette",{opacity:.05,duration:.12},.52)
+  .to(".chapter-inside",{opacity:1,duration:.07},.59)
+  .to(".fallback-inkwell",{opacity:0,duration:.07},.67)
+  .to(".chapter-inside",{opacity:0,filter:"blur(14px)",duration:.075},.85)
+  .to({}, {duration:.08},.92);
 }
 
-function setupBookModel(){
- const canvas=qs("#book-canvas"),loading=qs(".model-loading");if(!canvas||reduced)return;
+function setupInkwellModel(){
+ const canvas=qs("#inkwell-canvas"),loading=qs(".model-loading");if(!canvas||reduced)return;
  const THREE=window.THREE;
  if(!THREE||!THREE.GLTFLoader){loading?.classList.add("loaded");document.body.classList.add("model-failed");return}
  let renderer;
- try{renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:innerWidth>720,powerPreference:"high-performance"})}
+ try{renderer=new THREE.WebGLRenderer({canvas:canvas,alpha:true,antialias:innerWidth>720,powerPreference:"high-performance"})}
  catch(error){loading?.classList.add("loaded");document.body.classList.add("model-failed");return}
- renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<720?1.25:1.8));renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.18;
- const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(32,1,.05,50);camera.position.set(0,0,6.3);
- scene.add(new THREE.HemisphereLight(0xf7f2e8,0x17385b,2.7));
- const key=new THREE.DirectionalLight(0xffffff,3.8);key.position.set(-4,5,6);scene.add(key);
- const rim=new THREE.DirectionalLight(0x78abe0,3.4);rim.position.set(5,-2,4);scene.add(rim);
- const fill=new THREE.PointLight(0x1c558b,7,12);fill.position.set(1,-1,3);scene.add(fill);
+ renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<720?1.2:1.65));
+ renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.82;
+ const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(32,1,.04,40);camera.position.set(0,0,6.5);
+ scene.add(new THREE.HemisphereLight(0xd8e5ee,0x061426,1.05));
+ const key=new THREE.DirectionalLight(0xf5ead7,1.75);key.position.set(-4,5,6);scene.add(key);
+ const rim=new THREE.DirectionalLight(0x5f94c7,1.4);rim.position.set(5,1,3);scene.add(rim);
+ const fill=new THREE.PointLight(0x1f5b91,1.9,10);fill.position.set(1,-1,3);scene.add(fill);
 
- new THREE.GLTFLoader().load("/assets/socra-dialogue-book.glb",gltf=>{
-  const root=gltf.scene;scene.add(root);const mobile=innerWidth<720;
-  root.scale.setScalar(mobile?.88:1.18);root.position.set(mobile?0:1.72,mobile?.72:0,0);root.rotation.set(.03,-.18,mobile?0:.035);
-  root.traverse(object=>{if(object.isMesh){object.frustumCulled=true;if(object.material){object.material.envMapIntensity=1.1}}});
-  const attachPivot=names=>{const pivot=new THREE.Group();pivot.position.set(-1.08,0,0);root.add(pivot);names.map(name=>root.getObjectByName(name)).filter(Boolean).forEach(object=>pivot.attach(object));return pivot};
-  const frontPivot=attachPivot(["FrontCover","FrontPanel","FrontMark01","FrontMark02","FrontMark03"]);
-  const pagePivots=[];
-  for(let index=1;index<=9;index++){const names=[`Page${String(index).padStart(2,"0")}`];if(index===1)for(let ink=1;ink<=6;ink++)names.push(`PageInk${String(ink).padStart(2,"0")}`);pagePivots.push(attachPivot(names))}
-  const modelCards=[];root.traverse(object=>{if(object.name.startsWith("IdeaCard"))modelCards.push(object)});
+ new THREE.GLTFLoader().load("/assets/socra-inkwell.glb",gltf=>{
+  const root=gltf.scene,mobile=innerWidth<720;scene.add(root);
+  const startScale=mobile?.48:.66;
+  root.scale.setScalar(startScale);root.position.set(mobile?0:1.72,mobile?.82:-.08,0);root.rotation.set(.035,-.22,mobile?0:.025);
+  root.traverse(object=>{
+   if(!object.isMesh)return;
+   object.frustumCulled=true;
+   const materials=Array.isArray(object.material)?object.material:[object.material];
+   materials.forEach(material=>{
+    if(!material)return;
+    const name=(material.name||"").toLowerCase();
+    if(name.includes("glass")){material.transparent=true;material.opacity=.58;material.roughness=.2;material.metalness=.05;material.depthWrite=false;material.side=THREE.DoubleSide}
+    if(name.includes("ink")){material.color?.setHex(0x03152f);material.roughness=.36}
+    if(name.includes("cap")){material.roughness=.3;material.metalness=.68}
+   });
+  });
+
+  const capGroup=new THREE.Group();capGroup.position.set(0,1.37,0);root.add(capGroup);
+  ["Cap","Cork","CapBand01","CapBand02","CapBand03","CapBand04"].map(name=>root.getObjectByName(name)).filter(Boolean).forEach(object=>capGroup.attach(object));
   document.body.classList.add("model-ready");loading?.classList.add("loaded");
 
   if(heroTimeline){
    heroTimeline
-    .to(root.rotation,{y:.08,z:0,duration:.12},0)
-    .to(root.position,{x:0,y:0,duration:.12},.09)
-    .to(root.scale,{x:1.42,y:1.42,z:1.42,duration:.12},.09)
-    .to(camera.position,{z:5.35,duration:.1},.10)
-    .to(frontPivot.rotation,{y:2.72,duration:.18,ease:"power2.inOut"},.22);
-   pagePivots.forEach((pivot,index)=>heroTimeline.to(pivot.rotation,{y:2.42-index*.24,duration:.17,ease:"power2.inOut"},.25+index*.012));
-   heroTimeline
-    .to(root.rotation,{x:-.08,y:.02,duration:.16},.24)
-    .to(camera.position,{z:4.35,duration:.14},.25)
-    .to(camera.position,{z:1.1,duration:.15,ease:"power1.in"},.42)
-    .to(root.scale,{x:1.65,y:1.65,z:1.65,duration:.14},.42)
-    .to(camera.position,{z:-1.6,duration:.15},.55)
-    .to(root.rotation,{y:.2,duration:.20},.58)
-    .to(camera.position,{z:-4.9,duration:.22},.68)
-    .to(modelCards.map(card=>card.rotation),{y:1.1,z:.35,stagger:.012,duration:.20},.66);
+    .to(root.rotation,{y:.04,z:0,duration:.14},.08)
+    .to(root.position,{x:0,duration:.13},.10)
+    .to(root.scale,{x:1.03,y:1.03,z:1.03,duration:.13},.10)
+    .to(capGroup.position,{y:2.42,duration:.18,ease:"power2.inOut"},.245)
+    .to(capGroup.rotation,{y:Math.PI*1.65,z:.14,duration:.18,ease:"power2.inOut"},.245)
+    .to(root.scale,{x:1.28,y:1.28,z:1.28,duration:.14},.38)
+    .to(camera.position,{y:1.08,z:4.0,duration:.14},.39)
+    .to(camera.position,{z:1.35,duration:.15,ease:"power1.in"},.48)
+    .to(root.scale,{x:1.55,y:1.55,z:1.55,duration:.15},.48)
+    .to(camera.position,{z:.04,duration:.12},.56)
+    .to(".hero-pin",{backgroundColor:"#071B33",duration:.13},.50)
+    .to(canvas,{opacity:.12,duration:.10},.62)
+    .to(camera.position,{z:-2.2,duration:.16},.62)
+    .to(canvas,{opacity:0,duration:.08},.70);
    heroTimeline.scrollTrigger?.refresh();
   }
 
-  let visible=true,raf=0;const observer=new IntersectionObserver(entries=>{visible=entries.some(entry=>entry.isIntersecting);if(visible&&!raf)render()},{rootMargin:"100px"});observer.observe(canvas);
-  function render(){raf=0;if(!visible||document.hidden)return;renderer.render(scene,camera);raf=requestAnimationFrame(render)}
-  function resize(){const rect=canvas.getBoundingClientRect(),width=Math.max(1,rect.width),height=Math.max(1,rect.height);renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<720?1.25:1.8))}
+  let raf=0;
+  function render(){raf=requestAnimationFrame(render);if(!document.hidden)renderer.render(scene,camera)}
+  function resize(){
+   const rect=canvas.getBoundingClientRect(),width=Math.max(1,rect.width),height=Math.max(1,rect.height);
+   renderer.setSize(width,height,false);camera.aspect=width/height;camera.updateProjectionMatrix();
+   renderer.setPixelRatio(Math.min(devicePixelRatio,innerWidth<720?1.2:1.65));
+  }
   resize();addEventListener("resize",resize);render();
-  addEventListener("pagehide",()=>{cancelAnimationFrame(raf);observer.disconnect();root.traverse(object=>{if(object.isMesh){object.geometry?.dispose();(Array.isArray(object.material)?object.material:[object.material]).forEach(material=>material?.dispose())}});renderer.dispose()},{once:true});
+  addEventListener("pagehide",()=>{cancelAnimationFrame(raf);root.traverse(object=>{if(object.isMesh){object.geometry?.dispose();(Array.isArray(object.material)?object.material:[object.material]).forEach(material=>material?.dispose())}});renderer.dispose()},{once:true});
  },undefined,()=>{loading?.classList.add("loaded");document.body.classList.add("model-failed")});
 }
 
-document.addEventListener("DOMContentLoaded",()=>{setupBlurText();setupUI();setupHeroScroll();setupBookModel()});
+document.addEventListener("DOMContentLoaded",()=>{setupBlurText();setupUI();setupHeroScroll();setupInkwellModel()});
