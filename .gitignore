@@ -4,3 +4,4 @@ upload/
 node_modules/
 skills/
 .DS_Store
+SKILL.md
