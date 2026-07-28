@@ -196,3 +196,56 @@ footer{background:var(--surface-1);border-color:var(--border-strong)}footer>p{fo
  .metric-comparison>div{grid-template-columns:82px 1fr 30px}
 }
 .chapter-inside>span{color:rgba(255,255,255,.62)}
+
+
+/* Homepage contrast audit: explicit pairs are isolated from saved accent overrides. */
+.home-page .nav-pill .nav-action,
+.home-page .hero-actions .primary-cta,
+.home-page .price-card>a,
+.home-page .demo-composer button{
+ background:#252422!important;color:#FFFFFF!important;border-color:#252422!important
+}
+.home-page .nav-pill .nav-action:hover,
+.home-page .hero-actions .primary-cta:hover,
+.home-page .price-card>a:hover,
+.home-page .demo-composer button:hover{
+ background:#3A3935!important;color:#FFFFFF!important;border-color:#3A3935!important
+}
+[data-theme="dark"] body.home-page .nav-pill .nav-action,
+[data-theme="dark"] body.home-page .hero-actions .primary-cta,
+[data-theme="dark"] body.home-page .price-card>a,
+[data-theme="dark"] body.home-page .demo-composer button{
+ background:#E8E6E1!important;color:#161514!important;border-color:#E8E6E1!important
+}
+[data-theme="dark"] body.home-page .nav-pill .nav-action:hover,
+[data-theme="dark"] body.home-page .hero-actions .primary-cta:hover,
+[data-theme="dark"] body.home-page .price-card>a:hover,
+[data-theme="dark"] body.home-page .demo-composer button:hover{
+ background:#FFFFFF!important;color:#161514!important;border-color:#FFFFFF!important
+}
+.home-page .hero-badge span,.home-page .price-top>span{
+ background:#252422!important;color:#FFFFFF!important
+}
+[data-theme="dark"] body.home-page .hero-badge span,
+[data-theme="dark"] body.home-page .price-top>span{
+ background:#E8E6E1!important;color:#161514!important
+}
+.home-page .coming,.home-page .featured .coming{
+ background:#E3E0D9!important;color:#4B5563!important;border:1px solid rgba(0,0,0,.08)!important;opacity:1
+}
+[data-theme="dark"] body.home-page .coming,
+[data-theme="dark"] body.home-page .featured .coming{
+ background:#333230!important;color:#E5E7EB!important;border-color:rgba(255,255,255,.10)!important
+}
+.home-page .demo-message.student{background:#252422!important;color:#FFFFFF!important}
+.home-page .demo-message.student small{color:rgba(255,255,255,.76)!important}
+[data-theme="dark"] body.home-page .demo-message.student{background:#E8E6E1!important;color:#161514!important}
+[data-theme="dark"] body.home-page .demo-message.student small{color:#4B5563!important}
+[data-theme="dark"] body.home-page .skip-link{background:#E8E6E1;color:#161514}
+.home-page .principle .muted{color:rgba(255,255,255,.68)}
+.home-page .final-cta .primary-cta{
+ background:#F9FAFB!important;color:#171717!important;border-color:#F9FAFB!important
+}
+.home-page .final-cta .primary-cta:hover{
+ background:#E5E7EB!important;color:#171717!important;border-color:#E5E7EB!important
+}

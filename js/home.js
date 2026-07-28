@@ -159,9 +159,9 @@ function setupInkwellModel(){
    });
   });
 
-  // The transparent lip intersects the shell. A stable dark rim prevents flicker during the close approach.
-  const mouthLip=root.getObjectByName("MouthLip");
-  if(mouthLip?.material){mouthLip.material=mouthLip.material.clone();mouthLip.material.transparent=false;mouthLip.material.opacity=1;mouthLip.material.depthWrite=true;mouthLip.material.side=THREE.FrontSide;mouthLip.material.color?.setHex(0x263b4a);mouthLip.material.roughness=.31;if("transmission" in mouthLip.material)mouthLip.material.transmission=0;mouthLip.renderOrder=3}
+  // MouthLip is a separate intersecting ring in the source asset. The shell already defines the opening,
+  // so hiding the duplicate removes transparent edge clipping during the close camera move.
+  const mouthLip=root.getObjectByName("MouthLip");if(mouthLip)mouthLip.visible=false;
 
   const inkSurface=root.getObjectByName("InkSurface");let inkTexture=null;
   const inkLocalCenter=new THREE.Vector3();
