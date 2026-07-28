@@ -1,52 +1,183 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Socra teaches you how to think through guided questions, reflection, and genuine understanding."><meta name="theme-color" content="#f5f6fa"><title>Socra &mdash; Learn by thinking</title>
-<link rel="icon" href="/assets/favicon.ico"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png"><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-<link rel="stylesheet" href="/css/style.css"><link rel="stylesheet" href="/css/home.css"><script src="/js/theme.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Socra teaches you how to think through guided questions, reflection, and genuine understanding.">
+<meta name="theme-color" content="#020711">
+<title>Socra — Learn by thinking</title>
+<link rel="icon" href="/assets/favicon.ico">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+<link rel="stylesheet" href="/css/home.css">
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.168.0/build/three.module.js"}}</script>
 </head>
 <body class="home-page">
 <a class="skip-link" href="#main">Skip to content</a>
-<nav class="home-nav" aria-label="Main navigation"><a class="brand" href="#top" aria-label="Socra home"><span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span><b>socra</b></a><button class="menu-toggle" type="button" aria-expanded="false" aria-controls="nav-menu"><i></i><i></i><i></i><span class="sr-only">Open menu</span></button><div class="home-nav-links" id="nav-menu"><a href="#features">Features</a><a href="#research">Research</a><a href="#demo">Demo</a><a href="#faq">FAQ</a></div><div class="nav-actions"><button class="theme-toggle" type="button" aria-label="Switch theme"><i class="fa-solid fa-moon moon" aria-hidden="true"></i><i class="fa-solid fa-sun sun" aria-hidden="true"></i></button><a class="nav-cta" href="/auth.html">Start learning <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></div></nav>
+
+<nav class="glass-nav" aria-label="Main navigation">
+<a class="nav-brand liquid-glass" href="#top" aria-label="Socra home"><span class="brand-lines" aria-hidden="true"><i></i><i></i><i></i></span><strong>socra</strong></a>
+<button class="mobile-menu liquid-glass" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Open navigation"><i class="fa-solid fa-bars"></i></button>
+<div class="nav-pill liquid-glass" id="nav-links">
+<a href="#difference">Why Socra</a><a href="#method">Method</a><a href="#proof">Research</a><a href="#pricing">Pricing</a><a href="#faq">FAQ</a>
+<a class="nav-action" href="/auth.html">Start learning <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+</div>
+</nav>
 
 <main id="main">
 <section class="hero" id="top">
 <div class="hero-pin">
-<canvas id="cognitive-canvas" aria-label="A scroll-controlled Socra Question Core opening into a field of connected ideas"></canvas>
-<div class="hero-wash" aria-hidden="true"></div>
-<div class="model-loading" aria-live="polite"><i></i><span>Forming a thought</span></div>
-<div class="hero-counter" aria-hidden="true"><span class="hero-timecode">00:00:00</span><span>SCROLL TO THINK</span></div>
-<div class="hero-intro-scene">
-<p class="eyebrow">A different kind of learning intelligence</p>
-<h1 class="hero-title"><span>Learn by thinking.</span><span>Not by copying.</span></h1>
-<p class="hero-intro">Socra guides you with questions instead of revealing the answer&mdash;so curiosity becomes reasoning, and reasoning becomes understanding.</p>
-<div class="hero-actions"><a class="button button-primary" href="/auth.html">Start learning <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a><a class="button button-text" href="#demo"><i class="fa-solid fa-circle-play play" aria-hidden="true"></i> Watch demo</a></div>
-<p class="hero-note"><i></i> Built for independent minds</p>
+<div class="hero-fallback" aria-hidden="true"><div class="fallback-book"><i></i><i></i><i></i></div></div>
+<canvas id="book-canvas" aria-label="A scroll-controlled Socra learning volume opening into a field of questions"></canvas>
+<div class="hero-vignette" aria-hidden="true"></div>
+<div class="model-loading liquid-glass"><i></i><span>Opening Socra</span></div>
+
+<div class="hero-content">
+<div class="hero-badge liquid-glass" data-reveal><span>Built for</span> independent minds</div>
+<h1 data-blur-text>Learn by thinking. Not by copying.</h1>
+<p class="hero-sub" data-reveal>Socra guides you with questions instead of revealing the answer—so curiosity becomes reasoning, and reasoning becomes understanding.</p>
+<div class="hero-actions" data-reveal>
+<a class="primary-cta liquid-glass-strong" href="/auth.html">Start learning <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+<a class="text-cta" href="#demo"><i class="fa-solid fa-circle-play"></i> See Socra in action</a>
 </div>
-<div class="hero-beat beat-question" aria-hidden="true"><span>01 / BEGIN</span><strong>Question.</strong></div>
-<div class="hero-beat beat-reason" aria-hidden="true"><span>02 / BUILD</span><strong>Reason.</strong></div>
-<div class="hero-beat beat-reflect" aria-hidden="true"><span>03 / OWN</span><strong>Reflect.</strong></div>
-<div class="hero-beat beat-understand" aria-hidden="true"><span>04 / ARRIVE</span><strong>Understand.</strong></div>
-<div class="conversation-card"><div class="conversation-top"><div class="conversation-person"><span class="status-dot"></span><span>Learning with Socra</span></div><span class="conversation-topic">CALCULUS / 01</span></div><div class="hero-messages" aria-live="polite"></div><div class="thinking-line"><span></span><p>Understanding is forming</p></div></div>
-<div class="hero-film-progress" aria-hidden="true"><i></i></div>
-<a class="scroll-cue" href="#problem" aria-label="Skip the animated introduction"><i class="fa-solid fa-arrow-down" aria-hidden="true"></i></a>
+<div class="hero-stats" data-reveal>
+<article class="liquid-glass"><i class="fa-solid fa-brain"></i><strong>+35%</strong><span>Retention in the pilot study</span></article>
+<article class="liquid-glass"><i class="fa-solid fa-fingerprint"></i><strong>−33%</strong><span>AI-style similarity</span></article>
+</div>
+</div>
+
+<div class="hero-chapter chapter-close" aria-hidden="true"><span>Most AI closes the conversation.</span><strong data-blur-text>An answer can end a question.</strong></div>
+<div class="hero-chapter chapter-open" aria-hidden="true"><span>Socra begins there.</span><strong data-blur-text>Open your thinking.</strong></div>
+<div class="hero-chapter chapter-inside" aria-hidden="true"><span>Question by question</span><strong>Ask. Guide.<br>Reflect. Understand.</strong></div>
+
+<div class="hero-trust" data-reveal><span class="liquid-glass">One method. Every discipline.</span><div><b>Mathematics</b><b>Science</b><b>Code</b><b>Writing</b><b>History</b></div></div>
+<div class="hero-scroll"><span>Scroll to enter</span><i class="fa-solid fa-arrow-down"></i></div>
+<div class="hero-progress" aria-hidden="true"><i></i></div>
 </div>
 </section>
-<section class="problem webgl-zone" id="problem"><div class="section-label"><span>01</span> The problem with instant answers</div><div class="problem-grid"><div class="problem-statement"><p class="giant-copy">An answer can end a question before learning begins.</p></div><div class="answer-stack"><article class="answer-slip"><span>01</span><p>Copying is easy.</p><small>Effort falls away.</small></article><article class="answer-slip"><span>02</span><p>Dependency grows.</p><small>The tool does the thinking.</small></article><article class="answer-slip"><span>03</span><p>Understanding fades.</p><small>The answer does not become yours.</small></article></div></div><div class="problem-turn"><p>Most AI is measured by how quickly it closes the conversation.</p><p>Socra is designed to <em>open your thinking.</em></p></div></section>
-<section class="comparison webgl-zone" id="comparison"><div class="section-heading"><div class="section-label"><span>02</span> Two very different paths</div><h2>Same question.<br><em>Different outcome.</em></h2><p>Drag to compare what happens when AI finishes the thought&mdash;and when it helps you form one.</p></div><div class="compare-shell" style="--split:50%"><div class="compare-side compare-traditional"><p class="compare-kicker">Traditional AI</p><div class="compare-path instant-path"><span>Your question</span><i></i><span>Finished answer</span></div><ul><li>Gives answers</li><li>Solves the problem</li><li>Encourages dependency</li><li>Ends the conversation</li></ul></div><div class="compare-side compare-socra"><p class="compare-kicker">Socra</p><div class="compare-path reasoning-path"><span>Your question</span><i></i><span>A useful question</span><i></i><span>Your reasoning</span></div><ul><li>Asks questions</li><li>Develops reasoning</li><li>Encourages independence</li><li>Continues the conversation</li></ul></div><label class="compare-control"><input type="range" min="18" max="82" value="50" aria-label="Compare approaches"><span class="compare-handle"><i class="fa-solid fa-left-right" aria-hidden="true"></i></span></label></div></section>
-<section class="demo-section" id="demo"><div class="section-heading demo-heading"><div class="section-label"><span>03</span> Try the method</div><h2>Do not watch Socra think.<br><em>Think with it.</em></h2></div><div class="demo-layout"><div class="prompt-library" role="tablist"><p>Choose a question</p><button class="prompt-button active" data-demo="derivatives"><span>Mathematics</span>Explain derivatives<i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></button><button class="prompt-button" data-demo="recursion"><span>Computer science</span>Help with recursion<i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></button><button class="prompt-button" data-demo="chemistry"><span>Chemistry</span>Teach me stoichiometry<i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></button><button class="prompt-button" data-demo="macbeth"><span>Literature</span>Analyse Macbeth<i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></button><button class="prompt-button" data-demo="economics"><span>Economics</span>Understand supply &amp; demand<i class="fa-solid fa-arrow-up-right-from-square" aria-hidden="true"></i></button></div><div class="demo-chat" aria-live="polite"><div class="demo-bar"><span><i></i> Socra session</span><button class="replay-demo"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Replay</button></div><div class="demo-messages"></div><div class="demo-composer"><span>Continue your thought...</span><i class="fa-solid fa-arrow-up" aria-hidden="true"></i></div></div></div></section>
-<section class="method webgl-zone" id="method"><div class="method-intro"><div class="section-label"><span>04</span> How Socra works</div><h2>Understanding,<br><em>built one thought at a time.</em></h2><p>The conversation adapts to where you are&mdash;not where a textbook assumes you should be.</p></div><div class="method-steps"><article class="method-card"><span>01</span><div class="method-glyph"><i></i></div><h3>Ask</h3><p>Socra discovers what you already know.</p></article><article class="method-card"><span>02</span><div class="method-glyph"><i></i><i></i></div><h3>Guide</h3><p>Each question adapts to your response.</p></article><article class="method-card"><span>03</span><div class="method-glyph"><i></i><i></i><i></i></div><h3>Reflect</h3><p>You explain the idea in your own words.</p></article><article class="method-card"><span>04</span><div class="method-glyph complete"><i></i></div><h3>Understand</h3><p>Reasoning replaces memorisation.</p></article></div></section>
-<section class="research webgl-zone" id="research"><div class="research-top"><div><div class="section-label light-label"><span>05</span> Pilot study</div><h2>Built around<br><em>better learning.</em></h2></div><p>In a controlled pilot, learners using Socratic dialogue outperformed those using traditional AI assistance across five measures of independent work.</p></div><div class="metrics-grid"><article><strong data-value="32">+32%</strong><span>Creativity</span><i style="--score:72%"></i></article><article><strong data-value="30">+30%</strong><span>Argument quality</span><i style="--score:68%"></i></article><article><strong data-value="31">+31%</strong><span>Understanding</span><i style="--score:71%"></i></article><article><strong data-value="35">+35%</strong><span>Retention</span><i style="--score:78%"></i></article><article class="inverse"><strong data-value="-33">-33%</strong><span>AI-style similarity</span><i style="--score:33%"></i></article></div><div class="research-note"><span>Study note</span><p>Results compare traditional answer-first AI assistance with question-led Socratic dialogue. Directional pilot findings; full methodology is being prepared for publication.</p></div></section>
-<section class="journey webgl-zone" id="journey"><div class="section-heading journey-heading"><div class="section-label"><span>06</span> The learning journey</div><h2>Productive struggle<br><em>has a shape.</em></h2></div><div class="journey-map"><svg viewBox="0 0 1200 420" preserveAspectRatio="none"><path class="journey-path-bg" d="M60,215 C220,30 315,390 465,205 S705,35 790,210 S1000,385 1140,190"/><path class="journey-path" d="M60,215 C220,30 315,390 465,205 S705,35 790,210 S1000,385 1140,190"/></svg><div class="journey-step j1"><span>01</span><strong>Question</strong><small>Begin with uncertainty</small></div><div class="journey-step j2"><span>02</span><strong>Hint</strong><small>Find a foothold</small></div><div class="journey-step j3"><span>03</span><strong>Another question</strong><small>Build the connection</small></div><div class="journey-step j4"><span>04</span><strong>Reflection</strong><small>Make it your own</small></div><div class="journey-step j5"><span>05</span><strong>Understanding</strong><small>Arrive through reason</small></div></div></section>
-<section class="subjects" id="subjects"><div class="subjects-heading"><div class="section-label"><span>07</span> Across every discipline</div><h2>One method.<br><em>Endless questions.</em></h2><p>The subject changes. The habit of thinking stays with you.</p></div><div class="subject-grid"><article><span>&int;</span><h3>Mathematics</h3><p>Why does the chain rule work?</p></article><article><span>&lambda;</span><h3>Physics</h3><p>What changes when friction disappears?</p></article><article><span>H<sub>2</sub></span><h3>Chemistry</h3><p>What is the limiting reactant telling us?</p></article><article><span>&#8634;</span><h3>Biology</h3><p>Why would this trait be selected?</p></article><article><span>{ }</span><h3>Computer science</h3><p>What must the base case prevent?</p></article><article><i class="fa-solid fa-arrow-right" aria-hidden="true"></i><h3>Economics</h3><p>What would shift the whole curve?</p></article><article><span>&#8987;</span><h3>History</h3><p>Whose account is missing?</p></article><article><span>&ldquo;&rdquo;</span><h3>English</h3><p>What does the silence reveal?</p></article><article><span>Aa</span><h3>Languages</h3><p>Which context changes this meaning?</p></article></div></section>
-<section class="features" id="features"><div class="features-lead"><div class="section-label"><span>08</span> The thinking environment</div><h2>Everything you need.<br><em>Nothing that thinks for you.</em></h2></div><div class="feature-list"><article class="feature-wide feature-adaptive"><div><span>01 / ADAPT</span><h3>Adaptive questioning</h3><p>Every next question responds to your reasoning, confidence, and pace.</p></div><div class="adaptive-visual"><i></i><i></i><i></i><i></i><i></i></div></article><article><span>02 / CHOOSE</span><h3>AI model selection</h3><p>Choose the intelligence that best fits the work.</p><div class="model-chips"><i>A</i><i>C</i><i>G</i></div></article><article><span>03 / RETURN</span><h3>Session history</h3><p>Your past conversations stay organised and ready to revisit.</p><div class="history-lines"><i></i><i></i><i></i></div></article><article><span>04 / WRITE</span><h3>Markdown support</h3><p>Structure ideas clearly with rich, distraction-free writing.</p><code>## Your reasoning</code></article><article><span>05 / TRACE</span><h3>Code explanations</h3><p>Trace logic through questions instead of pasting a solution.</p><code>if (idea) -&gt; why?</code></article><article class="feature-wide feature-progress"><div><span>06 / GROW</span><h3>Progress you can feel</h3><p>Reflection prompts, personalised dialogue, and progress tracking reveal how your thinking changes over time.</p></div><div class="progress-visual"><i>question</i><i>reason</i><i>explain</i><i>understand</i></div></article></div></section>
-<section class="philosophy" id="philosophy"><p class="philosophy-mark">?</p><div class="philosophy-copy"><p>Education should create</p><p><em>independent thinkers.</em></p><p class="philosophy-muted">Not people who know</p><p class="philosophy-muted">which prompt to type.</p></div><p class="philosophy-caption">THE PRINCIPLE BEHIND EVERY SOCRA CONVERSATION</p></section>
-<section class="testimonials"><div class="section-heading testimonial-heading"><div class="section-label"><span>09</span> Early learners</div><h2>What it feels like<br><em>to find the answer yourself.</em></h2></div><div class="testimonial-grid"><figure><blockquote>&ldquo;For the first time, an AI left me more capable than when I opened it. I understood the proof because I had built it.&rdquo;</blockquote><figcaption><span>AM</span><div><strong>Aarav M.</strong><small>Undergraduate mathematics</small></div></figcaption></figure><figure><blockquote>&ldquo;It did not rescue me from being stuck. It helped me notice exactly why I was stuck.&rdquo;</blockquote><figcaption><span>LP</span><div><strong>Leah P.</strong><small>Computer science student</small></div></figcaption></figure><figure><blockquote>&ldquo;The questions made my essay sound like me. My argument became clearer without becoming generic.&rdquo;</blockquote><figcaption><span>SK</span><div><strong>Samira K.</strong><small>Secondary school learner</small></div></figcaption></figure></div><p class="placeholder-note">Illustrative placeholders &mdash; learner stories coming soon.</p></section>
-<section class="faq" id="faq"><div class="faq-intro"><div class="section-label"><span>10</span> Questions, naturally</div><h2>Good place<br><em>to begin.</em></h2><p>Still curious? That is rather the point.</p></div><div class="faq-list"><details><summary>Why not just use ChatGPT?<span></span></summary><p>General-purpose AI gives useful answers quickly. Socra asks adaptive questions and helps you construct the answer yourself.</p></details><details><summary>Does Socra ever provide answers?<span></span></summary><p>Yes&mdash;when it is the right teaching move. It first looks for the smallest intervention that keeps your reasoning active.</p></details><details><summary>Which AI models are supported?<span></span></summary><p>Socra supports a selection of leading AI models. Availability can vary by plan.</p></details><details><summary>Is Socra free?<span></span></summary><p>Socra offers a free way to begin, with more usage and advanced capabilities on paid plans.</p></details><details><summary>Can teachers use Socra?<span></span></summary><p>Yes. Teachers can design question-led activities and help students practise independent reasoning.</p></details><details><summary>Can Socra help with programming?<span></span></summary><p>Yes. Trace control flow, reason about algorithms, and debug assumptions without a pasted solution.</p></details><details><summary>Does it work for exam preparation?<span></span></summary><p>Yes. Socra exposes gaps, practises recall through explanation, and transfers ideas to unfamiliar problems.</p></details></div></section>
-<section class="final-cta"><div class="cta-rings"><i></i><i></i><i></i><i></i></div><p class="eyebrow">The answer is not the destination</p><h2>Start thinking<br><em>differently.</em></h2><p>Experience learning through conversation.</p><a class="button button-light" href="/auth.html">Start learning <i class="fa-solid fa-arrow-right" aria-hidden="true"></i></a></section>
+
+<section class="difference section-shell" id="difference">
+<header class="section-head">
+<p class="section-label">// A different kind of intelligence</p>
+<h2 data-blur-text>Not another answer machine.</h2>
+<p>Most AI is measured by how quickly it finishes the thought. Socra is designed to help you form one.</p>
+</header>
+<div class="path-grid">
+<article class="path-card liquid-glass" data-reveal>
+<div class="path-top"><span>Traditional AI</span><i class="fa-solid fa-bolt"></i></div>
+<h3>Question in.<br><em>Answer out.</em></h3>
+<ul><li><i class="fa-solid fa-minus"></i> Gives answers</li><li><i class="fa-solid fa-minus"></i> Solves the problem</li><li><i class="fa-solid fa-minus"></i> Encourages dependency</li><li><i class="fa-solid fa-minus"></i> Ends the conversation</li></ul>
+<div class="answer-path"><span>Your question</span><i></i><span>Finished answer</span></div>
+</article>
+<article class="path-card socra-path liquid-glass-strong" data-reveal>
+<div class="path-top"><span>Socra</span><i class="fa-solid fa-comments"></i></div>
+<h3>Question in.<br><em>Thinking unfolds.</em></h3>
+<ul><li><i class="fa-solid fa-check"></i> Asks useful questions</li><li><i class="fa-solid fa-check"></i> Develops reasoning</li><li><i class="fa-solid fa-check"></i> Builds independence</li><li><i class="fa-solid fa-check"></i> Continues the conversation</li></ul>
+<div class="answer-path"><span>Your question</span><i></i><span>Your reasoning</span><i></i><span>Understanding</span></div>
+</article>
+</div>
+</section>
+
+<section class="method section-shell" id="method">
+<header class="section-head split-head">
+<div><p class="section-label">// The Socratic method</p><h2 data-blur-text>Understanding, built one thought at a time.</h2></div>
+<p>The conversation adapts to where you are—not where a textbook assumes you should be.</p>
+</header>
+<div class="method-grid">
+<article class="liquid-glass" data-reveal><span>01</span><i class="fa-regular fa-circle-question"></i><h3>Ask</h3><p>Socra discovers what you already know.</p></article>
+<article class="liquid-glass" data-reveal><span>02</span><i class="fa-solid fa-route"></i><h3>Guide</h3><p>Each question adapts to your response.</p></article>
+<article class="liquid-glass" data-reveal><span>03</span><i class="fa-solid fa-pen-nib"></i><h3>Reflect</h3><p>You explain the idea in your own words.</p></article>
+<article class="liquid-glass" data-reveal><span>04</span><i class="fa-solid fa-lightbulb"></i><h3>Understand</h3><p>Reasoning replaces memorisation.</p></article>
+</div>
+</section>
+
+<section class="demo section-shell" id="demo">
+<header class="section-head demo-head"><p class="section-label">// Try the method</p><h2 data-blur-text>Do not watch Socra think. Think with it.</h2></header>
+<div class="demo-frame liquid-glass-strong" data-reveal>
+<div class="demo-top"><div><i></i><span>Socra session</span></div><button class="replay-demo"><i class="fa-solid fa-rotate-right"></i> Replay</button></div>
+<div class="demo-body">
+<div class="prompt-list" role="tablist" aria-label="Choose a learning question">
+<button class="prompt-button active" data-demo="derivatives"><i class="fa-solid fa-square-root-variable"></i><span><small>Mathematics</small>Explain derivatives</span></button>
+<button class="prompt-button" data-demo="recursion"><i class="fa-solid fa-code"></i><span><small>Computer science</small>Help with recursion</span></button>
+<button class="prompt-button" data-demo="chemistry"><i class="fa-solid fa-flask"></i><span><small>Chemistry</small>Teach me stoichiometry</span></button>
+<button class="prompt-button" data-demo="macbeth"><i class="fa-solid fa-book-open"></i><span><small>Literature</small>Analyse Macbeth</span></button>
+</div>
+<div class="demo-chat"><div class="demo-messages" aria-live="polite"></div><div class="demo-composer liquid-glass"><span>Continue your thought…</span><button aria-label="Send"><i class="fa-solid fa-arrow-up"></i></button></div></div>
+</div>
+</div>
+</section>
+
+<section class="proof section-shell" id="proof">
+<header class="section-head split-head"><div><p class="section-label">// Pilot study</p><h2 data-blur-text>Built around better learning.</h2></div><p>In a controlled pilot, learners using Socratic dialogue outperformed those using traditional AI assistance across five measures of independent work.</p></header>
+<div class="metrics-row">
+<article data-reveal><strong>+32%</strong><span>Creativity</span></article>
+<article data-reveal><strong>+30%</strong><span>Argument quality</span></article>
+<article data-reveal><strong>+31%</strong><span>Understanding</span></article>
+<article data-reveal><strong>+35%</strong><span>Retention</span></article>
+<article data-reveal><strong>−33%</strong><span>AI-style similarity</span></article>
+</div>
+<p class="study-note liquid-glass" data-reveal><span>Study note</span> Results compare traditional answer-first AI assistance with question-led Socratic dialogue. Directional pilot findings; full methodology is being prepared for publication.</p>
+</section>
+
+<section class="capabilities section-shell" id="features">
+<header class="section-head"><p class="section-label">// The thinking environment</p><h2 data-blur-text>Everything you need. Nothing that thinks for you.</h2></header>
+<div class="capability-grid">
+<article class="liquid-glass" data-reveal><div class="cap-top"><i class="fa-solid fa-comments"></i><div><span>Adaptive</span><span>Personal</span></div></div><h3>Question-led conversation</h3><p>Every next question responds to your reasoning, confidence, and pace. Choose the AI model that best fits the work.</p></article>
+<article class="liquid-glass" data-reveal><div class="cap-top"><i class="fa-solid fa-file-lines"></i><div><span>Markdown</span><span>History</span></div></div><h3>A workspace for thought</h3><p>Structure ideas clearly with rich writing, code explanations, organised documents, and conversations ready to revisit.</p></article>
+<article class="liquid-glass" data-reveal><div class="cap-top"><i class="fa-solid fa-chart-line"></i><div><span>Reflect</span><span>Grow</span></div></div><h3>Progress you can feel</h3><p>Reflection prompts, personalised dialogue, and progress tracking reveal how your thinking changes over time.</p></article>
+</div>
+</section>
+
+<section class="pricing section-shell" id="pricing">
+<header class="section-head split-head"><div><p class="section-label">// Pricing</p><h2 data-blur-text>Choose your path to understanding.</h2></div><p>Every plan gives you a Socratic partner. The difference is how deep the partnership goes.</p></header>
+<div class="pricing-grid">
+<article class="price-card liquid-glass" data-reveal><div class="price-name">Doxa</div><p>The Socratic concept of common belief</p><strong>Free</strong><ul><li><i class="fa-solid fa-check"></i>Limited chat credits</li><li><i class="fa-solid fa-check"></i>1 workspace document</li><li><i class="fa-solid fa-check"></i>Basic model quality</li></ul><a href="/auth.html">Start your journey <i class="fa-solid fa-arrow-right"></i></a></article>
+<article class="price-card featured liquid-glass-strong" data-reveal><div class="price-top"><div class="price-name">Elenchus</div><span>Most popular</span></div><p>The Socratic concept of cross-examination</p><strong>$8<small>/month</small></strong><em>$79 when billed annually</em><ul><li><i class="fa-solid fa-check"></i>Unlimited chat credits</li><li><i class="fa-solid fa-check"></i>10 workspace documents</li><li><i class="fa-solid fa-check"></i>Better model quality</li><li><i class="fa-solid fa-check"></i>Cognitive portfolio + metrics</li></ul><span class="coming">Coming soon</span></article>
+<article class="price-card liquid-glass" data-reveal><div class="price-name">Nous</div><p>The Socratic concept of true understanding</p><strong>$15<small>/month</small></strong><em>$149 when billed annually</em><ul><li><i class="fa-solid fa-check"></i>Unlimited chat and documents</li><li><i class="fa-solid fa-check"></i>Fully unlocked portfolio + metrics</li><li><i class="fa-solid fa-check"></i>Best model quality</li><li><i class="fa-solid fa-check"></i>Priority feature access</li></ul><span class="coming">Coming soon</span></article>
+</div>
+</section>
+
+<section class="principle">
+<div class="principle-copy"><p>Education should create</p><h2 data-blur-text>independent thinkers.</h2><p class="muted">Not people who know which prompt to type.</p></div>
+</section>
+
+<section class="stories section-shell">
+<header class="section-head"><p class="section-label">// Early learners</p><h2 data-blur-text>What it feels like to find the answer yourself.</h2></header>
+<div class="story-grid">
+<figure class="liquid-glass" data-reveal><blockquote>“For the first time, an AI left me more capable than when I opened it. I understood the proof because I had built it.”</blockquote><figcaption><b>AM</b><span><strong>Aarav M.</strong><small>Undergraduate mathematics</small></span></figcaption></figure>
+<figure class="liquid-glass" data-reveal><blockquote>“It did not rescue me from being stuck. It helped me notice exactly why I was stuck.”</blockquote><figcaption><b>LP</b><span><strong>Leah P.</strong><small>Computer science student</small></span></figcaption></figure>
+<figure class="liquid-glass" data-reveal><blockquote>“The questions made my essay sound like me. My argument became clearer without becoming generic.”</blockquote><figcaption><b>SK</b><span><strong>Samira K.</strong><small>Secondary school learner</small></span></figcaption></figure>
+</div>
+<p class="placeholder-note">Illustrative placeholders — learner stories coming soon.</p>
+</section>
+
+<section class="faq section-shell" id="faq">
+<header class="section-head"><p class="section-label">// Questions, naturally</p><h2 data-blur-text>Good place to begin.</h2><p>Still curious? That is rather the point.</p></header>
+<div class="faq-list">
+<details><summary>Why not just use ChatGPT?<i class="fa-solid fa-plus"></i></summary><p>General-purpose AI gives useful answers quickly. Socra asks adaptive questions and helps you construct the answer yourself.</p></details>
+<details><summary>Does Socra ever provide answers?<i class="fa-solid fa-plus"></i></summary><p>Yes—when it is the right teaching move. It first looks for the smallest intervention that keeps your reasoning active.</p></details>
+<details><summary>Which AI models are supported?<i class="fa-solid fa-plus"></i></summary><p>Socra supports a selection of leading AI models. Availability can vary by plan.</p></details>
+<details><summary>Is Socra free?<i class="fa-solid fa-plus"></i></summary><p>Socra offers a free way to begin, with more usage and advanced capabilities on paid plans.</p></details>
+<details><summary>Can teachers use Socra?<i class="fa-solid fa-plus"></i></summary><p>Yes. Teachers can design question-led activities and help students practise independent reasoning.</p></details>
+<details><summary>Can Socra help with programming and exam preparation?<i class="fa-solid fa-plus"></i></summary><p>Yes. Trace control flow, debug assumptions, expose gaps, practise recall through explanation, and transfer ideas to unfamiliar problems.</p></details>
+</div>
+</section>
+
+<section class="final-cta">
+<p class="section-label">// The answer is not the destination</p>
+<h2 data-blur-text>Start thinking differently.</h2>
+<p>Experience learning through conversation.</p>
+<a class="primary-cta liquid-glass-strong" href="/auth.html">Start learning <i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+</section>
 </main>
-<footer class="home-footer"><div class="footer-top"><a class="brand footer-brand" href="#top"><span class="brand-mark"><span></span><span></span><span></span></span><b>socra</b></a><p>Not another answer machine.<br>A better way to learn.</p><nav><a href="#philosophy">About</a><a href="#research">Research</a><a href="#">Blog</a><a href="#">Privacy</a><a href="#">Terms</a><a href="https://github.com/SocraApp">GitHub</a><a href="mailto:hello@socra.in">Contact</a></nav></div><div class="footer-bottom"><span>&copy; 2026 Socra</span><span>Designed for the curious.</span><a href="#top">Back to top <i class="fa-solid fa-arrow-up" aria-hidden="true"></i></a></div></footer>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script><script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script><script type="module" src="/js/home.js"></script>
+
+<footer><a class="footer-brand" href="#top"><span class="brand-lines"><i></i><i></i><i></i></span><strong>socra</strong></a><p>Not another answer machine.<br>A better way to learn.</p><nav><a href="#difference">About</a><a href="#proof">Research</a><a href="/pricing.html">Pricing</a><a href="#">Privacy</a><a href="#">Terms</a><a href="https://github.com/SocraApp">GitHub</a><a href="mailto:hello@socra.in">Contact</a></nav><div><span>© 2026 Socra</span><span>Designed for the curious.</span><a href="#top">Back to top <i class="fa-solid fa-arrow-up"></i></a></div></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
+<script type="module" src="/js/home.js"></script>
 </body>
 </html>
