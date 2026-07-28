@@ -1569,3 +1569,16 @@ img { max-width: 100%; height: auto; display: block; }
   .nav { padding-inline: 20px; }
   .nav-logo img { max-width: 126px; }
 }
+.pricing-page {
+  --primary: #252422;
+  --primary-hover: #3A3935;
+  --primary-10: rgba(37, 36, 34, 0.10);
+  --primary-06: rgba(37, 36, 34, 0.06);
+}
+[data-theme="dark"] .pricing-page {
+  --primary: #E8E6E1;
+  --primary-hover: #FFFFFF;
+  --primary-10: rgba(232, 230, 225, 0.10);
+  --primary-06: rgba(232, 230, 225, 0.06);
+}
+.pricing-page .btn:not(.btn-disabled):hover { transform: translateY(-2px); }

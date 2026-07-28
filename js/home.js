@@ -61,32 +61,11 @@ function setupFAQ(){
  });
 }
 
-function setupMetricCharts(){
- const charts=qsa(".metric-chart");if(!charts.length)return;
- charts.forEach(canvas=>{
-  const context=canvas.getContext("2d"),points=(canvas.dataset.points||"").split(",").map(Number),state={progress:(reduced||!window.gsap)?1:0};
-  const draw=()=>{
-   const rect=canvas.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2),width=Math.max(1,rect.width),height=Math.max(1,rect.height);
-   if(canvas.width!==Math.round(width*dpr)||canvas.height!==Math.round(height*dpr)){canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr)}
-   context.setTransform(dpr,0,0,dpr,0,0);context.clearRect(0,0,width,height);
-   const styles=getComputedStyle(document.documentElement),line=styles.getPropertyValue("--primary").trim()||"#252422",grid=styles.getPropertyValue("--border-strong").trim()||"rgba(0,0,0,.08)";
-   context.strokeStyle=grid;context.lineWidth=1;
-   for(let i=1;i<4;i++){const y=height*i/4;context.beginPath();context.moveTo(0,y);context.lineTo(width,y);context.stroke()}
-   const min=Math.min(...points),max=Math.max(...points),count=Math.max(2,points.length),limit=(count-1)*state.progress;
-   context.beginPath();context.strokeStyle=line;context.lineWidth=2.4;context.lineCap="round";context.lineJoin="round";
-   points.forEach((value,index)=>{
-    if(index>Math.ceil(limit))return;
-    const x=width*index/(count-1),y=height-8-(value-min)/Math.max(1,max-min)*(height-18);
-    if(index===0)context.moveTo(x,y);else{
-     const previous=points[index-1],px=width*(index-1)/(count-1),py=height-8-(previous-min)/Math.max(1,max-min)*(height-18),partial=Math.min(1,limit-(index-1));
-     context.lineTo(px+(x-px)*partial,py+(y-py)*partial);
-    }
-   });context.stroke();
-   const active=Math.min(points.length-1,Math.floor(limit));
-   if(active>=0){const x=width*active/(count-1),y=height-8-(points[active]-min)/Math.max(1,max-min)*(height-18);context.fillStyle=line;context.beginPath();context.arc(x,y,3.5,0,Math.PI*2);context.fill()}
-  };
-  draw();addEventListener("resize",draw);
-  if(window.gsap&&!reduced)ScrollTrigger.create({trigger:canvas,start:"top 84%",once:true,onEnter:()=>gsap.to(state,{progress:1,duration:1.45,ease:"power3.out",onUpdate:draw})});
+function setupMetricComparisons(){
+ qsa(".metric-comparison").forEach(chart=>{
+  const fills=qsa("b[data-value]",chart),values=fills.map(fill=>Number(fill.dataset.value)||0),max=Math.max(...values,1);
+  fills.forEach(fill=>fill.style.setProperty("--bar-width",(Number(fill.dataset.value)/max*100)+"%"));
+  if(window.gsap&&!reduced)ScrollTrigger.create({trigger:chart,start:"top 86%",once:true,onEnter:()=>gsap.fromTo(fills,{scaleX:0},{scaleX:1,duration:.9,stagger:.14,ease:"power3.out"})});
  });
 }
 
@@ -183,14 +162,19 @@ function setupInkwellModel(){
     .to(capGroup.rotation,{y:Math.PI*1.4,z:.82,duration:.2,ease:"power2.inOut"},.24)
     .to(camera.position,{y:2.75,z:4.45,duration:.16,ease:"power1.inOut"},.37)
     .to(lookTarget,{y:1.03,duration:.16,ease:"power1.inOut"},.37)
-    .to(root.scale,{x:1.18,y:1.18,z:1.18,duration:.14},.40)
+    .to(root.scale,{x:1.14,y:1.14,z:1.14,duration:.14},.40)
+    .to(root.rotation,{x:.18,y:.06,z:0,duration:.14,ease:"power1.inOut"},.40)
     .to(camera.position,{y:2.5,z:2.9,duration:.16,ease:"power2.inOut"},.49)
     .to(lookTarget,{y:1.06,z:0,duration:.16,ease:"power2.inOut"},.49)
-    .to(root.scale,{x:1.34,y:1.34,z:1.34,duration:.14},.52)
-    .to(camera.position,{y:2.14,z:2.12,duration:.16,ease:"power2.inOut"},.59)
+    .to(root.scale,{x:1.3,y:1.3,z:1.3,duration:.14},.52)
+    .to(root.rotation,{x:.4,y:.1,z:0,duration:.15,ease:"power2.inOut"},.51)
+    .to(camera.position,{x:.18,y:3.15,z:2.05,duration:.18,ease:"power2.inOut"},.59)
     .to(lookTarget,{y:1.025,duration:.16,ease:"power2.inOut"},.59)
-    .to(root.rotation,{y:.16,duration:.18,ease:"sine.inOut"},.64)
-    .to(canvas,{opacity:.38,duration:.12},.72);
+    .to(root.rotation,{x:.58,y:.18,z:-.03,duration:.2,ease:"sine.inOut"},.62)
+    .to(inkSurface?inkSurface.rotation:{},{y:.42,duration:.22,ease:"sine.inOut"},.64)
+    .to(camera.position,{x:-.12,y:3.3,z:1.82,duration:.18,ease:"sine.inOut"},.69)
+    .to(lookTarget,{y:1.01,duration:.18,ease:"sine.inOut"},.69)
+    .to({}, {duration:.15},.82);
    heroTimeline.scrollTrigger?.refresh();
   }
 
@@ -202,4 +186,4 @@ function setupInkwellModel(){
  },undefined,()=>{loading?.classList.add("loaded");document.body.classList.add("model-failed")});
 }
 
-document.addEventListener("DOMContentLoaded",()=>{setupBlurText();setupUI();setupFAQ();setupHeroScroll();setupMetricCharts();setupInkField();setupInkwellModel()});
+document.addEventListener("DOMContentLoaded",()=>{setupBlurText();setupUI();setupFAQ();setupHeroScroll();setupMetricComparisons();setupInkField();setupInkwellModel()});
