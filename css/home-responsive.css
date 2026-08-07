@@ -107,3 +107,159 @@
     --route-inset: 16vw;
   }
 }
+
+/* Persistent ambient layer: section backgrounds sit below it, UI stays legible. */
+#thought-field {
+  z-index: 1;
+}
+
+/* Use the production Socra wordmark, including the correct inverted asset. */
+.brand-logo {
+  display: block;
+  width: 150px;
+  height: auto;
+}
+
+.brand-logo-dark,
+[data-theme="dark"] .topbar .brand-logo-light {
+  display: none;
+}
+
+[data-theme="dark"] .topbar .brand-logo-dark,
+.topbar.invert .brand-logo-dark {
+  display: block;
+}
+
+.topbar.invert .brand-logo-light {
+  display: none;
+}
+
+[data-theme="dark"] .topbar.invert .brand-logo-light {
+  display: block;
+}
+
+[data-theme="dark"] .topbar.invert .brand-logo-dark {
+  display: none;
+}
+
+/* The final scene is deliberately dark in both themes. */
+.launch,
+footer {
+  --launch-bg: #111827;
+  --launch-text: #f8fafc;
+  --launch-muted: #aeb8ca;
+  background: var(--launch-bg);
+  color: var(--launch-text);
+}
+
+.launch > p,
+footer > p,
+footer > div {
+  color: var(--launch-muted);
+}
+
+.launch-cta,
+[data-theme="dark"] .launch-cta {
+  background: var(--launch-text);
+  color: var(--launch-bg);
+}
+
+.launch-thought,
+.launch-thought i,
+footer,
+footer > div {
+  border-color: rgba(248, 250, 252, 0.16);
+}
+
+.launch-thought i:nth-of-type(3) {
+  background: rgba(102, 141, 232, 0.14);
+}
+
+[data-theme="dark"] footer a,
+[data-theme="dark"] footer a:hover {
+  color: var(--launch-text);
+}
+
+.footer-brand .brand-glyph i {
+  background: var(--launch-text);
+}
+
+.topbar.launch-contrast {
+  color: #f8fafc;
+}
+
+.topbar.launch-contrast .brand-logo-light {
+  display: none !important;
+}
+
+.topbar.launch-contrast .brand-logo-dark {
+  display: block !important;
+}
+
+.topbar.launch-contrast .journey-meter {
+  color: #aeb8ca;
+}
+
+.topbar.launch-contrast .journey-meter i {
+  background: rgba(248, 250, 252, 0.18);
+}
+
+.topbar.launch-contrast .journey-meter b {
+  background: #f8fafc;
+}
+
+.topbar.launch-contrast .enter-link,
+[data-theme="dark"] .topbar.launch-contrast .enter-link {
+  background: #f8fafc;
+  color: #111827;
+}
+
+.topbar.launch-contrast .theme-toggle {
+  border-color: rgba(248, 250, 252, 0.2);
+  background: rgba(17, 24, 39, 0.78);
+  color: #aeb8ca;
+}
+
+.topbar.launch-contrast .theme-toggle i {
+  color: #f8fafc;
+}
+
+/* ScrollTrigger owns the product pin so the stage cannot release early. */
+.product-stage {
+  position: relative;
+}
+
+.product {
+  height: 210vh;
+}
+
+.capability-orbit {
+  background: color-mix(in srgb, var(--page) 82%, transparent);
+  backdrop-filter: blur(10px);
+  padding-block: 9px;
+}
+
+.capability-one {
+  left: 3%;
+  top: 62%;
+}
+
+.capability-two {
+  right: 3%;
+  top: 34%;
+}
+
+.capability-three {
+  right: 7%;
+  bottom: 7%;
+}
+
+@media (max-width: 620px) {
+  .brand-logo {
+    width: 126px;
+  }
+
+  .product {
+    height: 190vh;
+  }
+}

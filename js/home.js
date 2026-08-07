@@ -235,16 +235,13 @@ function setupMotion() {
     .to('.model-center', { opacity: 1, scale: 1, duration: .35, ease: 'power3.out' }, .58)
     .from('.model-center strong', { letterSpacing: '.15em', filter: 'blur(12px)', duration: .28 }, .62);
 
-  const product = gsap.timeline({ scrollTrigger: { trigger: '.product', start: 'top top', end: 'bottom bottom', scrub: .65 } });
-  product.to('.socra-interface', { opacity: .72, scale: .68, rotation: -2, duration: .14, ease: 'power2.out' }, 0)
-    .to('.product-copy', { y: -innerHeight * .42, opacity: 0, filter: 'blur(8px)', duration: .24 }, .12)
-    .to('.socra-interface', { opacity: 1, scale: 1, rotation: -1, duration: .32, ease: 'power3.out' }, .14)
-    .from('.ui-message', { opacity: 0, y: 20, stagger: .08, duration: .16 }, .38)
-    .to('.capability-orbit', { opacity: 1, x: 0, stagger: .1, duration: .18 }, .52)
-    .to('.socra-interface', { scale: .72, yPercent: -4, duration: .3 }, .72)
-    .to('.capability-one', { x: innerWidth * .19, y: innerHeight * .28, duration: .25 }, .73)
-    .to('.capability-two', { x: -innerWidth * .18, y: innerHeight * .33, duration: .25 }, .73)
-    .to('.capability-three', { x: -innerWidth * .2, y: -innerHeight * .1, duration: .25 }, .73);
+  const product = gsap.timeline({ scrollTrigger: { trigger: '.product', start: 'top top', end: 'bottom bottom', pin: '.product-stage', pinSpacing: false, scrub: .65, anticipatePin: 1 } });
+  product.to('.socra-interface', { opacity: .78, scale: .7, rotation: -2, duration: .18, ease: 'power2.out' }, 0)
+    .to('.product-copy', { y: -innerHeight * .24, opacity: 0, filter: 'blur(8px)', duration: .24 }, .12)
+    .to('.socra-interface', { opacity: 1, scale: .92, top: '54%', rotation: -1, duration: .34, ease: 'power3.out' }, .16)
+    .from('.ui-message', { opacity: 0, y: 20, stagger: .08, duration: .18 }, .36)
+    .to('.capability-orbit', { opacity: 1, y: 0, stagger: .08, duration: .2 }, .55)
+    .to('.socra-interface', { scale: .84, rotation: 0, duration: .22, ease: 'power2.inOut' }, .78);
 
   gsap.to('.plan-line i', { height: '100%', ease: 'none', scrollTrigger: { trigger: '.plan-journey', start: 'top 65%', end: 'bottom 45%', scrub: true } });
   $$('.plan-stop').forEach((stop, index) => gsap.from(stop.querySelector('.plan-copy'), { opacity: 0, x: index % 2 ? 70 : -70, duration: .8, ease: 'power3.out', scrollTrigger: { trigger: stop, start: 'top 72%' } }));
@@ -253,7 +250,15 @@ function setupMotion() {
 
   const setTopbarContrast = active => $('.topbar').classList.toggle('invert', active);
   ScrollTrigger.create({ trigger: '.dialogue', start: 'top top', end: 'bottom bottom', onEnter: () => setTopbarContrast(true), onEnterBack: () => setTopbarContrast(true), onLeave: () => setTopbarContrast(false), onLeaveBack: () => setTopbarContrast(false) });
-  ScrollTrigger.create({ trigger: '.launch', start: 'top top', end: 'max', onEnter: () => setTopbarContrast(true), onEnterBack: () => setTopbarContrast(true), onLeaveBack: () => setTopbarContrast(false) });
+  const setLaunchContrast = active => $('.topbar').classList.toggle('launch-contrast', active);
+  ScrollTrigger.create({
+    trigger: '.launch',
+    start: 'top top',
+    end: 'max',
+    onEnter: () => { setTopbarContrast(true); setLaunchContrast(true); },
+    onEnterBack: () => { setTopbarContrast(true); setLaunchContrast(true); },
+    onLeaveBack: () => { setTopbarContrast(false); setLaunchContrast(false); }
+  });
 
   ScrollTrigger.create({ start: 0, end: 'max', onUpdate: self => gsap.set('.journey-meter b', { width: `${self.progress * 100}%` }) });
 }
