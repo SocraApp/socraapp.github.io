@@ -17,3 +17,93 @@
 .topbar.invert .menu-toggle span {
   background: var(--page);
 }
+
+/* Keep the kinetic underline beneath the glyphs instead of through them. */
+.row-three i::after {
+  bottom: -0.1em;
+  height: 0.035em;
+}
+
+/* Route markers share the SVG coordinate system so every line meets its node. */
+.route {
+  --route-inset: 9vw;
+}
+
+.route svg {
+  left: var(--route-inset);
+  width: calc(100% - var(--route-inset));
+}
+
+.route-short svg {
+  height: 180px;
+}
+
+.route-socra svg {
+  height: 260px;
+}
+
+.route-stop {
+  right: auto;
+  /* Offset by the dot radius only. Translating the whole label stack by 50%
+     pulled every dot above the SVG path. */
+  transform: translate(-50%, -8px);
+}
+
+.stop-answer {
+  left: calc(var(--route-inset) + (100% - var(--route-inset)) * 0.944);
+  top: 55px;
+}
+
+.stop-question {
+  left: calc(var(--route-inset) + (100% - var(--route-inset)) * 0.317);
+  top: 10px;
+}
+
+.stop-discovery {
+  left: calc(var(--route-inset) + (100% - var(--route-inset)) * 0.583);
+  top: 95px;
+}
+
+.stop-connection {
+  left: calc(var(--route-inset) + (100% - var(--route-inset)) * 0.76);
+  top: 17px;
+}
+
+.stop-understanding {
+  left: calc(var(--route-inset) + (100% - var(--route-inset)) * 0.944);
+  top: 45px;
+}
+
+/* Show the product while its title is introduced; scrolling expands it. */
+.socra-interface {
+  opacity: 0.28;
+  transform: translate(-50%, -50%) scale(0.4);
+}
+
+/* Explicit contrast for inverted scenes and dark application surfaces. */
+[data-theme="dark"] .enter-link {
+  background: var(--primary);
+  color: #11182b;
+}
+
+[data-theme="dark"] .product-copy h2,
+[data-theme="dark"] .plans-intro h2,
+[data-theme="dark"] .model-center strong,
+[data-theme="dark"] .plan-copy h3 {
+  color: var(--ink);
+}
+
+[data-theme="dark"] .dialogue-intro h2 {
+  color: var(--canvas);
+}
+
+[data-theme="dark"] .topbar.invert .enter-link {
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+@media (max-width: 620px) {
+  .route {
+    --route-inset: 16vw;
+  }
+}

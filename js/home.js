@@ -91,13 +91,21 @@ function setupThoughtField() {
   if (!canvas || reduced) return;
   const context = canvas.getContext('2d', { alpha: true });
   let width = 0, height = 0, dpr = 1, frame = 0, last = 0;
-  let thread = '#383631', soft = 'rgba(56,54,49,.14)', cyan = '#53c9bc', orange = '#ff704d';
+  let thread = '#383631', soft = 'rgba(56,54,49,.14)', cyan = '#668de8', orange = '#ff704d';
   const nodes = Array.from({ length: 24 }, (_, index) => ({
     x: .08 + ((index * 47) % 83) / 100,
     y: .08 + ((index * 71) % 84) / 100,
     phase: index * .77,
     parent: index ? Math.max(0, index - 1 - (index % 4 === 0 ? 2 : 0)) : -1
   }));
+  const ambient = Array.from({ length: innerWidth < 700 ? 26 : 44 }, (_, index) => ({
+    x: ((index * 37) % 97) / 100,
+    y: ((index * 61 + 13) % 97) / 100,
+    vx: ((index % 5) - 2) * .000018,
+    vy: (((index * 3) % 5) - 2) * .000014,
+    size: 1 + (index % 3) * .55
+  }));
+  const mouse = { x: -1000, y: -1000, active: false };
 
   function readTheme() {
     const styles = getComputedStyle(document.documentElement);
@@ -120,6 +128,27 @@ function setupThoughtField() {
     const progress = Math.min(1, scrollY / scrollMax);
     const visibleCount = Math.max(2, Math.floor(2 + progress * (nodes.length - 2)));
     const time = now * .00018;
+
+    ambient.forEach((particle, index) => {
+      particle.x = (particle.x + particle.vx + 1) % 1;
+      particle.y = (particle.y + particle.vy + 1) % 1;
+      let x = particle.x * width, y = particle.y * height;
+      if (mouse.active) {
+        const dx = x - mouse.x, dy = y - mouse.y, distance = Math.hypot(dx, dy) || 1;
+        if (distance < 145) {
+          const force = (145 - distance) / 145;
+          particle.x = Math.min(1, Math.max(0, particle.x + dx / distance * force * .004));
+          particle.y = Math.min(1, Math.max(0, particle.y + dy / distance * force * .004));
+          x = particle.x * width; y = particle.y * height;
+          context.beginPath(); context.moveTo(mouse.x, mouse.y); context.lineTo(x, y);
+          context.strokeStyle = soft; context.globalAlpha = force * .55; context.stroke(); context.globalAlpha = 1;
+        }
+      }
+      context.beginPath(); context.arc(x, y, particle.size, 0, Math.PI * 2);
+      context.fillStyle = index % 7 === 0 ? cyan : thread;
+      context.globalAlpha = index % 7 === 0 ? .34 : .12;
+      context.fill(); context.globalAlpha = 1;
+    });
 
     context.lineWidth = 1;
     for (let index = 1; index < visibleCount; index++) {
@@ -146,6 +175,8 @@ function setupThoughtField() {
   }
   readTheme(); resize(); frame = requestAnimationFrame(draw);
   addEventListener('resize', resize, listenerOptions);
+  addEventListener('pointermove', event => { mouse.x = event.clientX; mouse.y = event.clientY; mouse.active = true; }, listenerOptions);
+  document.documentElement.addEventListener('pointerleave', () => { mouse.active = false; }, listenerOptions);
   new MutationObserver(readTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'style'] });
   addEventListener('pagehide', () => cancelAnimationFrame(frame), { once: true });
 }
@@ -205,8 +236,9 @@ function setupMotion() {
     .from('.model-center strong', { letterSpacing: '.15em', filter: 'blur(12px)', duration: .28 }, .62);
 
   const product = gsap.timeline({ scrollTrigger: { trigger: '.product', start: 'top top', end: 'bottom bottom', scrub: .65 } });
-  product.to('.product-copy', { y: -innerHeight * .42, opacity: 0, filter: 'blur(8px)', duration: .24 })
-    .to('.socra-interface', { opacity: 1, scale: 1, rotation: -1, duration: .42, ease: 'power3.out' }, .12)
+  product.to('.socra-interface', { opacity: .72, scale: .68, rotation: -2, duration: .14, ease: 'power2.out' }, 0)
+    .to('.product-copy', { y: -innerHeight * .42, opacity: 0, filter: 'blur(8px)', duration: .24 }, .12)
+    .to('.socra-interface', { opacity: 1, scale: 1, rotation: -1, duration: .32, ease: 'power3.out' }, .14)
     .from('.ui-message', { opacity: 0, y: 20, stagger: .08, duration: .16 }, .38)
     .to('.capability-orbit', { opacity: 1, x: 0, stagger: .1, duration: .18 }, .52)
     .to('.socra-interface', { scale: .72, yPercent: -4, duration: .3 }, .72)
