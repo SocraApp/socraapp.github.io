@@ -1,202 +1,234 @@
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = (selector, scope = document) => scope.querySelector(selector);
 const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
+const aborter = new AbortController();
+const listenerOptions = { signal: aborter.signal };
 
-const demos = {
+const trails = {
   math: {
-    icon: '∫', goal: 'Understand derivatives',
-    messages: [
-      ['user', 'Can you explain derivatives?'],
-      ['socra', 'You already know slope. What does slope tell you about a straight line?'],
-      ['user', 'How quickly it rises or falls.'],
-      ['socra', 'Good. A curve keeps changing—how might you measure its slope at one exact point?']
-    ]
+    start: 'Derivatives still feel abstract.',
+    q1: 'What does slope tell you about a straight line?',
+    you: 'How quickly it rises or falls.',
+    q2: 'How could we measure that on a curve at one exact point?'
   },
   code: {
-    icon: '{ }', goal: 'Build an intuition for recursion',
-    messages: [
-      ['user', 'I never understand recursion.'],
-      ['socra', 'What must every repeating process eventually do?'],
-      ['user', 'Stop somewhere.'],
-      ['socra', 'Exactly. In a recursive function, what could define that stopping point?']
-    ]
+    start: 'Recursion keeps tying my brain in knots.',
+    q1: 'What must every repeating process eventually do?',
+    you: 'Reach a place where it stops.',
+    q2: 'What could make each call move closer to that place?'
   },
   writing: {
-    icon: 'Aa', goal: 'Strengthen an argument',
-    messages: [
-      ['user', 'Can you improve my thesis?'],
-      ['socra', 'Before we rewrite it: what do you most want your reader to believe?'],
-      ['user', 'That ambition needs social permission.'],
-      ['socra', 'Interesting. Which moment in your evidence makes that claim hardest to dismiss?']
-    ]
+    start: 'My argument feels true, but not convincing.',
+    q1: 'What do you most want your reader to believe?',
+    you: 'That ambition needs social permission.',
+    q2: 'Which moment in your evidence makes that hardest to dismiss?'
   }
 };
 
-let demoTimers = [];
-function playDemo(topic = 'math') {
-  const data = demos[topic];
-  const chat = $('#demo-chat');
-  if (!data || !chat) return;
-  demoTimers.forEach(clearTimeout);
-  demoTimers = [];
-  chat.innerHTML = '';
-  $('#demo-goal').textContent = data.goal;
-  $('.topic-icon').textContent = data.icon;
-  data.messages.forEach((item, index) => {
-    const timer = setTimeout(() => {
-      const message = document.createElement('div');
-      message.className = `message ${item[0]}`;
-      message.innerHTML = `<small>${item[0] === 'socra' ? 'Socra asks' : 'You'}</small>${item[1]}`;
-      chat.appendChild(message);
-      if (window.gsap && !reduced) gsap.to(message, { opacity: 1, y: 0, duration: .55, ease: 'power3.out' });
-      else { message.style.opacity = 1; message.style.transform = 'none'; }
-    }, reduced ? 0 : index * 720);
-    demoTimers.push(timer);
-  });
-}
-
-function setupUI() {
-  const nav = $('.site-nav');
-  const menu = $('.menu-button');
+function setupInterface() {
+  const menu = $('.menu-toggle');
+  const nav = $('.journey-nav');
+  const themeToggle = $('.theme-toggle');
+  const syncThemeToggle = () => {
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    themeToggle?.setAttribute('aria-label', `Switch to ${dark ? 'light' : 'dark'} theme`);
+    const icon = themeToggle ? $('i', themeToggle) : null;
+    if (icon) icon.textContent = dark ? '☀' : '◐';
+    const themeMeta = $('meta[name="theme-color"]');
+    const canvasColor = getComputedStyle(document.documentElement).getPropertyValue('--canvas').trim();
+    if (themeMeta && canvasColor) themeMeta.setAttribute('content', canvasColor);
+  };
+  syncThemeToggle();
+  themeToggle?.addEventListener('click', () => {
+    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    window.SocraTheme?.applyTheme(dark ? 'light' : 'dark');
+    syncThemeToggle();
+  }, listenerOptions);
   menu?.addEventListener('click', () => {
-    const open = nav.classList.toggle('menu-open');
+    const open = nav.classList.toggle('open');
     menu.setAttribute('aria-expanded', String(open));
-  });
-  $$('.nav-center a').forEach(link => link.addEventListener('click', () => nav.classList.remove('menu-open')));
-  $$('.topic-tabs button').forEach(button => button.addEventListener('click', () => {
-    $$('.topic-tabs button').forEach(item => {
+  }, listenerOptions);
+  $$('.journey-nav a').forEach(link => link.addEventListener('click', () => {
+    nav.classList.remove('open');
+    menu?.setAttribute('aria-expanded', 'false');
+  }, listenerOptions));
+
+  $$('.trail-picker button').forEach(button => button.addEventListener('click', () => {
+    const data = trails[button.dataset.trail];
+    if (!data) return;
+    $$('.trail-picker button').forEach(item => {
       item.classList.toggle('active', item === button);
       item.setAttribute('aria-selected', String(item === button));
     });
-    playDemo(button.dataset.topic);
-  }));
+    const targets = [['#trail-start', data.start], ['#trail-q1', data.q1], ['#trail-you', data.you], ['#trail-q2', data.q2]];
+    if (window.gsap && !reduced) {
+      gsap.to('.talk-node p', { opacity: 0, y: -5, duration: .18, stagger: .04, onComplete: () => {
+        targets.forEach(([selector, value]) => $(selector).textContent = value);
+        gsap.to('.talk-node p', { opacity: 1, y: 0, duration: .35, stagger: .05, ease: 'power2.out' });
+      }});
+    } else targets.forEach(([selector, value]) => $(selector).textContent = value);
+  }, listenerOptions));
 
-  if (!reduced && matchMedia('(pointer:fine)').matches) {
-    const cursor = $('.cursor-glow');
-    addEventListener('pointermove', event => gsap.to(cursor, { x: event.clientX, y: event.clientY, duration: .22, ease: 'power2.out' }));
-    $$('a,button,.price-card,.outcome-grid article,.method-card,.feature-card').forEach(element => {
-      element.addEventListener('pointerenter', () => cursor.classList.add('hover'));
-      element.addEventListener('pointerleave', () => cursor.classList.remove('hover'));
+  if (!reduced && matchMedia('(pointer:fine)').matches && window.gsap) {
+    const pointer = $('.pointer');
+    addEventListener('pointermove', event => gsap.to(pointer, { x: event.clientX, y: event.clientY, duration: .2, ease: 'power2.out' }), listenerOptions);
+    $$('a,button,.talk-node,.plan-stop').forEach(element => {
+      element.addEventListener('pointerenter', () => pointer.classList.add('active'), listenerOptions);
+      element.addEventListener('pointerleave', () => pointer.classList.remove('active'), listenerOptions);
     });
-    $$('.magnetic').forEach(element => {
+    $$('.magnet').forEach(element => {
       element.addEventListener('pointermove', event => {
-        const rect = element.getBoundingClientRect();
-        gsap.to(element, { x: (event.clientX - rect.left - rect.width / 2) * .16, y: (event.clientY - rect.top - rect.height / 2) * .16, duration: .3 });
-      });
-      element.addEventListener('pointerleave', () => gsap.to(element, { x: 0, y: 0, duration: .6, ease: 'elastic.out(1,.35)' }));
-    });
-
-    const orbit = $('.hero-orbit');
-    $('.hero')?.addEventListener('pointermove', event => {
-      const x = event.clientX / innerWidth - .5;
-      const y = event.clientY / innerHeight - .5;
-      gsap.to(orbit, { x: x * 24, y: y * 18, duration: 1.1, ease: 'power2.out' });
-      gsap.to('.thought-core', { rotation: x * 8, duration: .8, ease: 'power2.out' });
-    });
-
-    $$('.outcome-grid article').forEach(card => {
-      card.addEventListener('pointermove', event => {
-        const rect = card.getBoundingClientRect();
-        gsap.to(card, { rotateX: (event.clientY - rect.top - rect.height / 2) / -32, rotateY: (event.clientX - rect.left - rect.width / 2) / 32, transformPerspective: 700, duration: .3 });
-      });
-      card.addEventListener('pointerleave', () => gsap.to(card, { rotateX: 0, rotateY: 0, duration: .7, ease: 'elastic.out(1,.35)' }));
+        const box = element.getBoundingClientRect();
+        gsap.to(element, { x: (event.clientX - box.left - box.width / 2) * .14, y: (event.clientY - box.top - box.height / 2) * .14, duration: .25 });
+      }, listenerOptions);
+      element.addEventListener('pointerleave', () => gsap.to(element, { x: 0, y: 0, duration: .65, ease: 'elastic.out(1,.35)' }), listenerOptions);
     });
   }
 }
 
-function splitHeading(element) {
-  if (!element || element.dataset.split) return;
-  element.dataset.split = 'true';
-  [...element.childNodes].forEach(node => {
-    if (node.nodeType !== Node.TEXT_NODE || !node.textContent.trim()) return;
-    const fragment = document.createDocumentFragment();
-    node.textContent.split(/(\s+)/).forEach(part => {
-      if (/^\s+$/.test(part)) fragment.appendChild(document.createTextNode(part));
-      else {
-        const clip = document.createElement('span');
-        const word = document.createElement('i');
-        clip.className = 'word-clip';
-        word.textContent = part;
-        clip.appendChild(word);
-        fragment.appendChild(clip);
-      }
-    });
-    node.replaceWith(fragment);
+function setupThoughtField() {
+  const canvas = $('#thought-field');
+  if (!canvas || reduced) return;
+  const context = canvas.getContext('2d', { alpha: true });
+  let width = 0, height = 0, dpr = 1, frame = 0, last = 0;
+  let thread = '#383631', soft = 'rgba(56,54,49,.14)', cyan = '#53c9bc', orange = '#ff704d';
+  const nodes = Array.from({ length: 24 }, (_, index) => ({
+    x: .08 + ((index * 47) % 83) / 100,
+    y: .08 + ((index * 71) % 84) / 100,
+    phase: index * .77,
+    parent: index ? Math.max(0, index - 1 - (index % 4 === 0 ? 2 : 0)) : -1
+  }));
+
+  function readTheme() {
+    const styles = getComputedStyle(document.documentElement);
+    thread = styles.getPropertyValue('--thread').trim() || thread;
+    soft = styles.getPropertyValue('--thread-soft').trim() || soft;
+    cyan = styles.getPropertyValue('--cyan').trim() || cyan;
+    orange = styles.getPropertyValue('--orange').trim() || orange;
+  }
+  function resize() {
+    width = innerWidth; height = innerHeight; dpr = Math.min(devicePixelRatio || 1, 1.5);
+    canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
+    context.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+  function draw(now) {
+    frame = requestAnimationFrame(draw);
+    if (document.hidden || now - last < 32) return;
+    last = now;
+    context.clearRect(0, 0, width, height);
+    const scrollMax = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+    const progress = Math.min(1, scrollY / scrollMax);
+    const visibleCount = Math.max(2, Math.floor(2 + progress * (nodes.length - 2)));
+    const time = now * .00018;
+
+    context.lineWidth = 1;
+    for (let index = 1; index < visibleCount; index++) {
+      const node = nodes[index], parent = nodes[node.parent];
+      const x = node.x * width + Math.sin(time * 3 + node.phase) * 8;
+      const y = node.y * height + Math.cos(time * 2 + node.phase) * 7;
+      const px = parent.x * width + Math.sin(time * 3 + parent.phase) * 8;
+      const py = parent.y * height + Math.cos(time * 2 + parent.phase) * 7;
+      context.beginPath();
+      context.moveTo(px, py);
+      context.quadraticCurveTo((px + x) / 2 + Math.sin(node.phase) * 30, (py + y) / 2, x, y);
+      context.strokeStyle = soft;
+      context.stroke();
+    }
+    for (let index = 0; index < visibleCount; index++) {
+      const node = nodes[index];
+      const x = node.x * width + Math.sin(time * 3 + node.phase) * 8;
+      const y = node.y * height + Math.cos(time * 2 + node.phase) * 7;
+      context.beginPath(); context.arc(x, y, index === visibleCount - 1 ? 4.5 : 2.1, 0, Math.PI * 2);
+      context.fillStyle = index === visibleCount - 1 ? (index % 2 ? cyan : orange) : thread;
+      context.globalAlpha = index === visibleCount - 1 ? .85 : .22;
+      context.fill(); context.globalAlpha = 1;
+    }
+  }
+  readTheme(); resize(); frame = requestAnimationFrame(draw);
+  addEventListener('resize', resize, listenerOptions);
+  new MutationObserver(readTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'style'] });
+  addEventListener('pagehide', () => cancelAnimationFrame(frame), { once: true });
+}
+
+function preparePaths() {
+  $$('svg path').forEach(path => {
+    if (typeof path.getTotalLength !== 'function') return;
+    const length = path.getTotalLength();
+    path.style.strokeDasharray = `${length}`;
+    path.style.strokeDashoffset = `${length}`;
   });
 }
 
 function setupMotion() {
   if (!window.gsap || !window.ScrollTrigger || reduced) return;
   gsap.registerPlugin(ScrollTrigger);
+  preparePaths();
 
-  const hero = gsap.timeline({ defaults: { ease: 'power4.out' } });
-  hero.to('.hero-line i', { y: 0, duration: 1.25, stagger: .14 })
-    .from('.eyebrow', { opacity: 0, x: -25, duration: .7 }, .45)
-    .from('.hero-bottom', { opacity: 0, y: 25, duration: .8 }, .6)
-    .from('.hero-orbit', { opacity: 0, scale: .7, rotation: -35, duration: 1.4 }, .15);
+  gsap.timeline({ defaults: { ease: 'power4.out' } })
+    .to('.title-row i', { y: 0, duration: 1.2, stagger: .11 })
+    .from('.overline', { opacity: 0, x: -25, duration: .7 }, .4)
+    .from('.arrival-note', { opacity: 0, y: 20, duration: .7 }, .62)
+    .from('.arrival-question', { opacity: 0, scale: .4, rotation: -30, duration: 1.1, ease: 'back.out(1.5)' }, .25)
+    .from('.subject-cloud span', { opacity: 0, scale: .5, stagger: .08, duration: .5 }, .7);
 
-  gsap.to('.orbit-a', { rotation: 360, duration: 30, repeat: -1, ease: 'none' });
-  gsap.to('.orbit-b', { rotation: -332, duration: 21, repeat: -1, ease: 'none' });
-  gsap.to('.orbit-c', { rotation: 342, duration: 40, repeat: -1, ease: 'none' });
-  gsap.to('.thought-core', { y: -12, duration: 2.2, yoyo: true, repeat: -1, ease: 'sine.inOut' });
-  gsap.to('.hero-orbit', { yPercent: 28, rotation: 24, scale: 1.12, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 1 } });
-  gsap.to('.ticker', { xPercent: -24, ease: 'none', scrollTrigger: { trigger: '.belief-strip', start: 'top bottom', end: 'bottom top', scrub: 1 } });
+  gsap.to('.arrival-question', { yPercent: 125, rotation: 80, scale: .65, ease: 'none', scrollTrigger: { trigger: '.arrival', start: 'top top', end: 'bottom top', scrub: .8 } });
+  gsap.to('.arrival-copy', { yPercent: -18, opacity: .1, filter: 'blur(8px)', ease: 'none', scrollTrigger: { trigger: '.arrival', start: '45% top', end: 'bottom top', scrub: .7 } });
 
-  $$('.split-text').forEach(heading => {
-    splitHeading(heading);
-    gsap.from($('.word-clip i', heading) ? $$('.word-clip i', heading) : [], {
-      yPercent: 115, duration: .9, stagger: .045, ease: 'power4.out',
-      scrollTrigger: { trigger: heading, start: 'top 83%' }
-    });
-  });
+  const fork = gsap.timeline({ scrollTrigger: { trigger: '.fork', start: 'top top', end: 'bottom bottom', pin: '.fork-pin', pinSpacing: false, scrub: .65, anticipatePin: 1 } });
+  fork.fromTo('.route-short path', { strokeDashoffset: () => $('.route-short path').getTotalLength() }, { strokeDashoffset: 0, duration: .16, ease: 'none' })
+    .to('.route-result', { opacity: 1, duration: .08 }, .13)
+    .to('.shortcut-copy', { opacity: 1, y: 0, duration: .1 }, .15)
+    .to('.route-short', { opacity: .14, filter: 'blur(4px)', duration: .12 }, .3)
+    .to('.shortcut-copy', { opacity: .08, duration: .1 }, .3)
+    .fromTo('.main-route', { strokeDashoffset: () => $('.main-route').getTotalLength() }, { strokeDashoffset: 0, duration: .42, ease: 'none' }, .33)
+    .to('.route-socra .route-stop', { opacity: 1, scale: 1, stagger: .055, duration: .09, ease: 'back.out(1.8)' }, .36)
+    .to('.route-socra .branch', { strokeDashoffset: 0, opacity: 1, stagger: .07, duration: .18 }, .52)
+    .to('.side-thought', { opacity: 1, y: -8, stagger: .08, duration: .1 }, .58)
+    .to('.journey-copy', { opacity: 1, y: 0, duration: .15 }, .68)
+    .to('.fork-prompt', { scale: .82, opacity: .35, duration: .12 }, .76);
 
-  const compare = gsap.timeline({
-    scrollTrigger: { trigger: '.comparison-stage', start: 'top top', end: '+=260%', pin: true, scrub: .7, anticipatePin: 1 }
-  });
-  compare.to('.answer-sheet', { scale: .82, opacity: .12, rotation: -8, filter: 'blur(5px)', duration: 1 })
-    .to('.regular-copy', { opacity: .12, x: -30, duration: .6 }, .2)
-    .to('.socra-copy', { opacity: 1, x: 0, duration: .7 }, .35)
-    .to('.question-node', { opacity: 1, scale: 1, stagger: .12, duration: .6, ease: 'back.out(1.6)' }, .35)
-    .to('.comparison-visual path', { opacity: 1, strokeDashoffset: 0, stagger: .12, duration: .9 }, .45)
-    .to('.understanding-core', { opacity: 1, scale: 1, duration: .65, ease: 'back.out(1.8)' }, .78)
-    .to('.question-node', { y: index => index % 2 ? -8 : 8, stagger: .1, duration: .5 }, 1.1);
+  const dialogue = gsap.timeline({ scrollTrigger: { trigger: '.dialogue', start: 'top top', end: 'bottom bottom', pin: '.dialogue-pin', pinSpacing: false, scrub: .65, anticipatePin: 1 } });
+  dialogue.fromTo('.conversation-line', { strokeDashoffset: () => $('.conversation-line').getTotalLength() }, { strokeDashoffset: 0, duration: .72, ease: 'none' })
+    .to('.talk-node', { opacity: 1, y: 0, scale: 1, stagger: .14, duration: .16, ease: 'back.out(1.4)' }, .06)
+    .to('.dialogue-progress i', { backgroundColor: 'var(--yellow)', stagger: .16, duration: .16 }, .15)
+    .to('.aha-node', { opacity: 1, scale: 1, rotation: 360, duration: .22, ease: 'back.out(1.8)' }, .74)
+    .to('.conversation-map', { scale: 1.06, duration: .15 }, .84);
 
-  gsap.to('.question-node', { rotation: index => index % 2 ? 2.5 : -2.5, duration: 2.4, yoyo: true, repeat: -1, stagger: .35, ease: 'sine.inOut' });
+  gsap.to('.talk-node', { y: index => index % 2 ? -7 : 7, duration: 2.5, yoyo: true, repeat: -1, stagger: .3, ease: 'sine.inOut' });
 
-  const methodTrack = $('.method-track');
-  const methodDistance = () => Math.max(0, methodTrack.scrollWidth - innerWidth + parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--pad')) * 2);
-  const methodTween = gsap.to(methodTrack, {
-    x: () => -methodDistance(), ease: 'none',
-    scrollTrigger: { trigger: '.method', start: 'top top', end: () => `+=${Math.max(innerWidth * 2.4, methodDistance() * 1.35)}`, pin: true, scrub: .6, invalidateOnRefresh: true }
-  });
-  gsap.to('.method-progress i', { width: '100%', ease: 'none', scrollTrigger: { trigger: '.method', start: 'top top', end: () => methodTween.scrollTrigger.end, scrub: true } });
-  $$('.method-card').forEach((card, index) => gsap.from(card, { rotation: index % 2 ? 4 : -4, y: 80, opacity: .15, duration: 1, scrollTrigger: { trigger: card, containerAnimation: methodTween, start: 'left 90%' } }));
+  const model = gsap.timeline({ scrollTrigger: { trigger: '.model', start: 'top top', end: 'bottom bottom', pin: '.model-pin', pinSpacing: false, scrub: .65, anticipatePin: 1 } });
+  model.to('.model-seed', { boxShadow: '0 0 0 42vw var(--thread-soft)', scale: 2, duration: .25 })
+    .from('.model-word', { x: index => index % 2 ? 120 : -120, y: index => index === 4 ? -100 : 60, scale: .5, duration: .35, stagger: .05 }, .1)
+    .to('.model-word', { opacity: 1, duration: .25, stagger: .05 }, .1)
+    .to('.model-word', { x: index => index % 2 ? -innerWidth * .28 : innerWidth * .28, y: index => index < 2 ? innerHeight * .24 : -innerHeight * .22, scale: .25, opacity: 0, duration: .35, stagger: .025 }, .5)
+    .to('.model-center', { opacity: 1, scale: 1, duration: .35, ease: 'power3.out' }, .58)
+    .from('.model-center strong', { letterSpacing: '.15em', filter: 'blur(12px)', duration: .28 }, .62);
 
-  gsap.from('.outcome-grid article', { y: 70, opacity: 0, scale: .92, rotation: index => index % 2 ? 2 : -2, stagger: .12, duration: .95, ease: 'back.out(1.35)', scrollTrigger: { trigger: '.outcome-grid', start: 'top 76%' } });
-  $$('.mini-visual').forEach((visual, index) => gsap.to(visual, { rotation: index % 2 ? -18 : 18, y: -18, ease: 'none', scrollTrigger: { trigger: visual, start: 'top bottom', end: 'bottom top', scrub: 1 } }));
-  gsap.from('.product-window', { y: 120, rotation: -5, opacity: 0, duration: 1.2, ease: 'power3.out', scrollTrigger: { trigger: '.experience', start: 'top 64%' } });
-  gsap.to('.product-window', { rotation: -1.5, y: -30, ease: 'none', scrollTrigger: { trigger: '.experience', start: 'top bottom', end: 'bottom top', scrub: 1 } });
+  const product = gsap.timeline({ scrollTrigger: { trigger: '.product', start: 'top top', end: 'bottom bottom', scrub: .65 } });
+  product.to('.product-copy', { y: -innerHeight * .42, opacity: 0, filter: 'blur(8px)', duration: .24 })
+    .to('.socra-interface', { opacity: 1, scale: 1, rotation: -1, duration: .42, ease: 'power3.out' }, .12)
+    .from('.ui-message', { opacity: 0, y: 20, stagger: .08, duration: .16 }, .38)
+    .to('.capability-orbit', { opacity: 1, x: 0, stagger: .1, duration: .18 }, .52)
+    .to('.socra-interface', { scale: .72, yPercent: -4, duration: .3 }, .72)
+    .to('.capability-one', { x: innerWidth * .19, y: innerHeight * .28, duration: .25 }, .73)
+    .to('.capability-two', { x: -innerWidth * .18, y: innerHeight * .33, duration: .25 }, .73)
+    .to('.capability-three', { x: -innerWidth * .2, y: -innerHeight * .1, duration: .25 }, .73);
 
-  $$('.feature-card').forEach((card, index) => {
-    gsap.from(card, { y: 100, rotation: index % 2 ? 3 : -3, opacity: 0, duration: 1, scrollTrigger: { trigger: card, start: 'top 84%' } });
-    gsap.to($('.feature-art', card), { y: -25, rotation: index % 2 ? -4 : 4, ease: 'none', scrollTrigger: { trigger: card, start: 'top bottom', end: 'bottom top', scrub: 1 } });
-  });
-  gsap.to('.growth-rings i:first-child', { rotation: 180, duration: 12, repeat: -1, ease: 'none' });
-  gsap.to('.sparks i', { scaleY: .55, transformOrigin: '50% 100%', duration: .85, yoyo: true, repeat: -1, stagger: .1, ease: 'sine.inOut' });
-  gsap.from('.price-card', { y: 90, opacity: 0, rotation: index => index === 1 ? 0 : index ? 3 : -3, stagger: .13, duration: 1, ease: 'power3.out', scrollTrigger: { trigger: '.pricing-grid', start: 'top 80%' } });
-  gsap.to('.final-orbits', { rotation: 90, scale: 1.18, ease: 'none', scrollTrigger: { trigger: '.final-cta', start: 'top bottom', end: 'bottom bottom', scrub: 1 } });
-  gsap.from('.final-cta h2', { scale: .7, opacity: 0, filter: 'blur(12px)', duration: 1.2, scrollTrigger: { trigger: '.final-cta', start: 'top 60%' } });
+  gsap.to('.plan-line i', { height: '100%', ease: 'none', scrollTrigger: { trigger: '.plan-journey', start: 'top 65%', end: 'bottom 45%', scrub: true } });
+  $$('.plan-stop').forEach((stop, index) => gsap.from(stop.querySelector('.plan-copy'), { opacity: 0, x: index % 2 ? 70 : -70, duration: .8, ease: 'power3.out', scrollTrigger: { trigger: stop, start: 'top 72%' } }));
+  gsap.to('.launch-thought', { rotation: 110, scale: 1.28, ease: 'none', scrollTrigger: { trigger: '.launch', start: 'top bottom', end: 'bottom bottom', scrub: 1 } });
+  gsap.from('.launch h2', { scale: .55, opacity: 0, filter: 'blur(15px)', duration: 1.1, scrollTrigger: { trigger: '.launch', start: 'top 60%' } });
 
-  let lastY = scrollY;
-  ScrollTrigger.create({ start: 0, end: 'max', onUpdate: self => {
-    const current = self.scroll();
-    $('.site-nav').classList.toggle('hidden', current > lastY && current > 180);
-    lastY = current;
-  }});
+  const setTopbarContrast = active => $('.topbar').classList.toggle('invert', active);
+  ScrollTrigger.create({ trigger: '.dialogue', start: 'top top', end: 'bottom bottom', onEnter: () => setTopbarContrast(true), onEnterBack: () => setTopbarContrast(true), onLeave: () => setTopbarContrast(false), onLeaveBack: () => setTopbarContrast(false) });
+  ScrollTrigger.create({ trigger: '.launch', start: 'top top', end: 'max', onEnter: () => setTopbarContrast(true), onEnterBack: () => setTopbarContrast(true), onLeaveBack: () => setTopbarContrast(false) });
+
+  ScrollTrigger.create({ start: 0, end: 'max', onUpdate: self => gsap.set('.journey-meter b', { width: `${self.progress * 100}%` }) });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  setupUI();
-  playDemo();
+  setupInterface();
+  setupThoughtField();
   setupMotion();
 });
+addEventListener('pagehide', () => aborter.abort(), { once: true });

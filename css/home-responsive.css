@@ -1,0 +1,19 @@
+@media (max-width: 620px) {
+  .theme-toggle {
+    width: 43px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .theme-toggle span {
+    display: none;
+  }
+
+  .row-three i {
+    width: auto;
+  }
+}
+
+.topbar.invert .menu-toggle span {
+  background: var(--page);
+}
