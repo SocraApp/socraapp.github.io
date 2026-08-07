@@ -74,7 +74,7 @@ function setupUI() {
   if (!reduced && matchMedia('(pointer:fine)').matches) {
     const cursor = $('.cursor-glow');
     addEventListener('pointermove', event => gsap.to(cursor, { x: event.clientX, y: event.clientY, duration: .22, ease: 'power2.out' }));
-    $$('a,button,.price-card,.outcome-grid article').forEach(element => {
+    $$('a,button,.price-card,.outcome-grid article,.method-card,.feature-card').forEach(element => {
       element.addEventListener('pointerenter', () => cursor.classList.add('hover'));
       element.addEventListener('pointerleave', () => cursor.classList.remove('hover'));
     });
@@ -84,6 +84,22 @@ function setupUI() {
         gsap.to(element, { x: (event.clientX - rect.left - rect.width / 2) * .16, y: (event.clientY - rect.top - rect.height / 2) * .16, duration: .3 });
       });
       element.addEventListener('pointerleave', () => gsap.to(element, { x: 0, y: 0, duration: .6, ease: 'elastic.out(1,.35)' }));
+    });
+
+    const orbit = $('.hero-orbit');
+    $('.hero')?.addEventListener('pointermove', event => {
+      const x = event.clientX / innerWidth - .5;
+      const y = event.clientY / innerHeight - .5;
+      gsap.to(orbit, { x: x * 24, y: y * 18, duration: 1.1, ease: 'power2.out' });
+      gsap.to('.thought-core', { rotation: x * 8, duration: .8, ease: 'power2.out' });
+    });
+
+    $$('.outcome-grid article').forEach(card => {
+      card.addEventListener('pointermove', event => {
+        const rect = card.getBoundingClientRect();
+        gsap.to(card, { rotateX: (event.clientY - rect.top - rect.height / 2) / -32, rotateY: (event.clientX - rect.left - rect.width / 2) / 32, transformPerspective: 700, duration: .3 });
+      });
+      card.addEventListener('pointerleave', () => gsap.to(card, { rotateX: 0, rotateY: 0, duration: .7, ease: 'elastic.out(1,.35)' }));
     });
   }
 }
@@ -119,9 +135,9 @@ function setupMotion() {
     .from('.hero-bottom', { opacity: 0, y: 25, duration: .8 }, .6)
     .from('.hero-orbit', { opacity: 0, scale: .7, rotation: -35, duration: 1.4 }, .15);
 
-  gsap.to('.orbit-a', { rotation: 360, duration: 28, repeat: -1, ease: 'none' });
-  gsap.to('.orbit-b', { rotation: -332, duration: 19, repeat: -1, ease: 'none' });
-  gsap.to('.orbit-c', { rotation: 342, duration: 38, repeat: -1, ease: 'none' });
+  gsap.to('.orbit-a', { rotation: 360, duration: 30, repeat: -1, ease: 'none' });
+  gsap.to('.orbit-b', { rotation: -332, duration: 21, repeat: -1, ease: 'none' });
+  gsap.to('.orbit-c', { rotation: 342, duration: 40, repeat: -1, ease: 'none' });
   gsap.to('.thought-core', { y: -12, duration: 2.2, yoyo: true, repeat: -1, ease: 'sine.inOut' });
   gsap.to('.hero-orbit', { yPercent: 28, rotation: 24, scale: 1.12, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: 1 } });
   gsap.to('.ticker', { xPercent: -24, ease: 'none', scrollTrigger: { trigger: '.belief-strip', start: 'top bottom', end: 'bottom top', scrub: 1 } });
@@ -145,6 +161,8 @@ function setupMotion() {
     .to('.understanding-core', { opacity: 1, scale: 1, duration: .65, ease: 'back.out(1.8)' }, .78)
     .to('.question-node', { y: index => index % 2 ? -8 : 8, stagger: .1, duration: .5 }, 1.1);
 
+  gsap.to('.question-node', { rotation: index => index % 2 ? 2.5 : -2.5, duration: 2.4, yoyo: true, repeat: -1, stagger: .35, ease: 'sine.inOut' });
+
   const methodTrack = $('.method-track');
   const methodDistance = () => Math.max(0, methodTrack.scrollWidth - innerWidth + parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--pad')) * 2);
   const methodTween = gsap.to(methodTrack, {
@@ -154,7 +172,7 @@ function setupMotion() {
   gsap.to('.method-progress i', { width: '100%', ease: 'none', scrollTrigger: { trigger: '.method', start: 'top top', end: () => methodTween.scrollTrigger.end, scrub: true } });
   $$('.method-card').forEach((card, index) => gsap.from(card, { rotation: index % 2 ? 4 : -4, y: 80, opacity: .15, duration: 1, scrollTrigger: { trigger: card, containerAnimation: methodTween, start: 'left 90%' } }));
 
-  gsap.from('.outcome-grid article', { y: 70, opacity: 0, stagger: .12, duration: .9, ease: 'power3.out', scrollTrigger: { trigger: '.outcome-grid', start: 'top 76%' } });
+  gsap.from('.outcome-grid article', { y: 70, opacity: 0, scale: .92, rotation: index => index % 2 ? 2 : -2, stagger: .12, duration: .95, ease: 'back.out(1.35)', scrollTrigger: { trigger: '.outcome-grid', start: 'top 76%' } });
   $$('.mini-visual').forEach((visual, index) => gsap.to(visual, { rotation: index % 2 ? -18 : 18, y: -18, ease: 'none', scrollTrigger: { trigger: visual, start: 'top bottom', end: 'bottom top', scrub: 1 } }));
   gsap.from('.product-window', { y: 120, rotation: -5, opacity: 0, duration: 1.2, ease: 'power3.out', scrollTrigger: { trigger: '.experience', start: 'top 64%' } });
   gsap.to('.product-window', { rotation: -1.5, y: -30, ease: 'none', scrollTrigger: { trigger: '.experience', start: 'top bottom', end: 'bottom top', scrub: 1 } });
@@ -164,6 +182,7 @@ function setupMotion() {
     gsap.to($('.feature-art', card), { y: -25, rotation: index % 2 ? -4 : 4, ease: 'none', scrollTrigger: { trigger: card, start: 'top bottom', end: 'bottom top', scrub: 1 } });
   });
   gsap.to('.growth-rings i:first-child', { rotation: 180, duration: 12, repeat: -1, ease: 'none' });
+  gsap.to('.sparks i', { scaleY: .55, transformOrigin: '50% 100%', duration: .85, yoyo: true, repeat: -1, stagger: .1, ease: 'sine.inOut' });
   gsap.from('.price-card', { y: 90, opacity: 0, rotation: index => index === 1 ? 0 : index ? 3 : -3, stagger: .13, duration: 1, ease: 'power3.out', scrollTrigger: { trigger: '.pricing-grid', start: 'top 80%' } });
   gsap.to('.final-orbits', { rotation: 90, scale: 1.18, ease: 'none', scrollTrigger: { trigger: '.final-cta', start: 'top bottom', end: 'bottom bottom', scrub: 1 } });
   gsap.from('.final-cta h2', { scale: .7, opacity: 0, filter: 'blur(12px)', duration: 1.2, scrollTrigger: { trigger: '.final-cta', start: 'top 60%' } });
