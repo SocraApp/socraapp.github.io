@@ -141,12 +141,12 @@ function setupThoughtField() {
           particle.y = Math.min(1, Math.max(0, particle.y + dy / distance * force * .004));
           x = particle.x * width; y = particle.y * height;
           context.beginPath(); context.moveTo(mouse.x, mouse.y); context.lineTo(x, y);
-          context.strokeStyle = soft; context.globalAlpha = force * .55; context.stroke(); context.globalAlpha = 1;
+          context.strokeStyle = soft; context.globalAlpha = force * .28; context.stroke(); context.globalAlpha = 1;
         }
       }
       context.beginPath(); context.arc(x, y, particle.size, 0, Math.PI * 2);
-      context.fillStyle = index % 7 === 0 ? cyan : thread;
-      context.globalAlpha = index % 7 === 0 ? .34 : .12;
+      context.fillStyle = index % 3 === 0 ? cyan : (index % 11 === 0 ? orange : thread);
+      context.globalAlpha = index % 3 === 0 ? .26 : (index % 11 === 0 ? .2 : .1);
       context.fill(); context.globalAlpha = 1;
     });
 
@@ -161,7 +161,9 @@ function setupThoughtField() {
       context.moveTo(px, py);
       context.quadraticCurveTo((px + x) / 2 + Math.sin(node.phase) * 30, (py + y) / 2, x, y);
       context.strokeStyle = soft;
+      context.globalAlpha = .16;
       context.stroke();
+      context.globalAlpha = 1;
     }
     for (let index = 0; index < visibleCount; index++) {
       const node = nodes[index];
@@ -169,7 +171,7 @@ function setupThoughtField() {
       const y = node.y * height + Math.cos(time * 2 + node.phase) * 7;
       context.beginPath(); context.arc(x, y, index === visibleCount - 1 ? 4.5 : 2.1, 0, Math.PI * 2);
       context.fillStyle = index === visibleCount - 1 ? (index % 2 ? cyan : orange) : thread;
-      context.globalAlpha = index === visibleCount - 1 ? .85 : .22;
+      context.globalAlpha = index === visibleCount - 1 ? .68 : .1;
       context.fill(); context.globalAlpha = 1;
     }
   }

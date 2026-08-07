@@ -110,7 +110,13 @@
 
 /* Persistent ambient layer: section backgrounds sit below it, UI stays legible. */
 #thought-field {
-  z-index: 1;
+  z-index: 70;
+  opacity: 0.72;
+}
+
+.grain {
+  opacity: 0.045;
+  z-index: 75;
 }
 
 /* Use the production Socra wordmark, including the correct inverted asset. */
@@ -184,6 +190,17 @@ footer > div {
   background: var(--launch-text);
 }
 
+.footer-logo-link {
+  display: block;
+  width: max-content;
+}
+
+.footer-logo {
+  display: block;
+  width: 150px;
+  height: auto;
+}
+
 .topbar.launch-contrast {
   color: #f8fafc;
 }
@@ -236,7 +253,13 @@ footer > div {
 .capability-orbit {
   background: color-mix(in srgb, var(--page) 82%, transparent);
   backdrop-filter: blur(10px);
-  padding-block: 9px;
+  padding: 13px 18px;
+  border-radius: 4px;
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--text) 9%, transparent);
+}
+
+.capability-two {
+  padding: 13px 18px;
 }
 
 .capability-one {
@@ -259,7 +282,74 @@ footer > div {
     width: 126px;
   }
 
+  .footer-logo {
+    width: 140px;
+  }
+
   .product {
     height: 190vh;
   }
+
+  .capability-orbit,
+  .capability-two {
+    padding: 12px 14px !important;
+  }
+
+  .capability-one {
+    top: 31%;
+    bottom: auto;
+  }
+
+  .capability-two {
+    top: auto;
+    bottom: 19%;
+  }
+
+  .capability-three {
+    top: auto;
+    bottom: 8%;
+  }
+}
+
+/* One accent system in both themes, with explicit hover contrast. */
+.topbar .enter-link,
+.plan-copy a,
+.plan-copy button,
+.launch .launch-cta {
+  background: var(--primary);
+  color: #11182b;
+  transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.topbar .enter-link:hover,
+.plan-copy a:hover,
+.launch .launch-cta:hover {
+  background: var(--primary-hover);
+  color: #ffffff;
+}
+
+[data-theme="dark"] .topbar .enter-link,
+[data-theme="dark"] .plan-copy a,
+[data-theme="dark"] .plan-copy button,
+[data-theme="dark"] .launch .launch-cta {
+  background: var(--primary);
+  color: #11182b;
+}
+
+[data-theme="dark"] .topbar .enter-link:hover,
+[data-theme="dark"] .plan-copy a:hover,
+[data-theme="dark"] .launch .launch-cta:hover {
+  background: var(--primary-hover);
+  color: #11182b;
+}
+
+.topbar.launch-contrast .enter-link,
+.topbar.launch-contrast .enter-link:hover {
+  background: var(--primary);
+  color: #11182b;
+}
+
+footer nav a:hover,
+[data-theme="dark"] footer nav a:hover {
+  color: var(--primary);
 }
