@@ -1,273 +1,61 @@
-const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const $ = (selector, scope = document) => scope.querySelector(selector);
-const $$ = (selector, scope = document) => [...scope.querySelectorAll(selector)];
-const aborter = new AbortController();
-const listenerOptions = { signal: aborter.signal };
-
-const trails = {
-  math: {
-    start: 'Derivatives still feel abstract.',
-    q1: 'What does slope tell you about a straight line?',
-    you: 'How quickly it rises or falls.',
-    q2: 'How could we measure that on a curve at one exact point?'
-  },
-  code: {
-    start: 'Recursion keeps tying my brain in knots.',
-    q1: 'What must every repeating process eventually do?',
-    you: 'Reach a place where it stops.',
-    q2: 'What could make each call move closer to that place?'
-  },
-  writing: {
-    start: 'My argument feels true, but not convincing.',
-    q1: 'What do you most want your reader to believe?',
-    you: 'That ambition needs social permission.',
-    q2: 'Which moment in your evidence makes that hardest to dismiss?'
-  }
-};
-
-function setupInterface() {
-  const menu = $('.menu-toggle');
-  const nav = $('.journey-nav');
-  const themeToggle = $('.theme-toggle');
-  const syncThemeToggle = () => {
-    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-    themeToggle?.setAttribute('aria-label', `Switch to ${dark ? 'light' : 'dark'} theme`);
-    const icon = themeToggle ? $('i', themeToggle) : null;
-    if (icon) icon.textContent = dark ? '☀' : '◐';
-    const themeMeta = $('meta[name="theme-color"]');
-    const canvasColor = getComputedStyle(document.documentElement).getPropertyValue('--canvas').trim();
-    if (themeMeta && canvasColor) themeMeta.setAttribute('content', canvasColor);
-  };
-  syncThemeToggle();
-  themeToggle?.addEventListener('click', () => {
-    const dark = document.documentElement.getAttribute('data-theme') === 'dark';
-    window.SocraTheme?.applyTheme(dark ? 'light' : 'dark');
-    syncThemeToggle();
-  }, listenerOptions);
-  menu?.addEventListener('click', () => {
-    const open = nav.classList.toggle('open');
-    menu.setAttribute('aria-expanded', String(open));
-  }, listenerOptions);
-  $$('.journey-nav a').forEach(link => link.addEventListener('click', () => {
-    nav.classList.remove('open');
-    menu?.setAttribute('aria-expanded', 'false');
-  }, listenerOptions));
-
-  $$('.trail-picker button').forEach(button => button.addEventListener('click', () => {
-    const data = trails[button.dataset.trail];
-    if (!data) return;
-    $$('.trail-picker button').forEach(item => {
-      item.classList.toggle('active', item === button);
-      item.setAttribute('aria-selected', String(item === button));
-    });
-    const targets = [['#trail-start', data.start], ['#trail-q1', data.q1], ['#trail-you', data.you], ['#trail-q2', data.q2]];
-    if (window.gsap && !reduced) {
-      gsap.to('.talk-node p', { opacity: 0, y: -5, duration: .18, stagger: .04, onComplete: () => {
-        targets.forEach(([selector, value]) => $(selector).textContent = value);
-        gsap.to('.talk-node p', { opacity: 1, y: 0, duration: .35, stagger: .05, ease: 'power2.out' });
-      }});
-    } else targets.forEach(([selector, value]) => $(selector).textContent = value);
-  }, listenerOptions));
-
-  if (!reduced && matchMedia('(pointer:fine)').matches && window.gsap) {
-    const pointer = $('.pointer');
-    addEventListener('pointermove', event => gsap.to(pointer, { x: event.clientX, y: event.clientY, duration: .2, ease: 'power2.out' }), listenerOptions);
-    $$('a,button,.talk-node,.plan-stop').forEach(element => {
-      element.addEventListener('pointerenter', () => pointer.classList.add('active'), listenerOptions);
-      element.addEventListener('pointerleave', () => pointer.classList.remove('active'), listenerOptions);
-    });
-    $$('.magnet').forEach(element => {
-      element.addEventListener('pointermove', event => {
-        const box = element.getBoundingClientRect();
-        gsap.to(element, { x: (event.clientX - box.left - box.width / 2) * .14, y: (event.clientY - box.top - box.height / 2) * .14, duration: .25 });
-      }, listenerOptions);
-      element.addEventListener('pointerleave', () => gsap.to(element, { x: 0, y: 0, duration: .65, ease: 'elastic.out(1,.35)' }), listenerOptions);
-    });
-  }
+/* Canvas UI is loaded as a browser-native CDN module; DOM remains accessible HTML. */
+let CanvasPoint;
+try {
+  ({ Point: CanvasPoint } = await import('https://cdn.jsdelivr.net/npm/@canvas-ui/core@2.0.0/+esm'));
+  document.documentElement.dataset.canvasUi = 'ready';
+} catch (error) {
+  CanvasPoint = class Point { constructor(x = 0, y = 0) { this.x = x; this.y = y; } };
+  document.documentElement.dataset.canvasUi = 'fallback';
 }
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const gsap = window.gsap, ScrollTrigger = window.ScrollTrigger;
+if (gsap && ScrollTrigger) gsap.registerPlugin(ScrollTrigger);
+const $ = (s, scope = document) => scope.querySelector(s);
+const $$ = (s, scope = document) => [...scope.querySelectorAll(s)];
+const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
 
-function setupThoughtField() {
-  const canvas = $('#thought-field');
-  if (!canvas || reduced) return;
-  const context = canvas.getContext('2d', { alpha: true });
-  let width = 0, height = 0, dpr = 1, frame = 0, last = 0;
-  let thread = '#383631', soft = 'rgba(56,54,49,.14)', cyan = '#668de8', orange = '#ff704d';
-  const nodes = Array.from({ length: 24 }, (_, index) => ({
-    x: .08 + ((index * 47) % 83) / 100,
-    y: .08 + ((index * 71) % 84) / 100,
-    phase: index * .77,
-    parent: index ? Math.max(0, index - 1 - (index % 4 === 0 ? 2 : 0)) : -1
-  }));
-  const ambient = Array.from({ length: innerWidth < 700 ? 26 : 44 }, (_, index) => ({
-    x: ((index * 37) % 97) / 100,
-    y: ((index * 61 + 13) % 97) / 100,
-    vx: ((index % 5) - 2) * .000018,
-    vy: (((index * 3) % 5) - 2) * .000014,
-    size: 1 + (index % 3) * .55
-  }));
-  const mouse = { x: -1000, y: -1000, active: false };
-
-  function readTheme() {
-    const styles = getComputedStyle(document.documentElement);
-    thread = styles.getPropertyValue('--thread').trim() || thread;
-    soft = styles.getPropertyValue('--thread-soft').trim() || soft;
-    cyan = styles.getPropertyValue('--cyan').trim() || cyan;
-    orange = styles.getPropertyValue('--orange').trim() || orange;
-  }
-  function resize() {
-    width = innerWidth; height = innerHeight; dpr = Math.min(devicePixelRatio || 1, 1.5);
-    canvas.width = Math.round(width * dpr); canvas.height = Math.round(height * dpr);
-    context.setTransform(dpr, 0, 0, dpr, 0, 0);
-  }
-  function draw(now) {
-    frame = requestAnimationFrame(draw);
-    if (document.hidden || now - last < 32) return;
-    last = now;
-    context.clearRect(0, 0, width, height);
-    const scrollMax = Math.max(1, document.documentElement.scrollHeight - innerHeight);
-    const progress = Math.min(1, scrollY / scrollMax);
-    const visibleCount = Math.max(2, Math.floor(2 + progress * (nodes.length - 2)));
-    const time = now * .00018;
-
-    ambient.forEach((particle, index) => {
-      particle.x = (particle.x + particle.vx + 1) % 1;
-      particle.y = (particle.y + particle.vy + 1) % 1;
-      let x = particle.x * width, y = particle.y * height;
-      if (mouse.active) {
-        const dx = x - mouse.x, dy = y - mouse.y, distance = Math.hypot(dx, dy) || 1;
-        if (distance < 145) {
-          const force = (145 - distance) / 145;
-          particle.x = Math.min(1, Math.max(0, particle.x + dx / distance * force * .004));
-          particle.y = Math.min(1, Math.max(0, particle.y + dy / distance * force * .004));
-          x = particle.x * width; y = particle.y * height;
-          context.beginPath(); context.moveTo(mouse.x, mouse.y); context.lineTo(x, y);
-          context.strokeStyle = soft; context.globalAlpha = force * .28; context.stroke(); context.globalAlpha = 1;
-        }
-      }
-      context.beginPath(); context.arc(x, y, particle.size, 0, Math.PI * 2);
-      context.fillStyle = index % 3 === 0 ? cyan : (index % 11 === 0 ? orange : thread);
-      context.globalAlpha = index % 3 === 0 ? .26 : (index % 11 === 0 ? .2 : .1);
-      context.fill(); context.globalAlpha = 1;
-    });
-
-    context.lineWidth = 1;
-    for (let index = 1; index < visibleCount; index++) {
-      const node = nodes[index], parent = nodes[node.parent];
-      const x = node.x * width + Math.sin(time * 3 + node.phase) * 8;
-      const y = node.y * height + Math.cos(time * 2 + node.phase) * 7;
-      const px = parent.x * width + Math.sin(time * 3 + parent.phase) * 8;
-      const py = parent.y * height + Math.cos(time * 2 + parent.phase) * 7;
-      context.beginPath();
-      context.moveTo(px, py);
-      context.quadraticCurveTo((px + x) / 2 + Math.sin(node.phase) * 30, (py + y) / 2, x, y);
-      context.strokeStyle = soft;
-      context.globalAlpha = .16;
-      context.stroke();
-      context.globalAlpha = 1;
-    }
-    for (let index = 0; index < visibleCount; index++) {
-      const node = nodes[index];
-      const x = node.x * width + Math.sin(time * 3 + node.phase) * 8;
-      const y = node.y * height + Math.cos(time * 2 + node.phase) * 7;
-      context.beginPath(); context.arc(x, y, index === visibleCount - 1 ? 4.5 : 2.1, 0, Math.PI * 2);
-      context.fillStyle = index === visibleCount - 1 ? (index % 2 ? cyan : orange) : thread;
-      context.globalAlpha = index === visibleCount - 1 ? .68 : .1;
-      context.fill(); context.globalAlpha = 1;
-    }
-  }
-  readTheme(); resize(); frame = requestAnimationFrame(draw);
-  addEventListener('resize', resize, listenerOptions);
-  addEventListener('pointermove', event => { mouse.x = event.clientX; mouse.y = event.clientY; mouse.active = true; }, listenerOptions);
-  document.documentElement.addEventListener('pointerleave', () => { mouse.active = false; }, listenerOptions);
-  new MutationObserver(readTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'style'] });
-  addEventListener('pagehide', () => cancelAnimationFrame(frame), { once: true });
+function intro() {
+  if (!gsap) { $('.loading-screen')?.remove(); return; }
+  gsap.timeline({ defaults: { ease: 'power3.out' } }).to('.loading-screen>i b', { width: '100%', duration: .75 }).to('.loader-mark', { scale: 1.12, duration: .35 }, '-=.15').to('.loading-screen', { yPercent: -100, duration: .9, ease: 'power4.inOut' }).from('.site-header', { y: -90, duration: .7 }, '-=.35').from('.hero-line', { yPercent: 115, opacity: 0, stagger: .1, duration: .9 }, '-=.5').from('.hero .eyebrow,.hero-sub,.question-orb,.scroll-cue', { opacity: 0, y: 22, stagger: .08, duration: .6 }, '-=.55').set('.loading-screen', { display: 'none' });
 }
-
-function preparePaths() {
-  $$('svg path').forEach(path => {
-    if (typeof path.getTotalLength !== 'function') return;
-    const length = path.getTotalLength();
-    path.style.strokeDasharray = `${length}`;
-    path.style.strokeDashoffset = `${length}`;
-  });
+function cursor() {
+  const el = $('.cursor'); if (!el || innerWidth < 800 || reduceMotion || !gsap) return;
+  const x = gsap.quickTo(el, 'x', { duration: .24, ease: 'power3' }), y = gsap.quickTo(el, 'y', { duration: .24, ease: 'power3' });
+  addEventListener('pointermove', e => { x(e.clientX); y(e.clientY); });
+  $$('a,button,.principle-row').forEach(target => { target.addEventListener('mouseenter', () => gsap.to(el, { scale: 1.7, duration: .25 })); target.addEventListener('mouseleave', () => gsap.to(el, { scale: 1, duration: .25 })); });
+  $$('.magnetic').forEach(target => { target.addEventListener('pointermove', e => { const b = target.getBoundingClientRect(); gsap.to(target, { x: (e.clientX - b.left - b.width / 2) * .18, y: (e.clientY - b.top - b.height / 2) * .18, duration: .35 }); }); target.addEventListener('pointerleave', () => gsap.to(target, { x: 0, y: 0, duration: .6, ease: 'elastic.out(1,.35)' })); });
 }
-
-function setupMotion() {
-  if (!window.gsap || !window.ScrollTrigger || reduced) return;
-  gsap.registerPlugin(ScrollTrigger);
-  preparePaths();
-
-  gsap.timeline({ defaults: { ease: 'power4.out' } })
-    .to('.title-row i', { y: 0, duration: 1.2, stagger: .11 })
-    .from('.overline', { opacity: 0, x: -25, duration: .7 }, .4)
-    .from('.arrival-note', { opacity: 0, y: 20, duration: .7 }, .62)
-    .from('.arrival-question', { opacity: 0, scale: .4, rotation: -30, duration: 1.1, ease: 'back.out(1.5)' }, .25)
-    .from('.subject-cloud span', { opacity: 0, scale: .5, stagger: .08, duration: .5 }, .7);
-
-  gsap.to('.arrival-question', { yPercent: 125, rotation: 80, scale: .65, ease: 'none', scrollTrigger: { trigger: '.arrival', start: 'top top', end: 'bottom top', scrub: .8 } });
-  gsap.to('.arrival-copy', { yPercent: -18, opacity: .1, filter: 'blur(8px)', ease: 'none', scrollTrigger: { trigger: '.arrival', start: '45% top', end: 'bottom top', scrub: .7 } });
-
-  const fork = gsap.timeline({ scrollTrigger: { trigger: '.fork', start: 'top top', end: 'bottom bottom', pin: '.fork-pin', pinSpacing: false, scrub: .65, anticipatePin: 1 } });
-  fork.fromTo('.route-short path', { strokeDashoffset: () => $('.route-short path').getTotalLength() }, { strokeDashoffset: 0, duration: .16, ease: 'none' })
-    .to('.route-result', { opacity: 1, duration: .08 }, .13)
-    .to('.shortcut-copy', { opacity: 1, y: 0, duration: .1 }, .15)
-    .to('.route-short', { opacity: .14, filter: 'blur(4px)', duration: .12 }, .3)
-    .to('.shortcut-copy', { opacity: .08, duration: .1 }, .3)
-    .fromTo('.main-route', { strokeDashoffset: () => $('.main-route').getTotalLength() }, { strokeDashoffset: 0, duration: .42, ease: 'none' }, .33)
-    .to('.route-socra .route-stop', { opacity: 1, scale: 1, stagger: .055, duration: .09, ease: 'back.out(1.8)' }, .36)
-    .to('.route-socra .branch', { strokeDashoffset: 0, opacity: 1, stagger: .07, duration: .18 }, .52)
-    .to('.side-thought', { opacity: 1, y: -8, stagger: .08, duration: .1 }, .58)
-    .to('.journey-copy', { opacity: 1, y: 0, duration: .15 }, .68)
-    .to('.fork-prompt', { scale: .82, opacity: .35, duration: .12 }, .76);
-
-  const dialogue = gsap.timeline({ scrollTrigger: { trigger: '.dialogue', start: 'top top', end: 'bottom bottom', pin: '.dialogue-pin', pinSpacing: false, scrub: .65, anticipatePin: 1 } });
-  dialogue.fromTo('.conversation-line', { strokeDashoffset: () => $('.conversation-line').getTotalLength() }, { strokeDashoffset: 0, duration: .72, ease: 'none' })
-    .to('.talk-node', { opacity: 1, y: 0, scale: 1, stagger: .14, duration: .16, ease: 'back.out(1.4)' }, .06)
-    .to('.dialogue-progress i', { backgroundColor: 'var(--yellow)', stagger: .16, duration: .16 }, .15)
-    .to('.aha-node', { opacity: 1, scale: 1, rotation: 360, duration: .22, ease: 'back.out(1.8)' }, .74)
-    .to('.conversation-map', { scale: 1.06, duration: .15 }, .84);
-
-  gsap.to('.talk-node', { y: index => index % 2 ? -7 : 7, duration: 2.5, yoyo: true, repeat: -1, stagger: .3, ease: 'sine.inOut' });
-
-  const model = gsap.timeline({ scrollTrigger: { trigger: '.model', start: 'top top', end: 'bottom bottom', pin: '.model-pin', pinSpacing: false, scrub: .65, anticipatePin: 1 } });
-  model.to('.model-seed', { boxShadow: '0 0 0 42vw var(--thread-soft)', scale: 2, duration: .25 })
-    .from('.model-word', { x: index => index % 2 ? 120 : -120, y: index => index === 4 ? -100 : 60, scale: .5, duration: .35, stagger: .05 }, .1)
-    .to('.model-word', { opacity: 1, duration: .25, stagger: .05 }, .1)
-    .to('.model-word', { x: index => index % 2 ? -innerWidth * .28 : innerWidth * .28, y: index => index < 2 ? innerHeight * .24 : -innerHeight * .22, scale: .25, opacity: 0, duration: .35, stagger: .025 }, .5)
-    .to('.model-center', { opacity: 1, scale: 1, duration: .35, ease: 'power3.out' }, .58)
-    .from('.model-center strong', { letterSpacing: '.15em', filter: 'blur(12px)', duration: .28 }, .62);
-
-  const product = gsap.timeline({ scrollTrigger: { trigger: '.product', start: 'top top', end: 'bottom bottom', pin: '.product-stage', pinSpacing: false, scrub: .65, anticipatePin: 1 } });
-  product.to('.socra-interface', { opacity: .78, scale: .7, rotation: -2, duration: .18, ease: 'power2.out' }, 0)
-    .to('.product-copy', { y: -innerHeight * .24, opacity: 0, filter: 'blur(8px)', duration: .24 }, .12)
-    .to('.socra-interface', { opacity: 1, scale: .92, top: '54%', rotation: -1, duration: .34, ease: 'power3.out' }, .16)
-    .from('.ui-message', { opacity: 0, y: 20, stagger: .08, duration: .18 }, .36)
-    .to('.capability-orbit', { opacity: 1, y: 0, stagger: .08, duration: .2 }, .55)
-    .to('.socra-interface', { scale: .84, rotation: 0, duration: .22, ease: 'power2.inOut' }, .78);
-
-  gsap.to('.plan-line i', { height: '100%', ease: 'none', scrollTrigger: { trigger: '.plan-journey', start: 'top 65%', end: 'bottom 45%', scrub: true } });
-  $$('.plan-stop').forEach((stop, index) => gsap.from(stop.querySelector('.plan-copy'), { opacity: 0, x: index % 2 ? 70 : -70, duration: .8, ease: 'power3.out', scrollTrigger: { trigger: stop, start: 'top 72%' } }));
-  gsap.to('.launch-thought', { rotation: 110, scale: 1.28, ease: 'none', scrollTrigger: { trigger: '.launch', start: 'top bottom', end: 'bottom bottom', scrub: 1 } });
-  gsap.from('.launch h2', { scale: .55, opacity: 0, filter: 'blur(15px)', duration: 1.1, scrollTrigger: { trigger: '.launch', start: 'top 60%' } });
-
-  const setTopbarContrast = active => $('.topbar').classList.toggle('invert', active);
-  ScrollTrigger.create({ trigger: '.dialogue', start: 'top top', end: 'bottom bottom', onEnter: () => setTopbarContrast(true), onEnterBack: () => setTopbarContrast(true), onLeave: () => setTopbarContrast(false), onLeaveBack: () => setTopbarContrast(false) });
-  const setLaunchContrast = active => $('.topbar').classList.toggle('launch-contrast', active);
-  ScrollTrigger.create({
-    trigger: '.launch',
-    start: 'top top',
-    end: 'max',
-    onEnter: () => { setTopbarContrast(true); setLaunchContrast(true); },
-    onEnterBack: () => { setTopbarContrast(true); setLaunchContrast(true); },
-    onLeaveBack: () => { setTopbarContrast(false); setLaunchContrast(false); }
-  });
-
-  ScrollTrigger.create({ start: 0, end: 'max', onUpdate: self => gsap.set('.journey-meter b', { width: `${self.progress * 100}%` }) });
+class ThoughtField {
+  constructor(canvas) { this.canvas = canvas; this.ctx = canvas.getContext('2d'); this.nodes = []; this.pointer = new CanvasPoint(-999, -999); this.active = true; this.resize = this.resize.bind(this); this.render = this.render.bind(this); addEventListener('resize', this.resize); addEventListener('pointermove', e => { this.pointer.x = e.clientX; this.pointer.y = e.clientY; }); document.addEventListener('visibilitychange', () => this.active = !document.hidden); this.resize(); this.render(); }
+  resize() { const dpr = Math.min(devicePixelRatio, 2), box = this.canvas.getBoundingClientRect(); this.w = box.width; this.h = box.height; this.canvas.width = this.w * dpr; this.canvas.height = this.h * dpr; this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0); const count = clamp(Math.round(this.w / 34), 24, 56); this.nodes = Array.from({ length: count }, () => ({ p: new CanvasPoint(Math.random() * this.w, Math.random() * this.h), vx: (Math.random() - .5) * .18, vy: (Math.random() - .5) * .18, r: Math.random() * 2 + .7 })); }
+  burst(x = this.w * .75, y = this.h * .3) { this.nodes.forEach(n => { const a = Math.atan2(n.p.y - y, n.p.x - x); n.vx += Math.cos(a) * 1.8; n.vy += Math.sin(a) * 1.8; }); }
+  render() { requestAnimationFrame(this.render); if (!this.active || reduceMotion) return; const c = this.ctx; c.clearRect(0, 0, this.w, this.h); for (let i = 0; i < this.nodes.length; i++) { const n = this.nodes[i], dx = n.p.x - this.pointer.x, dy = n.p.y - this.pointer.y, d = Math.hypot(dx, dy); if (d < 150) { n.vx += dx / Math.max(d, 1) * .012; n.vy += dy / Math.max(d, 1) * .012; } n.vx *= .985; n.vy *= .985; n.p.x += n.vx; n.p.y += n.vy; if (n.p.x < -20) n.p.x = this.w + 20; if (n.p.x > this.w + 20) n.p.x = -20; if (n.p.y < -20) n.p.y = this.h + 20; if (n.p.y > this.h + 20) n.p.y = -20; c.beginPath(); c.arc(n.p.x, n.p.y, n.r, 0, Math.PI * 2); c.fillStyle = i % 8 ? 'rgba(240,238,231,.42)' : '#c7ff32'; c.fill(); for (let j = i + 1; j < this.nodes.length; j++) { const m = this.nodes[j], distance = Math.hypot(n.p.x - m.p.x, n.p.y - m.p.y); if (distance < 125) { c.beginPath(); c.moveTo(n.p.x, n.p.y); c.lineTo(m.p.x, m.p.y); c.strokeStyle = `rgba(132,143,190,${(1 - distance / 125) * .2})`; c.stroke(); } } } }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  setupInterface();
-  setupThoughtField();
-  setupMotion();
-});
-addEventListener('pagehide', () => aborter.abort(), { once: true });
+function signalField(canvas) {
+  const ctx = canvas.getContext('2d'); let width, height, progress = 0;
+  const draw = () => { ctx.clearRect(0, 0, width, height); ctx.strokeStyle = 'rgba(9,10,12,.13)'; ctx.lineWidth = 1; for (let x = 0; x < width; x += 55) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, height); ctx.stroke(); } for (let y = 0; y < height; y += 55) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke(); } const points = Array.from({ length: 26 }, (_, i) => new CanvasPoint((i / 25) * width, height * (.68 - .3 * (i / 25)) + Math.sin(i * 1.17) * height * .085)); ctx.beginPath(); points.forEach((p, i) => { if (i > progress * 25 + 1) return; if (!i) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y); }); ctx.strokeStyle = '#3f5cff'; ctx.lineWidth = 3; ctx.stroke(); points.forEach((p, i) => { if (i > progress * points.length) return; ctx.beginPath(); ctx.arc(p.x, p.y, i === 25 ? 8 : 3, 0, Math.PI * 2); ctx.fillStyle = i === 25 ? '#090a0c' : '#3f5cff'; ctx.fill(); }); };
+  const resize = () => { const dpr = Math.min(devicePixelRatio, 2), box = canvas.getBoundingClientRect(); width = box.width; height = box.height; canvas.width = width * dpr; canvas.height = height * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); draw(); }; addEventListener('resize', resize); resize();
+  if (gsap) ScrollTrigger.create({ trigger: '.signals', start: 'top 75%', end: 'bottom 40%', scrub: true, onUpdate: self => { progress = self.progress; draw(); } }); else { progress = 1; draw(); }
+}
+function scrollMotion() {
+  if (!gsap || reduceMotion) return;
+  $$('.manifesto-line').forEach((line, i) => gsap.from(line, { xPercent: i % 2 ? 18 : -18, opacity: .1, scrollTrigger: { trigger: line, start: 'top 92%', end: 'top 45%', scrub: 1 } }));
+  gsap.from('.manifesto-note', { y: 100, opacity: 0, scrollTrigger: { trigger: '.manifesto-note', start: 'top 90%', end: 'top 60%', scrub: 1 } });
+  const journey = gsap.timeline({ scrollTrigger: { trigger: '.journey', start: 'top top', end: 'bottom bottom', scrub: 1 } });
+  journey.to('.journey-title', { opacity: .12, scale: .84, transformOrigin: 'left center', duration: .7 }).to('.path-progress', { strokeDashoffset: 0, duration: 4 }, 0).to('.journey-progress b', { width: '100%', duration: 4 }, 0).to('.card-ask', { opacity: 1, scale: 1, rotate: -3, duration: .5 }, .1).to('.card-probe', { opacity: 1, scale: 1, rotate: 2, duration: .5 }, 1).to('.note-a', { opacity: 1, duration: .35 }, 1.45).to('.card-link', { opacity: 1, scale: 1, rotate: -2, duration: .5 }, 2).to('.note-b', { opacity: 1, duration: .35 }, 2.5).to('.card-own', { opacity: 1, scale: 1, rotate: 1, duration: .55 }, 3).to('.thought-card:not(.card-own)', { opacity: .38, filter: 'blur(2px)', duration: .45 }, 3.6);
+  gsap.to('.product-shell', { rotateX: 0, scale: 1, ease: 'none', scrollTrigger: { trigger: '.product-shell', start: 'top 90%', end: 'center center', scrub: 1 } });
+  gsap.from('.chat-block,.document-panel>*', { y: 35, opacity: 0, stagger: .06, scrollTrigger: { trigger: '.product-shell', start: 'top 55%' } });
+  gsap.from('.workspace-features article', { y: 80, opacity: 0, stagger: .14, scrollTrigger: { trigger: '.workspace-features', start: 'top 80%' } });
+  gsap.from('.principle-row', { xPercent: -10, opacity: 0, stagger: .12, scrollTrigger: { trigger: '.principles', start: 'top 65%' } });
+  gsap.to('.final-orbit', { scale: 1.35, rotate: 210, scrollTrigger: { trigger: '.final-cta', start: 'top bottom', end: 'bottom top', scrub: 1 } });
+  gsap.from('.final-cta h2', { scale: .6, opacity: 0, scrollTrigger: { trigger: '.final-cta', start: 'top 70%', end: 'center 55%', scrub: 1 } });
+}
+function controls(field) {
+  const menu = $('.menu-button'), panel = $('.mobile-menu'); menu?.addEventListener('click', () => { const open = menu.getAttribute('aria-expanded') !== 'true'; menu.setAttribute('aria-expanded', String(open)); panel.classList.toggle('open', open); });
+  $$('.mobile-menu a').forEach(link => link.addEventListener('click', () => { menu?.setAttribute('aria-expanded', 'false'); panel?.classList.remove('open'); }));
+  $('.question-orb')?.addEventListener('click', e => field?.burst(e.clientX, e.clientY)); if (gsap && !reduceMotion) gsap.to('.question-orb', { x: 12, y: -18, duration: 3.2, repeat: -1, yoyo: true, ease: 'sine.inOut' });
+}
+const field = $('#question-canvas') ? new ThoughtField($('#question-canvas')) : null;
+if ($('#signal-canvas')) signalField($('#signal-canvas'));
+cursor(); controls(field); scrollMotion();
+if (document.fonts?.ready) document.fonts.ready.then(intro); else addEventListener('load', intro, { once: true });

@@ -3,163 +3,50 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Socra is an AI learning partner that helps you reach understanding through questions, connections, and your own reasoning.">
-  <meta name="theme-color" content="#FAF8F5">
-  <title>Socra — Find your way there</title>
-  <link rel="icon" href="/assets/favicon.ico">
-  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
-  <script src="/js/theme.js"></script>
-  <link rel="stylesheet" href="/css/style.css?v=20260807c">
-  <link rel="stylesheet" href="/css/home.css?v=20260807c">
-  <link rel="stylesheet" href="/css/home-responsive.css?v=20260807c">
+  <meta name="description" content="Socra is the AI thinking partner that asks better questions, helps you make connections, and turns learning into understanding.">
+  <meta name="theme-color" content="#090a0c">
+  <title>Socra — Think your way through</title>
+  <link rel="icon" href="/assets/favicon.ico"><link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Manrope:wght@400;500;600;700&family=Unbounded:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/home.css?v=20260822b"><link rel="stylesheet" href="/css/home-responsive.css?v=20260822b">
 </head>
-<body class="home-page">
-  <a class="skip-link" href="#journey">Skip to experience</a>
-  <canvas id="thought-field" aria-hidden="true"></canvas>
-  <div class="grain" aria-hidden="true"></div>
-  <div class="pointer" aria-hidden="true"><i></i></div>
-
-  <header class="topbar">
-    <a class="brand" href="#arrival" aria-label="Socra home"><img class="brand-logo brand-logo-light" src="/assets/full-logo.png" alt="Socra"><img class="brand-logo brand-logo-dark" src="/assets/inverted-full-logo.png" alt="Socra"></a>
-    <div class="journey-meter" aria-hidden="true"><span>question</span><i><b></b></i><span>understanding</span></div>
-    <div class="top-actions"><button class="theme-toggle" type="button"><span>Theme</span><i>◐</i></button><a class="enter-link magnet" href="/auth.html"><span>Enter Socra</span><b>↗</b></a></div>
-    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="journey-nav"><span></span><span></span></button>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a><div class="noise" aria-hidden="true"></div><div class="cursor" aria-hidden="true"><span></span></div>
+  <div class="loading-screen" aria-live="polite"><div class="loader-mark">s<span>?</span></div><p>calibrating curiosity</p><i><b></b></i></div>
+  <header class="site-header">
+    <a class="wordmark magnetic" href="#top" aria-label="Socra home"><span class="wordmark-glyph">s</span><strong>socra</strong></a>
+    <div class="header-status"><i></i><span>thinking partner / online</span></div>
+    <nav aria-label="Primary navigation"><a href="#method">Method</a><a href="#workspace">Workspace</a><a href="/pricing.html">Plans</a></nav>
+    <a class="header-cta magnetic" href="/auth.html"><span>Open Socra</span><i>↗</i></a>
+    <button class="menu-button" type="button" aria-expanded="false" aria-controls="mobile-menu"><span></span><span></span><span class="sr-only">Menu</span></button>
   </header>
-
-  <nav class="journey-nav" id="journey-nav" aria-label="Experience navigation">
-    <a href="#fork"><span>01</span> The fork</a>
-    <a href="#dialogue"><span>02</span> The conversation</a>
-    <a href="#model"><span>03</span> The mind</a>
-    <a href="#plans"><span>04</span> Plans</a>
-  </nav>
-
-  <main id="journey">
-    <section class="arrival" id="arrival">
-      <div class="arrival-question" aria-hidden="true"><span>?</span></div>
-      <div class="arrival-copy">
-        <p class="overline">Meet Socra, your thinking partner</p>
-        <h1 aria-label="What if the answer isn't the point?">
-          <span class="title-row row-one"><i>What if</i></span>
-          <span class="title-row row-two"><i>the answer</i></span>
-          <span class="title-row row-three"><i>isn’t the point?</i></span>
-        </h1>
-        <p class="arrival-note">Most AI takes you straight to the destination. Socra helps you find your own way there.</p>
-      </div>
-      <div class="start-trail"><span>Follow the thought</span><i><b></b></i></div>
-      <div class="subject-cloud" aria-hidden="true"><span>algebra</span><span>essays</span><span>code</span><span>science</span><span>ideas</span></div>
+  <div class="mobile-menu" id="mobile-menu"><a href="#method">Method</a><a href="#workspace">Workspace</a><a href="/pricing.html">Plans</a><a href="/auth.html">Open Socra ↗</a></div>
+  <main id="main">
+    <section class="hero" id="top">
+      <canvas id="question-canvas" aria-hidden="true"></canvas><div class="hero-coordinate mono">36.7783° N<br>119.4179° W</div><div class="hero-index mono">A thinking environment<br>for curious minds</div>
+      <div class="hero-copy"><p class="eyebrow"><span>01</span> Intelligence should feel like discovery</p><h1><span class="hero-line">DON’T JUST</span><span class="hero-line outline">GET THE</span><span class="hero-line shift">ANSWER.</span></h1><div class="hero-sub"><p>Socra is the AI that helps you <em>think your way there.</em> It questions, connects, and challenges—until the idea becomes yours.</p><a class="round-link magnetic" href="/auth.html"><span>Begin<br>with a question</span><i>↗</i></a></div></div>
+      <button class="question-orb" type="button" aria-label="Disturb the thought field"><span>?</span><i>move me</i></button><div class="scroll-cue mono"><span>scroll to investigate</span><i></i></div>
     </section>
-
-    <section class="fork" id="fork">
-      <div class="fork-pin">
-        <p class="scene-label">One question. Two journeys.</p>
-        <div class="fork-prompt"><span>You ask</span><strong>Why does this work?</strong></div>
-
-        <div class="route route-short">
-          <div class="route-name"><span>Regular AI</span><small>the shortcut</small></div>
-          <svg viewBox="0 0 900 180" preserveAspectRatio="none" aria-hidden="true"><path d="M40 90 C260 90 580 90 850 90"/></svg>
-          <div class="route-stop stop-answer"><i></i><span>Answer</span></div>
-          <p class="route-result">Conversation over.</p>
-        </div>
-
-        <div class="route route-socra">
-          <div class="route-name"><span>Socra</span><small>the way through</small></div>
-          <svg viewBox="0 0 900 260" preserveAspectRatio="none" aria-hidden="true">
-            <path class="main-route" d="M40 130 C150 130 170 55 285 80 S410 205 525 165 S690 50 850 115"/>
-            <path class="branch branch-a" d="M285 80 C320 20 390 18 430 48"/>
-            <path class="branch branch-b" d="M525 165 C565 230 650 238 705 198"/>
-          </svg>
-          <div class="route-stop stop-question"><i></i><span>Question</span></div>
-          <div class="route-stop stop-discovery"><i></i><span>Discovery</span></div>
-          <div class="route-stop stop-connection"><i></i><span>Connection</span></div>
-          <div class="route-stop stop-understanding"><i></i><span>Understanding</span></div>
-          <div class="side-thought thought-a">Wait—I’ve seen this pattern before.</div>
-          <div class="side-thought thought-b">So that must mean…</div>
-        </div>
-
-        <div class="fork-caption"><p class="shortcut-copy">Useful now.<br><span>Easy to lose.</span></p><p class="journey-copy">Built by you.<br><span>Ready to use again.</span></p></div>
-      </div>
+    <section class="manifesto" id="method">
+      <div class="manifesto-tag mono">THE PROBLEM / 001</div><p class="manifesto-line">AI got very good at</p><p class="manifesto-line display">finishing thoughts.</p><p class="manifesto-line right">We’re interested in what</p><p class="manifesto-line display right accent">starts them.</p><div class="manifesto-note"><span>Because the answer you receive disappears.</span><strong>The answer you build changes how you see.</strong></div>
     </section>
-
-    <section class="dialogue" id="dialogue">
-      <div class="dialogue-pin">
-        <div class="dialogue-intro">
-          <p class="scene-label">Don’t watch Socra think.</p>
-          <h2>Think <span>with it.</span></h2>
-          <p>Pick a trail. Each conversation starts from what you already know.</p>
-          <div class="trail-picker" role="tablist" aria-label="Choose a learning trail">
-            <button class="active" role="tab" aria-selected="true" data-trail="math">A changing curve</button>
-            <button role="tab" aria-selected="false" data-trail="code">A recursive loop</button>
-            <button role="tab" aria-selected="false" data-trail="writing">A stronger argument</button>
-          </div>
-        </div>
-
-        <div class="conversation-map" aria-live="polite">
-          <svg viewBox="0 0 720 720" aria-hidden="true"><path class="conversation-line" d="M360 75 C170 125 165 275 335 305 S555 420 390 490 S190 585 330 660"/></svg>
-          <div class="talk-node node-start"><small>You</small><p id="trail-start">Derivatives still feel abstract.</p></div>
-          <div class="talk-node node-q1"><small>Socra</small><p id="trail-q1">What does slope tell you about a straight line?</p></div>
-          <div class="talk-node node-you"><small>You</small><p id="trail-you">How quickly it rises or falls.</p></div>
-          <div class="talk-node node-q2"><small>Socra</small><p id="trail-q2">How could we measure that on a curve at one point?</p></div>
-          <div class="aha-node"><i>✦</i><span>Your next thought</span></div>
-        </div>
-        <div class="dialogue-progress" aria-hidden="true"><span>listen</span><i></i><span>notice</span><i></i><span>connect</span><i></i><span>explain</span></div>
-      </div>
+    <section class="journey" aria-label="How Socra thinks with you"><div class="journey-sticky">
+      <div class="journey-head"><p class="eyebrow"><span>02</span> One question / many possible routes</p><span class="mono step-readout">01 — 04</span></div><div class="journey-title"><span>THINKING ISN’T</span><strong>A STRAIGHT LINE.</strong></div>
+      <div class="thought-stage"><svg class="thought-path" viewBox="0 0 1200 650" fill="none" aria-hidden="true"><path class="path-base" d="M60 310 C190 310 185 110 355 155 S450 500 625 415 S735 110 915 210 S1050 510 1160 380"/><path class="path-progress" d="M60 310 C190 310 185 110 355 155 S450 500 625 415 S735 110 915 210 S1050 510 1160 380"/></svg>
+        <article class="thought-card card-ask"><small>YOU / 00:01</small><p>Why does this make sense?</p><i>01</i></article><article class="thought-card card-probe"><small>SOCRA / 00:03</small><p>What do you already notice?</p><i>02</i></article><article class="thought-card card-link"><small>YOU / 00:18</small><p>It connects to something I learned before.</p><i>03</i></article><article class="thought-card card-own"><small>YOUR MODEL / 01:42</small><p>I can explain it now.</p><i>04</i></article><div class="side-note note-a mono">A useful struggle</div><div class="side-note note-b mono">New connection detected</div>
+      </div><div class="journey-foot"><p>Socra never takes the pencil out of your hand.</p><div class="journey-progress"><i><b></b></i><span class="mono">question → ownership</span></div></div>
+    </div></section>
+    <section class="workspace" id="workspace">
+      <div class="workspace-intro"><p class="eyebrow"><span>03</span> Your mind, with more room</p><h2>A workspace<br>that <em>thinks back.</em></h2><p>Dialogue on one side. A living document on the other. Every useful connection kept in view.</p></div>
+      <div class="product-shell"><div class="shell-glow"></div><div class="shell-top"><div class="mini-logo">s</div><span class="mono">LIGHT / REFRACTION / ACTIVE</span><div class="shell-dots"><i></i><i></i></div></div><div class="shell-body"><aside><b>+</b><i class="active"></i><i></i><i></i><span></span><i></i></aside><div class="dialog-panel"><div class="panel-label mono">CONVERSATION 08</div><div class="chat-block chat-you"><small>YOU</small><p>I think the light slows down when it enters glass.</p></div><div class="chat-block chat-socra"><small>SOCRA</small><p>If speed changes, what might happen to its direction?</p></div><div class="thinking-input"><span>Share your next thought…</span><i>↑</i></div></div><div class="document-panel"><div class="panel-label mono">LIVING DOCUMENT / AUTO-SAVED</div><small>PHYSICS / OPTICS</small><h3>Why light bends</h3><p>When light crosses into a new medium, its speed changes. That change makes the path bend toward or away from the normal…</p><div class="document-lines"><i></i><i></i><i></i></div><div class="connection-chip">✦ connection found</div></div></div></div>
+      <div class="workspace-features"><article><span>01</span><h3>Adaptive dialogue</h3><p>Questions respond to the shape of your thinking—not a generic lesson plan.</p></article><article><span>02</span><h3>Living documents</h3><p>Your reasoning becomes notes you understand because you helped make them.</p></article><article><span>03</span><h3>Cognitive portfolio</h3><p>Track the way your reasoning, originality, and confidence evolve over time.</p></article></div>
     </section>
-
-    <section class="model" id="model">
-      <div class="model-pin">
-        <div class="model-seed" aria-hidden="true"></div>
-        <div class="model-word word-understand"><span>Understanding</span><small>not copied—constructed</small></div>
-        <div class="model-word word-reason"><span>Reasoning</span><small>steps you can see</small></div>
-        <div class="model-word word-create"><span>Creativity</span><small>more paths to try</small></div>
-        <div class="model-word word-remember"><span>Retention</span><small>ideas that return</small></div>
-        <div class="model-word word-independent"><span>Independence</span><small>ready without the AI</small></div>
-        <div class="model-center"><p>One question becomes</p><strong>a mental model.</strong><span>Connections make knowledge yours.</span></div>
-      </div>
-    </section>
-
-    <section class="product" id="product">
-      <div class="product-stage">
-        <div class="product-copy"><p class="scene-label">A place for thoughts to grow</p><h2>From first question<br>to lasting knowledge.</h2></div>
-        <div class="socra-interface">
-          <div class="interface-bar"><span class="mini-brand">s</span><p>Physics · Why does light bend?</p><b>SRM-1-dev</b></div>
-          <div class="interface-body">
-            <aside><span class="active">Conversation</span><span>Documents</span><span>Progress</span></aside>
-            <div class="interface-chat"><div class="ui-message student">I think it slows down in glass?</div><div class="ui-message guide">That’s a useful start. What might slowing down change about its path?</div><div class="ui-composer">Share your next thought… <i>↑</i></div></div>
-            <div class="interface-notes"><small>YOUR EXPLANATION</small><h3>Refraction</h3><p>When light enters a different medium…</p><i></i><i></i><div class="insight-tag">Connection found ✦</div></div>
-          </div>
-        </div>
-        <div class="capability-orbit capability-one"><span>Adaptive dialogue</span><small>Questions that respond to you</small></div>
-        <div class="capability-orbit capability-two"><span>Thinking workspace</span><small>Ideas become clear documents</small></div>
-        <div class="capability-orbit capability-three"><span>Cognitive portfolio</span><small>See how your mind grows</small></div>
-      </div>
-    </section>
-
-    <section class="plans" id="plans">
-      <div class="plans-intro"><p class="scene-label">Choose how far you want to go</p><h2>Every path starts free.</h2><p>Move between plans when your learning needs more room.</p></div>
-      <div class="plan-journey">
-        <div class="plan-line" aria-hidden="true"><i></i></div>
-        <article class="plan-stop plan-doxa"><div class="plan-node"><span>01</span></div><div class="plan-copy"><small>DOXA · COMMON BELIEF</small><h3>Begin</h3><p>Explore Socratic learning with limited chats, one workspace document, and the basic model.</p><div class="plan-price"><strong>Free</strong></div><a href="/auth.html">Start here <i>↗</i></a></div></article>
-        <article class="plan-stop plan-elenchus"><div class="plan-node"><span>02</span></div><div class="plan-copy"><small>ELENCHUS · EXAMINATION</small><h3>Go deeper</h3><p>Unlimited chats, ten documents, better model quality, and cognitive metrics.</p><div class="plan-price"><strong>$8</strong><span>/month</span><small>$79 annually</small></div><button disabled>Coming soon</button></div></article>
-        <article class="plan-stop plan-nous"><div class="plan-node"><span>03</span></div><div class="plan-copy"><small>NOUS · UNDERSTANDING</small><h3>Keep building</h3><p>Unlimited chats and documents, the full cognitive portfolio, and best model quality.</p><div class="plan-price"><strong>$15</strong><span>/month</span><small>$149 annually</small></div><button disabled>Coming soon</button></div></article>
-      </div>
-      <a class="compare-link" href="/pricing.html">Compare every detail <span>→</span></a>
-    </section>
-
-    <section class="launch">
-      <div class="launch-thought" aria-hidden="true"><span>?</span><i></i><i></i><i></i></div>
-      <p>The answer is not the finish line.</p>
-      <h2>Find your way<br><span>to the idea.</span></h2>
-      <a class="launch-cta magnet" href="/auth.html"><span>Start thinking with Socra</span><i>↗</i></a>
-    </section>
+    <section class="signals"><canvas id="signal-canvas" aria-hidden="true"></canvas><div class="signals-copy"><p class="eyebrow"><span>04</span> Measure what usually stays invisible</p><h2>WATCH YOUR<br><span>MIND MOVE.</span></h2><p>Not points. Not streaks. Signals from the actual way you reason.</p></div><div class="signal-readouts"><div><small class="mono">REASONING</small><strong>8.7</strong><i style="--v:87%"></i></div><div><small class="mono">ORIGINALITY</small><strong>7.9</strong><i style="--v:79%"></i></div><div><small class="mono">CONFIDENCE</small><strong>8.2</strong><i style="--v:82%"></i></div></div><div class="signal-caption mono">COGNITIVE SIGNAL / LAST 30 SESSIONS</div></section>
+    <section class="principles"><p class="eyebrow"><span>05</span> What stays with you</p><div class="principle-row"><span class="mono">01 / REASON</span><h3>SEE THE STEPS.</h3><p>Make your thinking visible enough to question it.</p></div><div class="principle-row"><span class="mono">02 / CONNECT</span><h3>FIND THE PATTERN.</h3><p>New knowledge sticks to what you already understand.</p></div><div class="principle-row"><span class="mono">03 / OWN</span><h3>LEAVE WITH IT.</h3><p>The goal is not dependence. It’s a mind more capable without us.</p></div></section>
+    <section class="final-cta"><div class="final-orbit" aria-hidden="true"><span>?</span><i></i><i></i><i></i></div><p class="mono">YOUR NEXT THOUGHT IS WAITING</p><h2>WHAT COULD<br><em>YOU</em> FIGURE OUT?</h2><a class="final-link magnetic" href="/auth.html"><span>Start thinking</span><i>↗</i></a></section>
   </main>
-
-  <footer><a class="footer-logo-link" href="#arrival" aria-label="Socra home"><img class="footer-logo" src="/assets/inverted-full-logo.png" alt="Socra"></a><p>You can figure this out.<br>Socra will help you think.</p><nav><a href="#fork">Why Socra</a><a href="#dialogue">Experience</a><a href="/pricing.html">Pricing</a><a href="mailto:hello@socra.in">Contact</a><a href="https://github.com/SocraApp">GitHub</a></nav><div><span>© 2026 Socra</span><span>Made for curious minds.</span><a href="#arrival">Return to the question ↑</a></div></footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/gsap.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.7/dist/ScrollTrigger.min.js"></script>
-  <script src="/js/home.js?v=20260807c"></script>
+  <footer><div class="footer-brand"><span>s</span><strong>socra</strong><p>An AI thinking partner<br>for minds in motion.</p></div><nav><a href="#method">Method</a><a href="#workspace">Workspace</a><a href="/pricing.html">Plans</a><a href="mailto:hello@socra.in">Contact</a><a href="https://github.com/SocraApp">GitHub</a></nav><div class="footer-meta mono"><span>© 2026 SOCRA</span><span>INDIA / THE INTERNET</span><a href="#top">BACK TO TOP ↑</a></div></footer>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script><script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js"></script><script type="module" src="/js/home.js?v=20260822b"></script>
 </body>
 </html>
